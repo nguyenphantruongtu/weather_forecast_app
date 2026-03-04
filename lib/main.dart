@@ -1,41 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'app.dart';
-import 'providers/settings_provider.dart';
-import 'providers/news_provider.dart';
+import 'providers/weather_provider.dart';
+import 'screens/sv2_screens/home_screen/home_screen.dart';
+import 'screens/sv2_screens/hourly_forecast_screen/hourly_forecast_screen.dart';
 
-/// Entry point của ứng dụng
-/// main(): hàm chính được gọi khi app khởi động
-void main() async {
-  // Đảm bảo Flutter bindings được khởi tạo
-  // Điều này cần thiết để các plugin native hoạt động đúng cách
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  runApp(const MyApp());
+}
 
-  // Tải environment variables từ file .env
-  // Điều này cho phép lưu trữ API keys trong file .env thay vì hardcode
-  await dotenv.load();
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
-  // Khởi tạo SettingsProvider và tải cài đặt từ SharedPreferences
-  final settingsProvider = SettingsProvider();
-  await settingsProvider.init();
-  // settingsProvider.init(): tải cấu hình đã lưu trước đó
-
-  // Chạy ứng dụng
-  runApp(
-    MultiProvider(
-      // MultiProvider: cung cấp nhiều providers cho toàn bộ app
-      // Tất cả widget con có thể truy cập các provider này thông qua context.watch(), context.read(), v.v.
-      providers: [
-        // Cung cấp SettingsProvider cho toàn bộ app
-        // ChangeNotifierProvider.value: sử dụng instance đã tạo sẵn
-        ChangeNotifierProvider.value(value: settingsProvider),
-        
-        // Cung cấp NewsProvider cho toàn bộ app
-        // ChangeNotifierProvider(create: (_) => ...): tạo instance mới
-        ChangeNotifierProvider(create: (_) => NewsProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => WeatherProvider())],
+      child: MaterialApp(
+        title: 'Weather Now App',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.blue,
+            brightness: Brightness.light,
+          ),
+          useMaterial3: true,
+          fontFamily: 'Roboto',
+          appBarTheme: const AppBarTheme(
+            elevation: 0,
+            centerTitle: false,
+            backgroundColor: Colors.transparent,
+            iconTheme: IconThemeData(color: Colors.black87),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        home: const HomeScreen(),
+        routes: {
+          '/home': (_) => const HomeScreen(),
+          '/hourly-forecast': (_) => const HourlyForecastScreen(),
+        },
+      ),
+    );
+  }
 }
