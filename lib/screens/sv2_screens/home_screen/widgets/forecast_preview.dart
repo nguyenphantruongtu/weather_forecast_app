@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../data/models/forecast_model.dart';
+import '../../../sv2_screens/hourly_forecast_screen/hourly_forecast_screen.dart';
 
 class ForecastPreview extends StatelessWidget {
   final List<ForecastModel> hourlyForecast;
+  final String? city;
 
-  const ForecastPreview({Key? key, required this.hourlyForecast})
+  const ForecastPreview({Key? key, required this.hourlyForecast, this.city})
     : super(key: key);
 
   String _getWeatherIcon(String description) {
@@ -48,6 +50,12 @@ class ForecastPreview extends StatelessWidget {
             TextButton(
               onPressed: () {
                 // Navigate to hourly forecast screen
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        HourlyForecastScreen(city: city ?? 'Hanoi'),
+                  ),
+                );
               },
               child: const Text('See All'),
             ),

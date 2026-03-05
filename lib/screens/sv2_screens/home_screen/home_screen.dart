@@ -20,7 +20,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadWeatherData();
+    // Defer loading data after frame is built to avoid "setState during build" error
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadWeatherData();
+    });
   }
 
   void _loadWeatherData() {
@@ -160,6 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Hourly Forecast Preview
                         ForecastPreview(
                           hourlyForecast: weatherProvider.hourlyForecast,
+                          city: _currentCity,
                         ),
                         const SizedBox(height: 24),
                       ],
