@@ -10,7 +10,15 @@ class GeocodingService {
   Future<List<LocationModel>> getLocations(String query) async {
     if (_apiKey.isEmpty) return [];
     
-    final url = Uri.parse('http://api.openweathermap.org/geo/1.0/direct?q=$query&limit=5&appid=$_apiKey');
+    // Xử lý đặc biệt cho các mã quốc gia phổ biến
+    String processedQuery = query;
+    if (query.toLowerCase().trim() == 'usa' || 
+        query.toLowerCase().trim() == 'us' || 
+        query.toLowerCase().trim() == 'america') {
+      processedQuery = 'United States';
+    }
+    
+    final url = Uri.parse('http://api.openweathermap.org/geo/1.0/direct?q=$processedQuery&limit=5&appid=$_apiKey');
     
     try {
       final response = await http.get(url);

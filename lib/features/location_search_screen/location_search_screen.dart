@@ -1,11 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/location_provider.dart';
+import '../saved_locations_screen/saved_locations_screen.dart';
+import '../map_view_screen/map_view_screen.dart';
+import '../location_compare_screen/location_compare_screen.dart';
 
-class LocationSearchScreen extends StatelessWidget {
+class LocationSearchScreen extends StatefulWidget {
+  const LocationSearchScreen({super.key});
+
+  @override
+  State<LocationSearchScreen> createState() => _LocationSearchScreenState();
+}
+
+class _LocationSearchScreenState extends State<LocationSearchScreen> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
 
-  LocationSearchScreen({super.key});
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_onFocusChange);
+    _controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _controller.removeListener(_onTextChanged);
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    setState(() {
+      _isFocused = _focusNode.hasFocus;
+    });
+  }
+
+  void _onTextChanged() {
+    final provider = Provider.of<LocationProvider>(context, listen: false);
+    if (_controller.text.isNotEmpty) {
+      // Khi gõ: Gọi API lấy gợi ý (không lưu vào history)
+      provider.searchCityWithoutHistory(_controller.text);
+    } else {
+      // Khi xóa hết: Xóa kết quả gợi ý để quay về hiện lịch sử
+      provider.searchCityWithoutHistory("");
+    }
+    setState(() {}); // Rebuild để cập nhật icon Clear
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,9 +57,24 @@ class LocationSearchScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("WeatherNow Search"), 
+        title: const Text("WeatherNow Search"),
         centerTitle: true,
         elevation: 0,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          if (index == 1) Navigator.push(context, MaterialPageRoute(builder: (context) => const SavedLocationsScreen()));
+          if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (context) => const MapViewScreen()));
+          if (index == 3) Navigator.push(context, MaterialPageRoute(builder: (context) => const LocationCompareScreen()));
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Tìm kiếm"),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Yêu thích"),
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: "Bản đồ"),
+          BottomNavigationBarItem(icon: Icon(Icons.compare_arrows), label: "So sánh"),
+        ],
       ),
       body: Column(
         children: [
@@ -24,43 +83,59 @@ class LocationSearchScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _controller,
+              focusNode: _focusNode,
               decoration: InputDecoration(
                 hintText: "Tìm thành phố của bạn...",
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _controller.clear();
-                    provider.searchCity(""); // Reset kết quả về rỗng
-                  },
-                ),
+                suffixIcon: _controller.text.isNotEmpty 
+                  ? IconButton(icon: const Icon(Icons.clear), onPressed: () => _controller.clear()) 
+                  : null,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
                 filled: true,
                 fillColor: Colors.grey[100],
               ),
-              onSubmitted: (value) => provider.searchCity(value),
+              onSubmitted: (value) {
+                if (value.isNotEmpty) {
+                  provider.searchCity(value);
+                  _focusNode.unfocus();
+                }
+              },
             ),
           ),
 
-          // Hiệu ứng thanh chạy khi đang tải dữ liệu tìm kiếm
           if (provider.isLoading) const LinearProgressIndicator(),
 
-          // 2. NỘI DUNG THAY ĐỔI (Lịch sử hoặc Kết quả)
+          // 2. NỘI DUNG HIỂN THỊ
           Expanded(
-            child: provider.searchResults.isEmpty 
-                ? _buildRecentSearches(provider) 
-                : _buildSearchResults(provider),
+            child: _buildSearchContent(provider),
           ),
         ],
       ),
     );
   }
 
-  // Giao diện Lịch sử tìm kiếm (Khi chưa nhập hoặc kết quả rỗng)
-  Widget _buildRecentSearches(LocationProvider provider) {
-    if (provider.recentSearches.isEmpty) {
+  Widget _buildSearchContent(LocationProvider provider) {
+    // KỊCH BẢN A: Ô nhập TRỐNG -> Hiện lịch sử tìm kiếm
+    if (_controller.text.isEmpty) {
+      if (provider.recentSearches.isNotEmpty) {
+        return _buildHistoryList(provider);
+      }
       return const Center(child: Text("Hãy nhập tên thành phố để tìm kiếm"));
     }
+
+    // KỊCH BẢN B: Ô nhập CÓ CHỮ -> Hiện gợi ý từ API
+    if (provider.searchResults.isNotEmpty) {
+      return _buildResultsList(provider);
+    }
+
+    // Trường hợp đang gõ nhưng chưa có kết quả
+    return provider.isLoading 
+      ? const SizedBox.shrink() 
+      : const Center(child: Text("Không tìm thấy kết quả phù hợp"));
+  }
+
+  // Giao diện Lịch sử (Chỉ hiện khi text rỗng)
+  Widget _buildHistoryList(LocationProvider provider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -69,8 +144,7 @@ class LocationSearchScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("TÌM KIẾM GẦN ĐÂY", 
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+              const Text("TÌM KIẾM GẦN ĐÂY", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
               TextButton(
                 onPressed: () => provider.clearRecent(), 
                 child: const Text("Xóa tất cả")
@@ -87,6 +161,7 @@ class LocationSearchScreen extends StatelessWidget {
               onTap: () {
                 _controller.text = provider.recentSearches[i];
                 provider.searchCity(provider.recentSearches[i]);
+                _focusNode.unfocus();
               },
             ),
           ),
@@ -95,29 +170,32 @@ class LocationSearchScreen extends StatelessWidget {
     );
   }
 
-  // Giao diện Kết quả trả về sau khi Search
-  Widget _buildSearchResults(LocationProvider provider) {
+  // Giao diện Gợi ý/Kết quả (Hiện khi đang gõ)
+  Widget _buildResultsList(LocationProvider provider) {
     return ListView.builder(
       itemCount: provider.searchResults.length,
       itemBuilder: (ctx, i) {
         final loc = provider.searchResults[i];
         return ListTile(
           leading: const Icon(Icons.location_on, color: Colors.blue),
-          title: Text(loc.name),
-          subtitle: Text("${loc.country} ${loc.state ?? ''}"),
-          // SỬA ONTAP: Đợi lấy dữ liệu thời tiết rồi mới hiện BottomSheet
+          title: Text(loc.country), // Hiển thị tên quốc gia thay vì tên thành phố
+          subtitle: Text("${loc.name} ${loc.state ?? ''}"), // Hiển thị tên thành phố trong subtitle
           onTap: () async {
-            // Hiển thị loading nhẹ trong khi đợi gọi API Weather
+            // Khi chọn 1 gợi ý -> Lưu vào lịch sử và xem thời tiết
+            provider.searchCity(loc.name); 
+            _focusNode.unfocus();
+            
             showDialog(
-              context: ctx,
+              context: context,
               barrierDismissible: false,
               builder: (context) => const Center(child: CircularProgressIndicator()),
             );
 
             await provider.fetchWeather(loc.lat, loc.lon);
-            
-            Navigator.pop(ctx); // Đóng Loading Dialog
-            _showWeatherBottomSheet(ctx, provider, loc.name);
+            if (mounted) {
+              Navigator.pop(context);
+              _showWeatherBottomSheet(context, provider, loc.name);
+            }
           },
           trailing: _buildTrailingIcons(provider, loc),
         );
@@ -125,41 +203,32 @@ class LocationSearchScreen extends StatelessWidget {
     );
   }
 
-  // Các nút tính năng (Tim và So sánh)
   Widget _buildTrailingIcons(LocationProvider provider, dynamic loc) {
-    final isSaved = provider.savedLocations.any((e) => e.name == loc.name);
-    final isComparing = provider.compareList.any((e) => e.name == loc.name);
+    final isSaved = provider.savedLocations.any((e) => e.uniqueId == loc.uniqueId);
+    final isComparing = provider.compareList.any((e) => e.uniqueId == loc.uniqueId);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: Icon(isComparing ? Icons.compare_arrows : Icons.compare_arrows_outlined, 
-            color: Colors.orange),
+          icon: Icon(isComparing ? Icons.compare_arrows : Icons.compare_arrows_outlined, color: Colors.orange),
           onPressed: () => provider.toggleCompare(loc),
         ),
         IconButton(
-          icon: Icon(isSaved ? Icons.favorite : Icons.favorite_border, 
-            color: Colors.red),
+          icon: Icon(isSaved ? Icons.favorite : Icons.favorite_border, color: Colors.red),
           onPressed: () => provider.toggleFavorite(loc),
         ),
       ],
     );
   }
 
-  // Bottom Sheet hiển thị thông tin thời tiết chi tiết (Màn 12 & 9)
   void _showWeatherBottomSheet(BuildContext context, LocationProvider provider, String cityName) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25))
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
       builder: (ctx) {
         final w = provider.currentWeather;
-        if (w == null) {
-          return const SizedBox(height: 150, child: Center(child: Text("Không có dữ liệu")));
-        }
-        
+        if (w == null) return const SizedBox(height: 150, child: Center(child: Text("Không có dữ liệu")));
         return Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
           child: Column(
@@ -168,11 +237,9 @@ class LocationSearchScreen extends StatelessWidget {
               Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)), margin: const EdgeInsets.only(bottom: 20)),
               Text(cityName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               const Divider(),
-              const SizedBox(height: 10),
               _buildInfoTile(Icons.thermostat, "Nhiệt độ", "${w['main']['temp']}°C", Colors.orange),
               _buildInfoTile(Icons.water_drop, "Độ ẩm", "${w['main']['humidity']}%", Colors.blue),
               _buildInfoTile(Icons.air, "Tốc độ gió", "${w['wind']['speed']} m/s", Colors.green),
-              _buildInfoTile(Icons.cloud, "Trạng thái", "${w['weather'][0]['description']}", Colors.grey),
             ],
           ),
         );

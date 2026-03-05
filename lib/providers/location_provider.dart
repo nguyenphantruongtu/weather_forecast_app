@@ -21,7 +21,7 @@ class LocationProvider with ChangeNotifier {
   Map<String, dynamic>? get currentWeather => _currentWeather;
   bool get isLoading => _isLoading;
 
-  // 1. Tìm kiếm thành phố
+  // 1. Tìm kiếm thành phố (Chỉ lưu vào lịch sử khi có query thực sự)
   Future<void> searchCity(String query) async {
     if (query.isEmpty) return;
     
@@ -29,8 +29,33 @@ class LocationProvider with ChangeNotifier {
     _searchResults = []; // Xóa kết quả cũ để hiện loading
     notifyListeners();
 
-    // Thêm vào lịch sử tìm kiếm (Recent)
+    // Thêm vào lịch sử tìm kiếm (Recent) - CHỈ KHI CÓ QUERY THỰC SỰ
     _addToRecent(query);
+
+    final apiKey = dotenv.env['OPENWEATHER_API_KEY'];
+    final url = 'http://api.openweathermap.org/geo/1.0/direct?q=$query&limit=5&appid=$apiKey';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        List data = json.decode(response.body);
+        _searchResults = data.map((e) => LocationModel.fromJson(e)).toList();
+      }
+    } catch (e) {
+      print("Lỗi kết nối: $e");
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // 1.1 Tìm kiếm thành phố mà KHÔNG lưu vào lịch sử (dành cho real-time search)
+  Future<void> searchCityWithoutHistory(String query) async {
+    if (query.isEmpty) return;
+    
+    _isLoading = true;
+    _searchResults = []; // Xóa kết quả cũ để hiện loading
+    notifyListeners();
 
     final apiKey = dotenv.env['OPENWEATHER_API_KEY'];
     final url = 'http://api.openweathermap.org/geo/1.0/direct?q=$query&limit=5&appid=$apiKey';
@@ -68,6 +93,22 @@ class LocationProvider with ChangeNotifier {
     }
   }
 
+  // 2.1. Lấy thời tiết chi tiết và trả về dữ liệu (Dùng cho so sánh)
+  Future<Map<String, dynamic>?> fetchWeatherData(double lat, double lon) async {
+    final apiKey = dotenv.env['OPENWEATHER_API_KEY'];
+    final url = 'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=$apiKey&units=metric&lang=vi';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+    } catch (e) {
+      print("Lỗi lấy thời tiết: $e");
+    }
+    return null;
+  }
+
   // 3. Quản lý Lịch sử
   void _addToRecent(String query) {
     if (!_recentSearches.contains(query)) {
@@ -83,9 +124,13 @@ class LocationProvider with ChangeNotifier {
 
   // 4. Các hàm bổ trợ khác
   void toggleFavorite(LocationModel loc) {
-    _savedLocations.any((e) => e.name == loc.name) 
-      ? _savedLocations.removeWhere((e) => e.name == loc.name) 
-      : _savedLocations.add(loc);
+    // Sử dụng uniqueId để kiểm tra thay vì chỉ dùng name
+    final exists = _savedLocations.any((e) => e.uniqueId == loc.uniqueId);
+    if (exists) {
+      _savedLocations.removeWhere((e) => e.uniqueId == loc.uniqueId);
+    } else {
+      _savedLocations.add(loc);
+    }
     notifyListeners();
   }
 
@@ -100,11 +145,19 @@ class LocationProvider with ChangeNotifier {
   }
 
   void toggleCompare(LocationModel loc) {
-    if (_compareList.any((e) => e.name == loc.name)) {
-      _compareList.removeWhere((e) => e.name == loc.name);
+    // Sử dụng uniqueId để kiểm tra thay vì chỉ dùng name
+    final exists = _compareList.any((e) => e.uniqueId == loc.uniqueId);
+    if (exists) {
+      _compareList.removeWhere((e) => e.uniqueId == loc.uniqueId);
     } else if (_compareList.length < 3) {
       _compareList.add(loc);
     }
+    notifyListeners();
+  }
+
+
+  void clearCompare() {
+    _compareList.clear();
     notifyListeners();
   }
 
@@ -113,4 +166,5 @@ class LocationProvider with ChangeNotifier {
     position: LatLng(loc.lat, loc.lon),
     infoWindow: InfoWindow(title: loc.name),
   )).toSet();
+  
 }
