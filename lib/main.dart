@@ -1,39 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:dio/dio.dart';
+
 import 'app.dart';
 import 'providers/settings_provider.dart';
 import 'providers/news_provider.dart';
+import 'data/services/open_meteo_service.dart';
+import 'data/services/weather_api_service.dart';
+import 'screens/sv5_screens/calendar_screen/providers/calendar_provider.dart';
 
-/// Entry point của ứng dụng
-/// main(): hàm chính được gọi khi app khởi động
 void main() async {
-  // Đảm bảo Flutter bindings được khởi tạo
-  // Điều này cần thiết để các plugin native hoạt động đúng cách
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Tải environment variables từ file .env
-  // Điều này cho phép lưu trữ API keys trong file .env thay vì hardcode
-  await dotenv.load();
+  // fileName: '.env' — explicit hơn, rõ ràng hơn cách viết không có tham số
+  await dotenv.load(fileName: '.env');
 
-  // Khởi tạo SettingsProvider và tải cài đặt từ SharedPreferences
   final settingsProvider = SettingsProvider();
   await settingsProvider.init();
-  // settingsProvider.init(): tải cấu hình đã lưu trước đó
 
-  // Chạy ứng dụng
   runApp(
     MultiProvider(
-      // MultiProvider: cung cấp nhiều providers cho toàn bộ app
-      // Tất cả widget con có thể truy cập các provider này thông qua context.watch(), context.read(), v.v.
       providers: [
-        // Cung cấp SettingsProvider cho toàn bộ app
-        // ChangeNotifierProvider.value: sử dụng instance đã tạo sẵn
+        // --- Providers từ HEAD ---
         ChangeNotifierProvider.value(value: settingsProvider),
-        
-        // Cung cấp NewsProvider cho toàn bộ app
-        // ChangeNotifierProvider(create: (_) => ...): tạo instance mới
         ChangeNotifierProvider(create: (_) => NewsProvider()),
+
+        // --- Providers từ TuNPT (sv5) ---
+        Provider<WeatherApiService>(
+          create: (_) => WeatherApiService(
+            dio: Dio(),
+            apiKey: dotenv.env['OPENWEATHER_API_KEY'] ?? '',
+            baseUrl:
+                dotenv.env['OPENWEATHER_BASE_URL'] ??
+                'https://api.openweathermap.org/data/2.5',
+          ),
+        ),
+        Provider<OpenMeteoService>(
+          create: (_) => OpenMeteoService(dio: Dio()),
+        ),
+        ChangeNotifierProvider<CalendarProvider>(
+          create: (context) => CalendarProvider(
+            weatherApiService: context.read<WeatherApiService>(),
+          ),
+        ),
       ],
       child: const MyApp(),
     ),

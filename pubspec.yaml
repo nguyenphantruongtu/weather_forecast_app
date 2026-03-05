@@ -44,7 +44,6 @@ dependencies:
 
   # Notifications
   flutter_local_notifications: ^17.1.2
-  workmanager: ^0.5.2
 
   # Images
   cached_network_image: ^3.3.1
@@ -59,6 +58,8 @@ dependencies:
 
   # CSV Export
   csv: ^6.0.0
+  pdf: ^3.10.8
+  collection: ^1.18.0
 
   # Environment
   flutter_dotenv: ^5.1.0
