@@ -5,7 +5,7 @@ import 'app.dart';
 import 'providers/settings_provider.dart';
 import 'providers/news_provider.dart';
 
-/// Entry point của ứng dụng
+/// Entry point của ứng dụn
 /// main(): hàm chính được gọi khi app khởi động
 void main() async {
   // Đảm bảo Flutter bindings được khởi tạo
