@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'app.dart';
 import 'providers/settings_provider.dart';
 import 'providers/news_provider.dart';
+import 'providers/weather_provider.dart';
 
 /// Entry point của ứng dụn
 /// main(): hàm chính được gọi khi app khởi động
@@ -30,10 +31,13 @@ void main() async {
         // Cung cấp SettingsProvider cho toàn bộ app
         // ChangeNotifierProvider.value: sử dụng instance đã tạo sẵn
         ChangeNotifierProvider.value(value: settingsProvider),
-        
+
         // Cung cấp NewsProvider cho toàn bộ app
         // ChangeNotifierProvider(create: (_) => ...): tạo instance mới
         ChangeNotifierProvider(create: (_) => NewsProvider()),
+
+        // Cung cấp WeatherProvider cho toàn bộ app
+        ChangeNotifierProvider(create: (_) => WeatherProvider()),
       ],
       child: const MyApp(),
     ),
