@@ -160,6 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Hourly Forecast Preview
                         ForecastPreview(
                           hourlyForecast: weatherProvider.hourlyForecast,
+                          city: _currentCity,
                         ),
                         const SizedBox(height: 24),
                       ],

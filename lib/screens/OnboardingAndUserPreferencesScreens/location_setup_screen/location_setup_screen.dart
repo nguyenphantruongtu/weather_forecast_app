@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import '../settings_screen/settings_screen.dart';
+import '../../sv2_screens/home_screen/home_screen.dart';
 import 'widgets/location_option_card.dart';
 import 'widgets/permission_dialog.dart';
 
@@ -61,7 +61,8 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'Location permission is denied forever. Enable it in app settings.'),
+              'Location permission is denied forever. Enable it in app settings.',
+            ),
           ),
         );
       }
@@ -85,23 +86,22 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
-        String cityName =
-            '${place.locality}, ${place.country}';
+        String cityName = '${place.locality}, ${place.country}';
         // isNotEmpty: danh sách không rỗng
 
         setState(() => _selectedCity = cityName);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Selected: $cityName')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Selected: $cityName')));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       setState(() => _isLoading = false);
@@ -114,16 +114,16 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
     // trim(): xóa khoảng trắng ở đầu và cuối
 
     if (query.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a city name')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a city name')));
       return;
     }
 
     setState(() => _selectedCity = query);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Selected: $query')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Selected: $query')));
   }
 
   /// Di chuyển sang Settings Screen
@@ -137,7 +137,7 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   }
 
@@ -195,7 +195,7 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
                     const SizedBox(height: 32),
 
                     // Info về vị trí đã chọn
-                    if (_selectedCity != null) ...[ 
+                    if (_selectedCity != null) ...[
                       // ... (spread operator): mở rộng list
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -205,10 +205,7 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.check_circle,
-                              color: Colors.green,
-                            ),
+                            const Icon(Icons.check_circle, color: Colors.green),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -297,7 +294,9 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
                   setState(() => _selectedCity = _popularCities[index]);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Selected: ${_popularCities[index]}')),
+                    SnackBar(
+                      content: Text('Selected: ${_popularCities[index]}'),
+                    ),
                   );
                 },
               );
