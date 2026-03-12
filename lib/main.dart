@@ -1,45 +1,53 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+
+// Import từ branch main
 import 'app.dart';
 import 'providers/settings_provider.dart';
 import 'providers/news_provider.dart';
 import 'providers/weather_provider.dart';
 
-/// Entry point của ứng dụn
-/// main(): hàm chính được gọi khi app khởi động
+// Import từ branch TungNQ
+import 'providers/location_provider.dart';
+import 'features/location_search_screen/location_search_screen.dart';
+
 void main() async {
-  // Đảm bảo Flutter bindings được khởi tạo
-  // Điều này cần thiết để các plugin native hoạt động đúng cách
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load file .env
+  await dotenv.load(fileName: ".env");
 
-  // Tải environment variables từ file .env
-  // Điều này cho phép lưu trữ API keys trong file .env thay vì hardcode
-  await dotenv.load();
-
-  // Khởi tạo SettingsProvider và tải cài đặt từ SharedPreferences
+  // Khởi tạo SettingsProvider (từ main)
   final settingsProvider = SettingsProvider();
   await settingsProvider.init();
-  // settingsProvider.init(): tải cấu hình đã lưu trước đó
 
-  // Chạy ứng dụng
   runApp(
     MultiProvider(
-      // MultiProvider: cung cấp nhiều providers cho toàn bộ app
-      // Tất cả widget con có thể truy cập các provider này thông qua context.watch(), context.read(), v.v.
       providers: [
-        // Cung cấp SettingsProvider cho toàn bộ app
-        // ChangeNotifierProvider.value: sử dụng instance đã tạo sẵn
+        // Giữ tất cả các Provider của cả 2 branch
         ChangeNotifierProvider.value(value: settingsProvider),
-
-        // Cung cấp NewsProvider cho toàn bộ app
-        // ChangeNotifierProvider(create: (_) => ...): tạo instance mới
         ChangeNotifierProvider(create: (_) => NewsProvider()),
-
-        // Cung cấp WeatherProvider cho toàn bộ app
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
+        ChangeNotifierProvider(create: (_) => LocationProvider()), // Của Tùng
       ],
       child: const MyApp(),
     ),
   );
+}
+
+// Lưu ý: Nếu ở branch 'main' đã có class MyApp trong file 'app.dart' 
+// thì bạn nên xóa đoạn class MyApp dưới đây và cấu hình trong file app.dart nhé.
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Weather App Group 6',
+      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+      home: const LocationSearchScreen(), // Màn hình của Tùng
+    );
+  }
 }
