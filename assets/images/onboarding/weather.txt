@@ -1,0 +1,3 @@
+<!-- Onboarding Slide 1 - Real-time Weather -->
+<!-- Placeholder - Thay thế bằng file PNG/SVG (300x300px) -->
+<!-- File ảnh thực sự: weather.png -->

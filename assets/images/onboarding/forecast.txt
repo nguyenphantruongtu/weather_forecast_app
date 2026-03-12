@@ -1,0 +1,3 @@
+<!-- Onboarding Slide 2 - 7-Day Forecast -->
+<!-- Placeholder - Thay thế bằng file PNG/SVG (300x300px) -->
+<!-- File ảnh thực sự: forecast.png -->
