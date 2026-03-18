@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/theme_provider.dart';
-import 'providers/weather_provider.dart';
 import 'screens/OnboardingAndUserPreferencesScreens/splash_screen/splash_screen.dart';
 import 'screens/OnboardingAndUserPreferencesScreens/onboarding_screen/onboarding_screen.dart';
 import 'screens/OnboardingAndUserPreferencesScreens/location_setup_screen/location_setup_screen.dart';

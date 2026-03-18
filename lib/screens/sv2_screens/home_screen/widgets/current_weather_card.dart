@@ -1,11 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../data/models/weather_model.dart';
+import '../../../../data/models/settings_model.dart';
+import '../../../../utils/unit_converter.dart';
 
 class CurrentWeatherCard extends StatelessWidget {
   final WeatherModel weather;
+  final VoidCallback onSettingsTap;
+  final TemperatureUnit temperatureUnit;
+  final TimeFormat timeFormat;
 
-  const CurrentWeatherCard({Key? key, required this.weather}) : super(key: key);
+  const CurrentWeatherCard({
+    super.key,
+    required this.weather,
+    required this.onSettingsTap,
+    required this.temperatureUnit,
+    required this.timeFormat,
+  });
+
+  double _displayTemperature(double celsiusValue) {
+    if (temperatureUnit == TemperatureUnit.fahrenheit) {
+      return UnitConverter.celsiusToFahrenheit(celsiusValue);
+    }
+    return celsiusValue;
+  }
+
+  String _timePattern() {
+    return timeFormat == TimeFormat.h24
+        ? 'EEE, MMM d • HH:mm'
+        : 'EEE, MMM d • h:mm a';
+  }
 
   String _getWeatherIcon(String description) {
     switch (description.toLowerCase()) {
@@ -37,6 +61,9 @@ class CurrentWeatherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayTemp = _displayTemperature(weather.temperature);
+    final displayFeelsLike = _displayTemperature(weather.feelsLike);
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -65,15 +92,13 @@ class CurrentWeatherCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    DateFormat(
-                      'EEE, MMM d • h:mm a',
-                    ).format(weather.lastUpdated),
+                    DateFormat(_timePattern()).format(weather.lastUpdated),
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: onSettingsTap,
                 icon: const Icon(Icons.settings, color: Colors.white),
               ),
             ],
@@ -86,7 +111,7 @@ class CurrentWeatherCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${weather.temperature.toStringAsFixed(0)}°',
+                    '${displayTemp.toStringAsFixed(0)}°',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 64,
@@ -98,7 +123,7 @@ class CurrentWeatherCard extends StatelessWidget {
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                   Text(
-                    'Feels like ${weather.feelsLike.toStringAsFixed(0)}°',
+                    'Feels like ${displayFeelsLike.toStringAsFixed(0)}°',
                     style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],

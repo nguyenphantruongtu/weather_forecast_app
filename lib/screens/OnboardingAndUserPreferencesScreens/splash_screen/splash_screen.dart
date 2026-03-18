@@ -32,25 +32,17 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Scaffold: cấu trúc cơ bản của một screen (AppBar, body, FloatingButton...)
       body: Container(
-        // Container: widget để chứa các widget khác, có thể set background color
         width: double.infinity,
         height: double.infinity,
-        // double.infinity: chiếm toàn bộ kích thước khả dụng
-        decoration: BoxDecoration(
-          // Gradient background từ xanh nhạt đến xanh đậm
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.blue.shade100,
-              Colors.blue.shade600,
-            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF0E6FA1), Color(0xFF11B4E6)],
           ),
         ),
-        child: const SplashAnimation(),
-        // Gọi widget animation mà ta đã tạo
+        child: const SafeArea(child: SplashAnimation()),
       ),
     );
   }

@@ -1,11 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../../../../data/models/forecast_model.dart';
+import '../../../../data/models/settings_model.dart';
+import '../../../../utils/unit_converter.dart';
 
 class HourlyChart extends StatelessWidget {
   final List<ForecastModel> hourlyForecast;
+  final TemperatureUnit temperatureUnit;
+  final TimeFormat timeFormat;
 
-  const HourlyChart({Key? key, required this.hourlyForecast}) : super(key: key);
+  const HourlyChart({
+    super.key,
+    required this.hourlyForecast,
+    required this.temperatureUnit,
+    required this.timeFormat,
+  });
+
+  double _displayTemperature(double celsiusValue) {
+    if (temperatureUnit == TemperatureUnit.fahrenheit) {
+      return UnitConverter.celsiusToFahrenheit(celsiusValue);
+    }
+    return celsiusValue;
+  }
+
+  String _xAxisPattern() {
+    return timeFormat == TimeFormat.h24 ? 'HH' : 'ha';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,18 +39,24 @@ class HourlyChart extends StatelessWidget {
 
     List<FlSpot> spots = [];
     for (int i = 0; i < next24Hours.length; i++) {
-      spots.add(FlSpot(i.toDouble(), next24Hours[i].temp));
+      spots.add(FlSpot(i.toDouble(), _displayTemperature(next24Hours[i].temp)));
     }
 
     double minTemp =
-        next24Hours.map((f) => f.temp).reduce((a, b) => a < b ? a : b) - 5;
+      next24Hours
+        .map((f) => _displayTemperature(f.temp))
+        .reduce((a, b) => a < b ? a : b) -
+      5;
     double maxTemp =
-        next24Hours.map((f) => f.temp).reduce((a, b) => a > b ? a : b) + 5;
+      next24Hours
+        .map((f) => _displayTemperature(f.temp))
+        .reduce((a, b) => a > b ? a : b) +
+      5;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.05),
+        color: Colors.blue.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -51,13 +78,13 @@ class HourlyChart extends StatelessWidget {
                   verticalInterval: 1,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: Colors.grey.withOpacity(0.3),
+                      color: Colors.grey.withValues(alpha: 0.3),
                       strokeWidth: 1,
                     );
                   },
                   getDrawingVerticalLine: (value) {
                     return FlLine(
-                      color: Colors.grey.withOpacity(0.3),
+                      color: Colors.grey.withValues(alpha: 0.3),
                       strokeWidth: 1,
                     );
                   },
@@ -77,8 +104,8 @@ class HourlyChart extends StatelessWidget {
                       getTitlesWidget: (value, meta) {
                         int index = value.toInt();
                         if (index >= 0 && index < next24Hours.length) {
-                          final time = next24Hours[index].dt;
-                          final hour = time.split(' ')[1].substring(0, 2);
+                          final dateTime = DateTime.parse(next24Hours[index].dt);
+                          final hour = DateFormat(_xAxisPattern()).format(dateTime);
                           return Text(
                             hour,
                             style: const TextStyle(fontSize: 10),
@@ -103,7 +130,7 @@ class HourlyChart extends StatelessWidget {
                 ),
                 borderData: FlBorderData(
                   show: true,
-                  border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                 ),
                 minY: minTemp,
                 maxY: maxTemp,

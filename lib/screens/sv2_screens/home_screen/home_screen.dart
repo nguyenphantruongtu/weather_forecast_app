@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../providers/settings_provider.dart';
 import '../../../providers/weather_provider.dart';
+import '../../OnboardingAndUserPreferencesScreens/settings_screen/settings_screen.dart';
 import 'widgets/current_weather_card.dart';
 import 'widgets/weather_metrics_grid.dart';
 import 'widgets/forecast_preview.dart';
@@ -45,6 +47,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       body: CustomScrollView(
@@ -142,7 +146,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Current Weather Card
-                        CurrentWeatherCard(weather: currentWeather),
+                        CurrentWeatherCard(
+                          weather: currentWeather,
+                          onSettingsTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const SettingsScreen(),
+                              ),
+                            );
+                          },
+                          temperatureUnit: settings.temperatureUnit,
+                          timeFormat: settings.timeFormat,
+                        ),
                         const SizedBox(height: 24),
 
                         // Weather Metrics Grid
@@ -154,13 +169,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        WeatherMetricsGrid(weather: currentWeather),
+                        WeatherMetricsGrid(
+                          weather: currentWeather,
+                          temperatureUnit: settings.temperatureUnit,
+                          windSpeedUnit: settings.windSpeedUnit,
+                        ),
                         const SizedBox(height: 24),
 
                         // Hourly Forecast Preview
                         ForecastPreview(
                           hourlyForecast: weatherProvider.hourlyForecast,
                           city: _currentCity,
+                          temperatureUnit: settings.temperatureUnit,
+                          timeFormat: settings.timeFormat,
                         ),
                         const SizedBox(height: 24),
                       ],

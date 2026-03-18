@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../data/models/settings_model.dart';
+import '../../../providers/settings_provider.dart';
 import '../../../providers/weather_provider.dart';
 import '../../../data/models/forecast_model.dart';
+import '../../../utils/unit_converter.dart';
 import 'widgets/hourly_chart.dart';
 import 'widgets/hourly_item.dart';
 
@@ -34,6 +37,8 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
@@ -97,6 +102,17 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                 0,
                 hourlyForecast.length - 1,
               )];
+          final selectedTemp = _displayTemperature(
+            selectedForecast.temp,
+            settings.temperatureUnit,
+          );
+          final selectedWind = _displayWind(
+            selectedForecast.windSpeed,
+            settings.windSpeedUnit,
+          );
+          final selectedTime = DateFormat(
+            _timePattern(settings.timeFormat),
+          ).format(DateTime.parse(selectedForecast.dt));
 
           return SingleChildScrollView(
             child: Padding(
@@ -129,7 +145,11 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                   ),
 
                   // Temperature Chart
-                  HourlyChart(hourlyForecast: hourlyForecast),
+                  HourlyChart(
+                    hourlyForecast: hourlyForecast,
+                    temperatureUnit: settings.temperatureUnit,
+                    timeFormat: settings.timeFormat,
+                  ),
                   const SizedBox(height: 24),
 
                   // Selected Hour Details
@@ -149,9 +169,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  DateFormat(
-                                    'HH:mm',
-                                  ).format(DateTime.parse(selectedForecast.dt)),
+                                  selectedTime,
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -167,7 +185,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                               ],
                             ),
                             Text(
-                              '${selectedForecast.temp.toStringAsFixed(0)}°',
+                              '${selectedTemp.toStringAsFixed(0)}°',
                               style: const TextStyle(
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,
@@ -192,8 +210,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                             _DetailTile(
                               icon: Icons.air,
                               label: 'Wind',
-                              value:
-                                  '${selectedForecast.windSpeed.toStringAsFixed(1)} km/h',
+                              value: selectedWind,
                             ),
                             _DetailTile(
                               icon: Icons.cloud,
@@ -228,6 +245,8 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                         return HourlyItem(
                           forecast: hourlyForecast[index],
                           isSelected: _selectedIndex == index,
+                          temperatureUnit: settings.temperatureUnit,
+                          timeFormat: settings.timeFormat,
                           onTap: () {
                             setState(() {
                               _selectedIndex = index;
@@ -245,6 +264,25 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
         },
       ),
     );
+  }
+
+  double _displayTemperature(double celsiusValue, TemperatureUnit unit) {
+    if (unit == TemperatureUnit.fahrenheit) {
+      return UnitConverter.celsiusToFahrenheit(celsiusValue);
+    }
+    return celsiusValue;
+  }
+
+  String _displayWind(double kmhValue, WindSpeedUnit unit) {
+    if (unit == WindSpeedUnit.mph) {
+      final mph = kmhValue * 0.621371;
+      return '${mph.toStringAsFixed(1)} mph';
+    }
+    return '${kmhValue.toStringAsFixed(1)} km/h';
+  }
+
+  String _timePattern(TimeFormat format) {
+    return format == TimeFormat.h24 ? 'HH:mm' : 'h:mm a';
   }
 
   Widget _buildLoadingShimmer() {
