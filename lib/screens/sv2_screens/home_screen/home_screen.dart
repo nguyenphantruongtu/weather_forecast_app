@@ -23,7 +23,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadWeatherData();
+    // Defer loading data after frame is built to avoid "setState during build" error
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadWeatherData();
+    });
   }
 
   void _loadWeatherData() {
@@ -202,6 +205,80 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showWeatherMenu();
+        },
+        tooltip: 'More options',
+        backgroundColor: Colors.blue.shade500,
+        child: const Icon(Icons.cloud),
+      ),
+    );
+  }
+
+  void _showWeatherMenu() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.only(left: 16, bottom: 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'More Weather Options',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            ),
+            // Menu Items
+            ListTile(
+              leading: Icon(Icons.schedule, color: Colors.teal.shade500),
+              title: const Text('Hourly Forecast'),
+              subtitle: const Text('Next 24 hours'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/hourly-forecast');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.calendar_month, color: Colors.blue.shade500),
+              title: const Text('Daily Forecast'),
+              subtitle: const Text('7-10 days ahead'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/daily-forecast');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.info_outline, color: Colors.indigo.shade500),
+              title: const Text('Weather Details'),
+              subtitle: const Text('Detailed weather info'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/weather-details');
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
