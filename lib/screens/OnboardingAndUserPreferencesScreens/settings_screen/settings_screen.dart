@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../data/models/settings_model.dart';
+import '../../../utils/app_strings.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -18,22 +19,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final settingsProvider = context.watch<SettingsProvider>();
     final settings = settingsProvider.settings;
+    final languageCode = settings.language;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBackground = isDark ? const Color(0xFF11141C) : const Color(0xFFF6F7FB);
+    final titleColor = isDark ? Colors.white : const Color(0xFF1C2232);
     final appearance = _appearanceOverride ??
         (settings.theme == AppTheme.dark ? 'dark' : 'light');
     final timePattern = settings.timeFormat == TimeFormat.h24 ? 'HH:mm' : 'h:mm a';
     final currentTime = DateFormat(timePattern).format(DateTime.now());
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: pageBackground,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF6F7FB),
+        backgroundColor: pageBackground,
         surfaceTintColor: Colors.transparent,
-        foregroundColor: const Color(0xFF1C2232),
-        iconTheme: const IconThemeData(color: Color(0xFF1C2232)),
-        title: const Text(
-          'Settings & Preferences',
+        foregroundColor: titleColor,
+        iconTheme: IconThemeData(color: titleColor),
+        title: Text(
+          AppStrings.tr(
+            languageCode,
+            en: 'Settings & Preferences',
+            vi: 'Cài đặt & Tùy chỉnh',
+          ),
           style: TextStyle(
-            color: Color(0xFF1C2232),
+            color: titleColor,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -42,14 +51,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          _sectionLabel('UNITS'),
+          _sectionLabel(AppStrings.tr(languageCode, en: 'UNITS', vi: 'ĐƠN VỊ')),
           _card(
             child: Column(
               children: [
                 _settingRow(
                   icon: Icons.thermostat,
                   iconColor: const Color(0xFF6FA1F0),
-                  title: 'Temperature',
+                  title: AppStrings.tr(languageCode, en: 'Temperature', vi: 'Nhiệt độ'),
                   trailing: _InlineBinarySwitch(
                     leftText: '°C',
                     rightText: '°F',
@@ -68,7 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _settingRow(
                   icon: Icons.air,
                   iconColor: const Color(0xFF77AFE8),
-                  title: 'Wind Speed',
+                  title: AppStrings.tr(languageCode, en: 'Wind Speed', vi: 'Tốc độ gió'),
                   trailing: _InlineBinarySwitch(
                     leftText: 'km/h',
                     rightText: 'mph',
@@ -84,13 +93,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _sectionLabel('APPEARANCE'),
+          _sectionLabel(AppStrings.tr(languageCode, en: 'APPEARANCE', vi: 'GIAO DIỆN')),
           _card(
             child: Row(
               children: [
                 Expanded(
                   child: _appearanceTile(
-                    label: 'Light',
+                    label: AppStrings.tr(languageCode, en: 'Light', vi: 'Sáng'),
                     icon: Icons.light_mode,
                     selected: appearance == 'light',
                     onTap: () {
@@ -102,7 +111,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _appearanceTile(
-                    label: 'Dark',
+                    label: AppStrings.tr(languageCode, en: 'Dark', vi: 'Tối'),
                     icon: Icons.dark_mode,
                     selected: appearance == 'dark',
                     onTap: () {
@@ -114,7 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _appearanceTile(
-                    label: 'Auto',
+                    label: AppStrings.tr(languageCode, en: 'Auto', vi: 'Tự động'),
                     icon: Icons.brightness_4,
                     selected: appearance == 'auto',
                     onTap: () {
@@ -132,14 +141,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _sectionLabel('TIME & DATE'),
+          _sectionLabel(AppStrings.tr(languageCode, en: 'TIME & DATE', vi: 'THỜI GIAN & NGÀY')),
           _card(
             child: Column(
               children: [
                 _settingRow(
                   icon: Icons.schedule,
                   iconColor: const Color(0xFF76ACE8),
-                  title: 'Time Format',
+                  title: AppStrings.tr(languageCode, en: 'Time Format', vi: 'Định dạng giờ'),
                   trailing: _InlineBinarySwitch(
                     leftText: '12h',
                     rightText: '24h',
@@ -157,7 +166,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Padding(
                     padding: const EdgeInsets.only(left: 44),
                     child: Text(
-                      'Current time: $currentTime',
+                      '${AppStrings.tr(languageCode, en: 'Current time', vi: 'Giờ hiện tại')}: $currentTime',
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFFA1A9BC),
@@ -170,7 +179,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _sectionLabel('LANGUAGE'),
+          _sectionLabel(AppStrings.tr(languageCode, en: 'LANGUAGE', vi: 'NGÔN NGỮ')),
           _card(
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
@@ -184,18 +193,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: Color(0xFF76ACE8),
                     ),
                     const SizedBox(width: 12),
-                    const Text(
-                      'Language',
+                    Text(
+                      AppStrings.tr(languageCode, en: 'Language', vi: 'Ngôn ngữ'),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F2637),
+                        color: isDark ? Colors.white : const Color(0xFF1F2637),
                       ),
                     ),
                     const Spacer(),
                     Text(
-                      settings.language == 'en' ? 'English' : 'Vietnamese',
-                      style: const TextStyle(
-                        color: Color(0xFF9098AD),
+                      settings.language == 'en' ? 'English' : 'Tiếng Việt',
+                      style: TextStyle(
+                        color: isDark ? const Color(0xFFBAC2D6) : const Color(0xFF9098AD),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -215,14 +224,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _sectionLabel(String title) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(left: 2, bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           letterSpacing: 0.8,
-          color: Color(0xFFB0B7C7),
+          color: isDark ? const Color(0xFF9FA9C2) : const Color(0xFFB0B7C7),
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -230,12 +240,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _card({required Widget child}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1A1F2B) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8ECF4)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2A3143) : const Color(0xFFE8ECF4),
+        ),
       ),
       child: child,
     );
@@ -247,15 +260,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String title,
     required Widget trailing,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         _IconBadge(icon: icon, color: iconColor),
         const SizedBox(width: 12),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1F2637),
+            color: isDark ? Colors.white : const Color(0xFF1F2637),
           ),
         ),
         const Spacer(),
@@ -304,11 +318,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _showLanguageSelector(BuildContext context) {
     final provider = context.read<SettingsProvider>();
+    final languageCode = provider.settings.language;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Language'),
+        title: Text(AppStrings.tr(languageCode, en: 'Select Language', vi: 'Chọn ngôn ngữ')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
