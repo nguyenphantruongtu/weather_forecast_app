@@ -1,0 +1,540 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../data/models/news_alert_model.dart';
+import '../../../../providers/weather_provider.dart';
+import 'widgets/alert_card.dart';
+import 'widgets/alert_severity_badge.dart';
+
+class AlertsScreen extends StatefulWidget {
+  const AlertsScreen({super.key});
+
+  @override
+  State<AlertsScreen> createState() => _AlertsScreenState();
+}
+
+class _AlertsScreenState extends State<AlertsScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  AlertSeverity? _selectedSeverity;
+  late List<AlertModel> _activeAlerts;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeAlerts = [];
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  List<AlertModel> get _filteredAlerts {
+    if (_selectedSeverity == null) return _activeAlerts;
+    return _activeAlerts
+        .where((a) => a.severity == _selectedSeverity)
+        .toList();
+  }
+
+  /// Generate alerts based on current weather conditions
+  void _updateAlertsFromWeather(dynamic currentWeather) {
+    _activeAlerts.clear();
+
+    if (currentWeather != null) {
+      // Generate alerts based on weather conditions
+      _generateAlertsFromWeather(currentWeather);
+    }
+  }
+
+  /// Create alert list based on weather data
+  void _generateAlertsFromWeather(weather) {
+    int alertId = 1;
+
+    // Heat Warning - if temp > 38°C
+    if (weather.temperature > 38) {
+      _activeAlerts.add(
+        AlertModel(
+          id: (alertId++).toString(),
+          title: 'Excessive Heat Warning',
+          description:
+              'Dangerous heat conditions expected. High temperatures of ${weather.temperature.toStringAsFixed(1)}°C detected. Heat index values may reach ${(weather.temperature + 5).toStringAsFixed(1)}°C. Stay hydrated and avoid prolonged outdoor activities.',
+          severity: weather.temperature > 42
+              ? AlertSeverity.extreme
+              : AlertSeverity.severe,
+          type: AlertType.heat,
+          location: weather.location,
+          startTime: DateTime.now(),
+          endTime: DateTime.now().add(const Duration(hours: 24)),
+          updatedAt: DateTime.now(),
+          impact: weather.temperature > 42 ? 'High Risk' : 'Moderate Risk',
+          isActive: true,
+        ),
+      );
+    }
+
+    // High Wind Warning - if windSpeed > 50 km/h
+    if (weather.windSpeed > 50) {
+      _activeAlerts.add(
+        AlertModel(
+          id: (alertId++).toString(),
+          title: 'High Wind Warning',
+          description:
+              'Strong winds with speeds of ${weather.windSpeed.toStringAsFixed(1)} km/h detected. Damaging winds and flying debris expected. Secure loose objects and avoid outdoor activities.',
+          severity: weather.windSpeed > 75
+              ? AlertSeverity.extreme
+              : AlertSeverity.severe,
+          type: AlertType.wind,
+          location: weather.location,
+          startTime: DateTime.now(),
+          endTime: DateTime.now().add(const Duration(hours: 12)),
+          updatedAt: DateTime.now(),
+          impact: weather.windSpeed > 75 ? 'High Risk' : 'Moderate Risk',
+          isActive: true,
+        ),
+      );
+    }
+
+    // Thunderstorm Warning - if description contains "Thunderstorm" or "Rain"
+    if (weather.description.toLowerCase().contains('thunderstorm') ||
+        weather.description.toLowerCase().contains('storm')) {
+      _activeAlerts.add(
+        AlertModel(
+          id: (alertId++).toString(),
+          title: 'Severe Thunderstorm Warning',
+          description:
+              'A severe thunderstorm warning has been issued for your area. ${weather.description}. Lightning, heavy rain, and damaging winds expected. Take shelter immediately.',
+          severity: AlertSeverity.severe,
+          type: AlertType.thunderstorm,
+          location: weather.location,
+          startTime: DateTime.now(),
+          endTime: DateTime.now().add(const Duration(hours: 6)),
+          updatedAt: DateTime.now(),
+          impact: 'High Risk',
+          isActive: true,
+        ),
+      );
+    }
+
+    // Flood Watch - if description contains "Rain" or "Rainy" and humidity > 80%
+    if ((weather.description.toLowerCase().contains('rain') ||
+            weather.description.toLowerCase().contains('rainy')) &&
+        weather.humidity > 80) {
+      _activeAlerts.add(
+        AlertModel(
+          id: (alertId++).toString(),
+          title: 'Flash Flood Watch',
+          description:
+              'Conditions are favorable for flash flooding. Heavy rainfall with humidity at ${weather.humidity}% detected. Be prepared to evacuate low-lying areas. Avoid driving through flooded roads.',
+          severity: AlertSeverity.moderate,
+          type: AlertType.flood,
+          location: weather.location,
+          startTime: DateTime.now(),
+          endTime: DateTime.now().add(const Duration(hours: 12)),
+          updatedAt: DateTime.now(),
+          impact: 'Moderate Risk',
+          isActive: true,
+        ),
+      );
+    }
+
+    // Fog Warning - if description contains "Fog"
+    if (weather.description.toLowerCase().contains('fog')) {
+      _activeAlerts.add(
+        AlertModel(
+          id: (alertId++).toString(),
+          title: 'Dense Fog Advisory',
+          description:
+              'Dense fog reduces visibility significantly. Use caution while driving and reduce speed. Use headlights and avoid unnecessary travel.',
+          severity: AlertSeverity.minor,
+          type: AlertType.fog,
+          location: weather.location,
+          startTime: DateTime.now(),
+          endTime: DateTime.now().add(const Duration(hours: 8)),
+          updatedAt: DateTime.now(),
+          impact: 'Low Risk',
+          isActive: true,
+        ),
+      );
+    }
+
+    // Cold Warning - if temp < 0°C
+    if (weather.temperature < 0) {
+      _activeAlerts.add(
+        AlertModel(
+          id: (alertId++).toString(),
+          title: 'Extreme Cold Warning',
+          description:
+              'Dangerous cold conditions with temperatures of ${weather.temperature.toStringAsFixed(1)}°C. Frostbite can occur in minutes on exposed skin. Limit time outdoors and dress in layers.',
+          severity: weather.temperature < -10
+              ? AlertSeverity.extreme
+              : AlertSeverity.severe,
+          type: AlertType.cold,
+          location: weather.location,
+          startTime: DateTime.now(),
+          endTime: DateTime.now().add(const Duration(hours: 24)),
+          updatedAt: DateTime.now(),
+          impact: weather.temperature < -10 ? 'High Risk' : 'Moderate Risk',
+          isActive: true,
+        ),
+      );
+    }
+
+    // High UV Index Warning - if uvIndex > 8
+    if (weather.uvIndex > 8) {
+      _activeAlerts.add(
+        AlertModel(
+          id: (alertId++).toString(),
+          title: 'High UV Index Alert',
+          description:
+              'UV index is very high at ${weather.uvIndex.toStringAsFixed(1)}. Prolonged sun exposure will cause rapid sunburn and skin damage. Seek shade and use sunscreen SPF 50+.',
+          severity: AlertSeverity.moderate,
+          type: AlertType.heat,
+          location: weather.location,
+          startTime: DateTime.now(),
+          endTime: DateTime.now().add(const Duration(hours: 6)),
+          updatedAt: DateTime.now(),
+          impact: 'Moderate Risk',
+          isActive: true,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<WeatherProvider>(
+      builder: (context, weatherProvider, child) {
+        // Update alerts whenever weather changes
+        _updateAlertsFromWeather(weatherProvider.currentWeather);
+        
+        final location =
+            weatherProvider.currentWeather?.location ?? 'Loading...';
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF7F8FA),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, size: 20),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: const Text(
+              'Weather Alerts',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+            centerTitle: true,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(48),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F0F0),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicator: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  labelColor: const Color(0xFF1A1A2E),
+                  unselectedLabelColor: Colors.grey,
+                  labelStyle: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  tabs: const [
+                    Tab(text: 'Active'),
+                    Tab(text: 'Past'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildActiveAlertsTab(weatherProvider, location),
+              _buildPastAlertsTab(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActiveAlertsTab(WeatherProvider weatherProvider, String location) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        // Fetch weather data again
+        if (weatherProvider.currentWeather != null) {
+          await weatherProvider.fetchCurrentWeather(location);
+        }
+      },
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Location row
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined,
+                          size: 16, color: Color(0xFF6B7AEF)),
+                      const SizedBox(width: 4),
+                      Text(
+                        location,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          if (weatherProvider.currentWeather != null) {
+                            weatherProvider.fetchCurrentWeather(location);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF0FB),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.refresh,
+                              size: 18, color: Color(0xFF6B7AEF)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Count & last updated
+                  Row(
+                    children: [
+                      Text(
+                        '${_activeAlerts.length} Active Alerts',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    weatherProvider.currentWeather != null
+                        ? 'Updated just now'
+                        : 'Loading weather data...',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Filter chips
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildFilterChip('All (${_activeAlerts.length})', null),
+                        const SizedBox(width: 8),
+                        _buildFilterChip('Extreme', AlertSeverity.extreme,
+                            dotColor: const Color(0xFFD32F2F)),
+                        const SizedBox(width: 8),
+                        _buildFilterChip('Severe', AlertSeverity.severe,
+                            dotColor: const Color(0xFFE65100)),
+                        const SizedBox(width: 8),
+                        _buildFilterChip('Moderate', AlertSeverity.moderate,
+                            dotColor: const Color(0xFFF57C00)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: _activeAlerts.isEmpty
+                ? SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle_outline,
+                              size: 64, color: Colors.grey[300]),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No active alerts',
+                            style: TextStyle(
+                                color: Colors.grey[500], fontSize: 16),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'All conditions are normal',
+                            style: TextStyle(
+                                color: Colors.grey[400], fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final alert = _filteredAlerts[index];
+                        return AlertCard(
+                          alert: alert,
+                          onTap: () => _showAlertDetail(alert),
+                        );
+                      },
+                      childCount: _filteredAlerts.length,
+                    ),
+                  ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, AlertSeverity? severity,
+      {Color? dotColor}) {
+    final isSelected = _selectedSeverity == severity;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedSeverity = isSelected ? null : severity;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6B7AEF) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF6B7AEF)
+                : Colors.grey.withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color:
+                    isSelected ? Colors.white : const Color(0xFF1A1A2E),
+              ),
+            ),
+            if (dotColor != null && !isSelected) ...[
+              const SizedBox(width: 5),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPastAlertsTab() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.history, size: 64, color: Colors.grey[300]),
+          const SizedBox(height: 12),
+          Text(
+            'No past alerts',
+            style: TextStyle(color: Colors.grey[500], fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAlertDetail(AlertModel alert) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                alert.title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(alert.location,
+                  style: TextStyle(color: Colors.grey[600])),
+              const SizedBox(height: 16),
+              Text(
+                alert.description +
+                    ' These conditions are expected to persist through the evening hours. Stay indoors and avoid unnecessary travel. If you must go outside, limit exposure and stay hydrated.',
+                style:
+                    TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

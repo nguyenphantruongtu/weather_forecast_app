@@ -8,15 +8,21 @@ class NewsCard extends StatelessWidget {
   const NewsCard({super.key, required this.article, required this.onTap});
 
   Color get _categoryColor {
-    switch (article.category) {
-      case 'BREAKING':
-        return const Color(0xFFD32F2F);
-      case 'STORMS':
-        return const Color(0xFF6B7AEF);
-      case 'CLIMATE':
-        return const Color(0xFF388E3C);
-      case 'LOCAL':
+    switch (article.category.toUpperCase()) {
+      case 'BUSINESS':
+        return const Color(0xFF1A237E);
+      case 'ENTERTAINMENT':
+        return const Color(0xFFD81B60);
+      case 'GENERAL':
+        return const Color(0xFF757575);
+      case 'HEALTH':
+        return const Color(0xFF2E7D32);
+      case 'SCIENCE':
         return const Color(0xFF0288D1);
+      case 'SPORTS':
+        return const Color(0xFFEF6C00);
+      case 'TECHNOLOGY':
+        return const Color(0xFF616161);
       default:
         return const Color(0xFF757575);
     }

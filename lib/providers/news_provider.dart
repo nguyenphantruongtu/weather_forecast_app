@@ -8,16 +8,19 @@ class NewsProvider extends ChangeNotifier {
   List<NewsArticleModel> _articles = [];
   bool _isLoading = false;
   String? _error;
-  String _selectedCategory = 'All News';
+  String _selectedCategory = 'All';
   int _currentPage = 1;
   bool _hasMore = true;
 
   static const List<String> categories = [
-    'All News',
-    'Breaking',
-    'Climate',
-    'Storms',
-    'Local',
+    'All',
+    'Business',
+    'Entertainment',
+    'General',
+    'Health',
+    'Science',
+    'Sports',
+    'Technology',
   ];
 
   NewsProvider({NewsApiService? apiService})
@@ -45,7 +48,7 @@ class NewsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final newArticles = await _apiService.fetchWeatherNews(
+      final newArticles = await _apiService.fetchNews(
         category: _selectedCategory,
         page: _currentPage,
       );
