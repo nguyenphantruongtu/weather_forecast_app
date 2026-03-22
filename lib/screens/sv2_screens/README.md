@@ -1,9 +1,11 @@
 # SV2 Screens - Weather Forecast App
 
 ## Overview
-This directory contains the implementation of screens 5-6 from the project requirements:
+This directory contains the implementation of screens 5-8 from the project requirements:
 - **Screen 5**: Home/Current Weather Screen
 - **Screen 6**: Hourly Forecast Screen
+- **Screen 7**: Daily Forecast (7-10 days) 🆕
+- **Screen 8**: Weather Details 🆕
 
 ## Directory Structure
 
@@ -17,11 +19,27 @@ lib/
 │   │       ├── weather_metrics_grid.dart      # Grid of weather metrics
 │   │       └── forecast_preview.dart          # Hourly forecast preview
 │   │
-│   └── hourly_forecast_screen/
-│       ├── hourly_forecast_screen.dart        # Main hourly forecast screen
+│   ├── hourly_forecast_screen/
+│   │   ├── hourly_forecast_screen.dart        # Main hourly forecast screen
+│   │   └── widgets/
+│   │       ├── hourly_chart.dart              # Line chart for temperature trend
+│   │       └── hourly_item.dart               # Individual hourly weather item
+│   │
+│   ├── daily_forecast_screen/  🆕
+│   │   ├── daily_forecast_screen.dart         # Main 7-10 day forecast screen
+│   │   └── widgets/
+│   │       ├── daily_forecast_chart.dart      # Line chart visualization
+│   │       ├── daily_forecast_card.dart       # Detailed day card
+│   │       └── daily_forecast_item.dart       # Compact list item
+│   │
+│   └── weather_details_screen/  🆕
+│       ├── weather_details_screen.dart        # Main weather details screen
 │       └── widgets/
-│           ├── hourly_chart.dart              # Line chart for temperature trend
-│           └── hourly_item.dart               # Individual hourly weather item
+│           ├── weather_details_card.dart      # Current weather header
+│           ├── atmospheric_metrics_grid.dart  # Atmospheric conditions
+│           ├── wind_details_card.dart         # Wind information
+│           ├── sun_moon_details_card.dart     # Sun/Moon times
+│           └── uv_index_chart.dart            # UV Index visualization
 │
 ├── data/
 │   ├── models/
@@ -70,24 +88,94 @@ lib/
   - Humidity, Wind Speed, Cloud Coverage, Precipitation
 - **Shimmer Loading**: Professional loading state with shimmer effect
 
+### Screen 7: Daily Forecast (7-10 days) 🆕
+- **Multiple View Modes**: Switch between 3 visualization styles
+  - **Chart View**: Line chart of temperature trends
+  - **Card View**: Detailed mini-cards for each day
+  - **List View**: Compact list format
+- **Daily Weather Metrics**:
+  - Min/Max temperature for each day
+  - Feels like temperature
+  - Humidity percentage
+  - Cloud coverage
+  - Precipitation probability
+  - Wind speed
+  - Weather description with emoji
+- **10-Day Summary Statistics**:
+  - Average temperature across all days
+  - Highest temperature
+  - Lowest temperature
+  - Average humidity
+- **Interactive Chart**: fl_chart line visualization with:
+  - Temperature trends
+  - Smooth curves
+  - Dot indicators for each day
+  - Gradient fill beneath the line
+
+### Screen 8: Weather Details 🆕
+- **Current Weather Header Card**: 
+  - Location and date
+  - Large temperature display
+  - Weather description
+  - Feels like information
+- **Atmospheric Metrics Grid** (2x2):
+  - Pressure (hPa) with status badges
+  - Visibility (km) with quality indicator
+  - Dew Point (°C) with comfort level
+  - Humidity (%) with level indicator
+- **Wind Details Card**:
+  - Wind speed (m/s) with circular progress
+  - Multiple unit conversions (km/h, mph)
+  - Wind classification (Calm, Light, Moderate, etc.)
+  - Visual speed indicator
+- **UV Index Visualization**:
+  - Circular pie chart representation
+  - UV Index level classification
+  - Health recommendations based on UV level
+  - UV Index scale reference chart
+- **Sun & Moon Information**:
+  - Sunrise and sunset times
+  - Daylight duration calculation
+  - Visual sun/moon icons
+  - Time formatting with intl
+- **Additional Information**:
+  - Last updated timestamp
+  - Location details
+  - Weather description
+  - Temperature summary
+
 ## Technologies Used
 
-1. **State Management**: Provider package
-2. **HTTP Client**: Dio for API requests
-3. **Charts**: fl_chart for temperature visualization
-4. **Date/Time**: intl package for formatting
-5. **UI Effects**: shimmer package for loading states
+1. **State Management**: `Provider` package
+   - Efficient state management
+   - Automatic UI rebuilds on data changes
+2. **HTTP Client**: `Dio` for API requests
+   - Error handling
+   - Mock data support for testing
+3. **Charts**: `fl_chart` for visualizations
+   - Line charts for temperature trends
+   - Pie charts for UV Index
+   - Real-time data rendering
+4. **Date/Time**: `intl` package for formatting
+   - Locale-aware date formatting
+   - Time formatting in 12/24-hour formats
+5. **UI Effects**: `shimmer` package for loading states
+   - Professional loading skeletons
 6. **API**: OpenWeatherMap API
+   - Real-time weather data
+   - Multi-day forecast data
+   - Comprehensive weather metrics
 
 ## API Integration
 
 The `WeatherApiService` class provides methods for:
 - `getCurrentWeather(city)` - Fetch current weather data
 - `getHourlyForecast(city)` - Fetch 48-hour forecast
-- `getDailyForecast(city)` - Fetch 7-day forecast
+- `getDailyForecast(city)` - Fetch 7-10 day forecast
 - `getWeatherByCoordinates(lat, lon)` - Fetch weather by coordinates
 
-**Note**: Replace `YOUR_API_KEY_HERE` in `weather_api_service.dart` with your OpenWeatherMap API key.
+**Note**: Replace API key in `weather_api_service.dart` with your OpenWeatherMap API key.
+**Testing**: Mock data is enabled by default (set `USE_MOCK_DATA = false` to use real API).
 
 ## Models
 
@@ -97,6 +185,68 @@ Contains current weather data:
 - Feels like, humidity, wind speed, pressure
 - Visibility, UV index, dew point
 - Sunrise/sunset times, last updated
+- **Used by**: Home Screen, Weather Details Screen
+
+### ForecastModel
+Contains hourly/daily forecast data:
+- Date/time (dt)
+- Temperature (current, min, max)
+- Feels like temperature
+- Humidity, wind speed
+- Weather description and icon
+- Precipitation probability
+- Cloud coverage
+- **Used by**: Hourly Forecast Screen, Daily Forecast Screen
+
+## Navigation Integration
+
+To navigate to the new screens, add the following to your main navigation:
+
+```dart
+// Navigate to Daily Forecast Screen
+Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => const DailyForecastScreen(city: 'Hanoi'),
+  ),
+);
+
+// Navigate to Weather Details Screen
+Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => const WeatherDetailsScreen(city: 'Hanoi'),
+  ),
+);
+```
+
+## Error Handling
+
+All screens implement comprehensive error handling:
+- **Loading States**: Shimmer effect placeholders
+- **Error States**: Detailed error messages with retry buttons
+- **Empty States**: User-friendly "no data" messages
+- **Network Errors**: Automatic error capture and display
+
+## Performance Optimizations
+
+1. **Chart Rendering**: Optimized fl_chart configurations for smooth performance
+2. **State Management**: Provider prevents unnecessary widget rebuilds
+3. **Lazy Loading**: Data fetched on-demand, not pre-loaded
+4. **Image Caching**: Supports cached_network_image for weather icons
+5. **Memory Management**: Proper disposal of resources in StatefulWidgets
+
+## Future Enhancements
+
+Potential improvements:
+1. Add weather alerts/warnings
+2. Implement location-based automatic weather fetch
+3. Add weather history charts
+4. Implement offline data caching
+5. Weather comparison between multiple cities
+6. Custom weather notifications
+7. Export forecast data to PDF/CSV
+8. Seasonal weather pattern analysis
 
 ### ForecastModel
 Contains forecast data for a specific time:
