@@ -166,6 +166,87 @@ class _HomeScreenState extends State<HomeScreen> {
                           city: _currentCity,
                         ),
                         const SizedBox(height: 24),
+
+                        // Quick Access Buttons for New Screens 🆕
+                        const Text(
+                          'More Options',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Column(
+                          children: [
+                            // Hourly Forecast Button
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/hourly-forecast',
+                                  );
+                                },
+                                icon: const Icon(Icons.schedule),
+                                label: const Text('Hourly Forecast'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.teal.shade500,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            // Daily & Details Buttons
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/daily-forecast',
+                                      );
+                                    },
+                                    icon: const Icon(Icons.calendar_month),
+                                    label: const Text('7-10 Days'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue.shade500,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/weather-details',
+                                      );
+                                    },
+                                    icon: const Icon(Icons.info_outline),
+                                    label: const Text('Details'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.indigo.shade500,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   );
@@ -174,6 +255,80 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showWeatherMenu();
+        },
+        tooltip: 'More options',
+        backgroundColor: Colors.blue.shade500,
+        child: const Icon(Icons.cloud),
+      ),
+    );
+  }
+
+  void _showWeatherMenu() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.only(left: 16, bottom: 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'More Weather Options',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            ),
+            // Menu Items
+            ListTile(
+              leading: Icon(Icons.schedule, color: Colors.teal.shade500),
+              title: const Text('Hourly Forecast'),
+              subtitle: const Text('Next 24 hours'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/hourly-forecast');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.calendar_month, color: Colors.blue.shade500),
+              title: const Text('Daily Forecast'),
+              subtitle: const Text('7-10 days ahead'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/daily-forecast');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.info_outline, color: Colors.indigo.shade500),
+              title: const Text('Weather Details'),
+              subtitle: const Text('Detailed weather info'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/weather-details');
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }

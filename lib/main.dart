@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'providers/weather_provider.dart';
 import 'screens/sv2_screens/home_screen/home_screen.dart';
 import 'screens/sv2_screens/hourly_forecast_screen/hourly_forecast_screen.dart';
+import 'screens/sv2_screens/daily_forecast_screen/daily_forecast_screen.dart';
+import 'screens/sv2_screens/weather_details_screen/weather_details_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -44,6 +46,8 @@ class MyApp extends StatelessWidget {
         routes: {
           '/home': (_) => const HomeScreen(),
           '/hourly-forecast': (_) => const HourlyForecastScreen(),
+          '/daily-forecast': (_) => const DailyForecastScreen(),
+          '/weather-details': (_) => const WeatherDetailsScreen(),
         },
       ),
     );
