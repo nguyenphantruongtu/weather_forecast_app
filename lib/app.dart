@@ -9,6 +9,8 @@ import 'screens/OnboardingAndUserPreferencesScreens/settings_screen/settings_scr
 import 'screens/OnboardingAndUserPreferencesScreens/info_screen/info_screen.dart';
 import 'screens/sv2_screens/home_screen/home_screen.dart';
 import 'screens/sv2_screens/hourly_forecast_screen/hourly_forecast_screen.dart';
+import 'screens/sv2_screens/daily_forecast_screen/daily_forecast_screen.dart';
+import 'screens/sv2_screens/weather_details_screen/weather_details_screen.dart';
 
 /// Root widget của ứng dụng
 /// Cung cấp theme và navigation routing cho app
@@ -32,7 +34,9 @@ class MyApp extends StatelessWidget {
         '/onboarding': (_) => const OnboardingScreen(),
         '/location_setup': (_) => const LocationSetupScreen(),
         '/home': (_) => const HomeScreen(),
-        '/hourly_forecast': (_) => const HourlyForecastScreen(),
+        '/hourly-forecast': (_) => const HourlyForecastScreen(),
+        '/daily-forecast': (_) => const DailyForecastScreen(),
+        '/weather-details': (_) => const WeatherDetailsScreen(),
         '/settings': (_) => const SettingsScreen(),
         '/info': (_) => const InfoScreen(),
       },

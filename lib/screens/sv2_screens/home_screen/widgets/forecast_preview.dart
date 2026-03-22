@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../data/models/forecast_model.dart';
 import '../../../../data/models/settings_model.dart';
+import '../../../../utils/app_strings.dart';
 import '../../../../utils/unit_converter.dart';
 import '../../hourly_forecast_screen/hourly_forecast_screen.dart';
 
@@ -10,6 +11,7 @@ class ForecastPreview extends StatelessWidget {
   final String? city;
   final TemperatureUnit temperatureUnit;
   final TimeFormat timeFormat;
+  final String languageCode;
 
   const ForecastPreview({
     super.key,
@@ -17,6 +19,7 @@ class ForecastPreview extends StatelessWidget {
     this.city,
     required this.temperatureUnit,
     required this.timeFormat,
+    required this.languageCode,
   });
 
   double _displayTemperature(double celsiusValue) {
@@ -63,9 +66,9 @@ class ForecastPreview extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Hourly Forecast',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Text(
+              AppStrings.tr(languageCode, en: 'Hourly Forecast', vi: 'Dự báo theo giờ'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             TextButton(
               onPressed: () {
@@ -76,7 +79,7 @@ class ForecastPreview extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text('See All'),
+              child: Text(AppStrings.tr(languageCode, en: 'See All', vi: 'Xem tất cả')),
             ),
           ],
         ),

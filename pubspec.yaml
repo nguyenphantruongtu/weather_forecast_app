@@ -72,13 +72,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
+  
+  # Assets cho app
   assets:
     - .env
     - assets/images/
-    - assets/images/logo/
-    - assets/images/onboarding/
-    - assets/images/weather_icons/
-    - assets/images/illustrations/
     - assets/lottie/
     - assets/data/
