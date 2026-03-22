@@ -8,7 +8,57 @@ class WeatherApiService {
   final String baseUrl = 'https://api.openweathermap.org/data/2.5';
   final Dio dio = Dio();
 
+  // Use mock data for testing
+  static const bool USE_MOCK_DATA = true;
+
+  // Mock weather data generator
+  WeatherModel _getMockWeather(String city) {
+    return WeatherModel(
+      location: city,
+      temperature: 28.5,
+      description: 'Clear',
+      icon: '01d',
+      feelsLike: 29.2,
+      humidity: 65,
+      windSpeed: 3.5,
+      pressure: 1013,
+      visibility: 10.0,
+      uvIndex: 7.2,
+      dewPoint: 20.0,
+      sunrise: DateTime.now().subtract(Duration(hours: 6)),
+      sunset: DateTime.now().add(Duration(hours: 6)),
+      lastUpdated: DateTime.now(),
+    );
+  }
+
+  List<ForecastModel> _getMockForecast(String city) {
+    List<ForecastModel> forecasts = [];
+    for (int i = 0; i < 8; i++) {
+      forecasts.add(
+        ForecastModel(
+          dt: DateTime.now().add(Duration(hours: i)).toString(),
+          temp: 25.0 + (i * 0.5),
+          tempMin: 23.0 + (i * 0.3),
+          tempMax: 27.0 + (i * 0.7),
+          feelsLike: 25.5 + (i * 0.5),
+          humidity: 60 + i,
+          windSpeed: 3.0 + (i * 0.2),
+          description: 'Clear',
+          icon: '01d',
+          precipitation: 0.0,
+          cloudiness: 10,
+        ),
+      );
+    }
+    return forecasts;
+  }
+
   Future<WeatherModel> getCurrentWeather(String city) async {
+    if (USE_MOCK_DATA) {
+      await Future.delayed(Duration(milliseconds: 500)); // Simulate API delay
+      return _getMockWeather(city);
+    }
+
     try {
       final response = await dio.get(
         '$baseUrl/weather',
@@ -26,6 +76,11 @@ class WeatherApiService {
   }
 
   Future<List<ForecastModel>> getHourlyForecast(String city) async {
+    if (USE_MOCK_DATA) {
+      await Future.delayed(Duration(milliseconds: 500));
+      return _getMockForecast(city);
+    }
+
     try {
       final response = await dio.get(
         '$baseUrl/forecast',
