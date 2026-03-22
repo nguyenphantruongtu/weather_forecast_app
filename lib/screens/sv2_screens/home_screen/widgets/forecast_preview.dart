@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../data/models/forecast_model.dart';
-import '../../../sv2_screens/hourly_forecast_screen/hourly_forecast_screen.dart';
+import '../../hourly_forecast_screen/hourly_forecast_screen.dart';
 
 class ForecastPreview extends StatelessWidget {
   final List<ForecastModel> hourlyForecast;
@@ -49,11 +49,10 @@ class ForecastPreview extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                // Navigate to hourly forecast screen
-                Navigator.of(context).push(
+                Navigator.push(
+                  context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        HourlyForecastScreen(city: city ?? 'Hanoi'),
+                    builder: (_) => HourlyForecastScreen(city: city ?? 'Hanoi'),
                   ),
                 );
               },
@@ -76,7 +75,7 @@ class ForecastPreview extends StatelessWidget {
                   horizontal: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(

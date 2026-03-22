@@ -4,7 +4,7 @@ import '../models/forecast_model.dart';
 
 class WeatherApiService {
   final String apiKey =
-      '8c1e5f04ab7603a4247f35cdabacbf31'; // Test API key for OpenWeatherMap
+      '8c1e5f04ab7603a4247f35cdabacbf31'; // Replace with your OpenWeatherMap API key
   final String baseUrl = 'https://api.openweathermap.org/data/2.5';
   final Dio dio = Dio();
 
