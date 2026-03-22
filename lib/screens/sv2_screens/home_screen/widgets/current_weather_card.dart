@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../data/models/weather_model.dart';
 import '../../../../data/models/settings_model.dart';
+import '../../../../utils/app_strings.dart';
 import '../../../../utils/unit_converter.dart';
 
 class CurrentWeatherCard extends StatelessWidget {
@@ -9,6 +10,7 @@ class CurrentWeatherCard extends StatelessWidget {
   final VoidCallback onSettingsTap;
   final TemperatureUnit temperatureUnit;
   final TimeFormat timeFormat;
+  final String languageCode;
 
   const CurrentWeatherCard({
     super.key,
@@ -16,6 +18,7 @@ class CurrentWeatherCard extends StatelessWidget {
     required this.onSettingsTap,
     required this.temperatureUnit,
     required this.timeFormat,
+    required this.languageCode,
   });
 
   double _displayTemperature(double celsiusValue) {
@@ -123,7 +126,7 @@ class CurrentWeatherCard extends StatelessWidget {
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                   Text(
-                    'Feels like ${displayFeelsLike.toStringAsFixed(0)}°',
+                    '${AppStrings.tr(languageCode, en: 'Feels like', vi: 'Cảm giác như')} ${displayFeelsLike.toStringAsFixed(0)}°',
                     style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],

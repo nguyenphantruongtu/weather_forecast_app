@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/weather_provider.dart';
+import '../../../utils/app_strings.dart';
 import '../../OnboardingAndUserPreferencesScreens/settings_screen/settings_screen.dart';
 import 'widgets/current_weather_card.dart';
 import 'widgets/weather_metrics_grid.dart';
@@ -48,9 +49,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceTextColor = Theme.of(context).colorScheme.onSurface;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           // App Bar
@@ -58,10 +62,10 @@ class _HomeScreenState extends State<HomeScreen> {
             elevation: 0,
             backgroundColor: Colors.transparent,
             pinned: true,
-            title: const Text(
-              'Weather Now',
+            title: Text(
+              AppStrings.tr(languageCode, en: 'Weather Now', vi: 'Thời tiết hôm nay'),
               style: TextStyle(
-                color: Colors.black87,
+                color: surfaceTextColor,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -69,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
             actions: [
               IconButton(
                 onPressed: _loadWeatherData,
-                icon: const Icon(Icons.refresh, color: Colors.black87),
+                icon: Icon(Icons.refresh, color: surfaceTextColor),
               ),
             ],
           ),
@@ -80,7 +84,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search city...',
+                  hintText: AppStrings.tr(
+                    languageCode,
+                    en: 'Search city...',
+                    vi: 'Tìm thành phố...',
+                  ),
                   prefixIcon: const Icon(Icons.location_on),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
@@ -95,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: isDark ? const Color(0xFF1E2533) : Colors.white,
                 ),
                 onChanged: (value) {
                   setState(() {});
@@ -125,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Error: ${weatherProvider.error}',
+                            '${AppStrings.tr(languageCode, en: 'Error', vi: 'Lỗi')}: ${weatherProvider.error}',
                             textAlign: TextAlign.center,
                             style: TextStyle(color: Colors.red.shade300),
                           ),
@@ -157,13 +165,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           temperatureUnit: settings.temperatureUnit,
                           timeFormat: settings.timeFormat,
+                          languageCode: languageCode,
                         ),
                         const SizedBox(height: 24),
 
                         // Weather Metrics Grid
-                        const Text(
-                          'Details',
-                          style: TextStyle(
+                        Text(
+                          AppStrings.tr(languageCode, en: 'Details', vi: 'Chi tiết'),
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -182,6 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           city: _currentCity,
                           temperatureUnit: settings.temperatureUnit,
                           timeFormat: settings.timeFormat,
+                          languageCode: languageCode,
                         ),
                         const SizedBox(height: 24),
                       ],
