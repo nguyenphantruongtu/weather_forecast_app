@@ -15,28 +15,27 @@ class NewsApiService {
               receiveTimeout: const Duration(seconds: 10),
             ));
 
-  Future<List<NewsArticleModel>> fetchWeatherNews({
-    String category = 'all',
+  Future<List<NewsArticleModel>> fetchNews({
+    String category = 'All',
     int page = 1,
     int pageSize = 20,
+    String country = 'us',
   }) async {
     try {
-      String query = 'weather';
-      if (category == 'Breaking') query = 'breaking weather';
-      if (category == 'Climate') query = 'climate change';
-      if (category == 'Storms') query = 'storm hurricane';
-      if (category == 'Local') query = 'vietnam weather';
+      final params = {
+        'country': country,
+        'page': page,
+        'pageSize': pageSize,
+        'apiKey': _apiKey,
+      };
+
+      if (category.toLowerCase() != 'all') {
+        params['category'] = category.toLowerCase();
+      }
 
       final response = await _dio.get(
-        '/everything',
-        queryParameters: {
-          'q': query,
-          'language': 'en',
-          'sortBy': 'publishedAt',
-          'page': page,
-          'pageSize': pageSize,
-          'apiKey': _apiKey,
-        },
+        '/top-headlines',
+        queryParameters: params,
       );
 
       if (response.statusCode == 200) {
@@ -45,7 +44,7 @@ class NewsApiService {
             .map((json) => NewsArticleModel.fromJson({
                   ...json,
                   'id': json['url'] ?? DateTime.now().toString(),
-                  'category': _mapCategory(category),
+                  'category': _formatCategoryForArticle(category),
                 }))
             .toList();
       }
@@ -55,19 +54,10 @@ class NewsApiService {
     }
   }
 
-  String _mapCategory(String filter) {
-    switch (filter) {
-      case 'Storms':
-        return 'STORMS';
-      case 'Climate':
-        return 'CLIMATE';
-      case 'Local':
-        return 'LOCAL';
-      case 'Breaking':
-        return 'BREAKING';
-      default:
-        return 'WEATHER';
-    }
+  String _formatCategoryForArticle(String category) {
+    final normalized = category.trim().toLowerCase();
+    if (normalized == 'all') return 'GENERAL';
+    return normalized.toUpperCase();
   }
 
   // Mock data for development/fallback

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'news_list_screen/news_list_screen.dart';
+import 'alerts_screen/alerts_screen.dart';
+import 'notification_settings_screen/notification_settings_screen.dart';
 
 /// Entry point widget for NotiNews screens
 /// Implements the bottom navigation bar shown in the design mockup
@@ -11,12 +13,14 @@ class NotiNewsMainScreen extends StatefulWidget {
 }
 
 class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
-  int _currentIndex = 0; // Default to News tab
-
+    int _currentIndex = 1; // Default to News tab
+ 
   final List<Widget> _screens = const [
+    AlertsScreen(),
     NewsListScreen(),
+    NotificationSettingsScreen(),
   ];
-
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,13 +49,13 @@ class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
                   icon: Icons.notifications_outlined,
                   activeIcon: Icons.notifications,
                   label: 'Alerts',
-                  index: 1,
+                  index: 0,
                 ),
                 _buildNavItem(
                   icon: Icons.article_outlined,
                   activeIcon: Icons.article,
                   label: 'News',
-                  index: 0,
+                  index: 1,
                 ),
                 _buildNavItem(
                   icon: Icons.settings_outlined,
@@ -66,7 +70,7 @@ class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
       ),
     );
   }
-
+ 
   Widget _buildNavItem({
     required IconData icon,
     required IconData activeIcon,
