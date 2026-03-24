@@ -5,6 +5,9 @@ import '../models/forecast_model.dart'; // Import của Tùng
 import '../../screens/sv5_screens/calendar_screen/models/weather_day_model.dart';
 import '../../screens/sv5_screens/calendar_screen/utils/date_utils.dart';
 
+// Mock data flag
+const bool USE_MOCK_DATA = true;
+
 class WeatherApiService {
   // Sử dụng Constructor từ develop để linh hoạt quản lý API Key
   WeatherApiService({
@@ -344,6 +347,70 @@ class WeatherApiService {
   int _toInt(dynamic value) {
     if (value is num) return value.round();
     return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  WeatherModel _getMockWeather(String city) {
+    return WeatherModel(
+      location: city,
+      temperature: 25.0,
+      description: 'Clear',
+      icon: '01d',
+      feelsLike: 26.0,
+      humidity: 60,
+      windSpeed: 5.0,
+      pressure: 1013,
+      visibility: 10.0,
+      uvIndex: 5.0,
+      dewPoint: 20.0,
+      sunrise: DateTime.now().add(Duration(hours: 6)),
+      sunset: DateTime.now().add(Duration(hours: 18)),
+      lastUpdated: DateTime.now(),
+    );
+  }
+
+  Future<WeatherModel> getWeatherByCoordinatesWithLocation(
+    double latitude,
+    double longitude, {
+    required String locationName,
+  }) async {
+    if (USE_MOCK_DATA) {
+      await Future.delayed(Duration(milliseconds: 500));
+      return WeatherModel(
+        location: locationName,
+        temperature: 25.0,
+        description: 'Clear',
+        icon: '01d',
+        feelsLike: 26.0,
+        humidity: 60,
+        windSpeed: 5.0,
+        pressure: 1013,
+        visibility: 10.0,
+        uvIndex: 5.0,
+        dewPoint: 20.0,
+        sunrise: DateTime.now().add(Duration(hours: 6)),
+        sunset: DateTime.now().add(Duration(hours: 18)),
+        lastUpdated: DateTime.now(),
+      );
+    }
+
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/weather',
+        queryParameters: {
+          'lat': latitude,
+          'lon': longitude,
+          'appid': _apiKey,
+          'units': 'metric',
+        },
+      );
+      if (response.statusCode == 200) {
+        return WeatherModel.fromJson(response.data);
+      } else {
+        throw Exception('Failed to load weather data');
+      }
+    } catch (e) {
+      throw Exception('Failed to load weather by coordinates: $e');
+    }
   }
 }
 
