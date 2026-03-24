@@ -1,62 +1,25 @@
 import 'package:dio/dio.dart';
-import '../models/weather_model.dart';
-import '../models/forecast_model.dart';
+import '../models/weather_history_model.dart';
+import '../models/weather_model.dart'; // Import của Tùng
+import '../models/forecast_model.dart'; // Import của Tùng
+import '../../screens/sv5_screens/calendar_screen/models/weather_day_model.dart';
+import '../../screens/sv5_screens/calendar_screen/utils/date_utils.dart';
 
 class WeatherApiService {
-  static const String _forecastBaseUrl = 'https://api.open-meteo.com/v1';
-  static const String _geocodingBaseUrl = 'https://geocoding-api.open-meteo.com/v1';
+  // Sử dụng Constructor từ develop để linh hoạt quản lý API Key
+  WeatherApiService({
+    required Dio dio,
+    required String apiKey,
+    String baseUrl = 'https://api.openweathermap.org/data/2.5',
+  })  : _dio = dio,
+        _apiKey = apiKey,
+        _baseUrl = baseUrl;
 
-  final Dio _dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ),
-  );
+  final Dio _dio;
+  final String _apiKey;
+  final String _baseUrl;
 
-  // Use mock data for testing
-  static const bool USE_MOCK_DATA = true;
-
-  // Mock weather data generator
-  WeatherModel _getMockWeather(String city) {
-    return WeatherModel(
-      location: city,
-      temperature: 28.5,
-      description: 'Clear',
-      icon: '01d',
-      feelsLike: 29.2,
-      humidity: 65,
-      windSpeed: 3.5,
-      pressure: 1013,
-      visibility: 10.0,
-      uvIndex: 7.2,
-      dewPoint: 20.0,
-      sunrise: DateTime.now().subtract(Duration(hours: 6)),
-      sunset: DateTime.now().add(Duration(hours: 6)),
-      lastUpdated: DateTime.now(),
-    );
-  }
-
-  List<ForecastModel> _getMockForecast(String city) {
-    List<ForecastModel> forecasts = [];
-    for (int i = 0; i < 8; i++) {
-      forecasts.add(
-        ForecastModel(
-          dt: DateTime.now().add(Duration(hours: i)).toString(),
-          temp: 25.0 + (i * 0.5),
-          tempMin: 23.0 + (i * 0.3),
-          tempMax: 27.0 + (i * 0.7),
-          feelsLike: 25.5 + (i * 0.5),
-          humidity: 60 + i,
-          windSpeed: 3.0 + (i * 0.2),
-          description: 'Clear',
-          icon: '01d',
-          precipitation: 0.0,
-          cloudiness: 10,
-        ),
-      );
-    }
-    return forecasts;
-  }
+  // --- PHẦN 1: GIỮ CÁC HÀM TỪ TUNGNQ (Để phục vụ màn hình tìm kiếm thành phố) ---
 
   Future<WeatherModel> getCurrentWeather(String city) async {
     if (USE_MOCK_DATA) {
@@ -65,229 +28,219 @@ class WeatherApiService {
     }
 
     try {
-      final geo = await _searchCity(city);
-      final forecastData = await _fetchForecastData(geo.latitude, geo.longitude);
-      return _buildCurrentWeather(
-        forecastData,
-        '${geo.name}, ${geo.country}',
+      final response = await _dio.get(
+        '$_baseUrl/weather',
+        queryParameters: {'q': city, 'appid': _apiKey, 'units': 'metric'},
       );
+      if (response.statusCode == 200) {
+        return WeatherModel.fromJson(response.data);
+      } else {
+        throw Exception('Failed to load weather data');
+      }
     } catch (e) {
       throw Exception('Failed to load current weather: $e');
     }
   }
 
   Future<List<ForecastModel>> getHourlyForecast(String city) async {
-    if (USE_MOCK_DATA) {
-      await Future.delayed(Duration(milliseconds: 500));
-      return _getMockForecast(city);
-    }
-
     try {
-      final geo = await _searchCity(city);
-      final forecastData = await _fetchForecastData(geo.latitude, geo.longitude);
-      return _buildHourlyForecast(forecastData);
+      final response = await _dio.get(
+        '$_baseUrl/forecast',
+        queryParameters: {'q': city, 'appid': _apiKey, 'units': 'metric'},
+      );
+      if (response.statusCode == 200) {
+        List<dynamic> list = response.data['list'] as List<dynamic>;
+        return list
+            .map((item) => ForecastModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception('Failed to load forecast data');
+      }
     } catch (e) {
       throw Exception('Failed to load hourly forecast: $e');
     }
   }
 
-  Future<List<ForecastModel>> getDailyForecast(String city) async {
+  Future<List<ForecastModel>> getForecast(String city) async {
     try {
-      final geo = await _searchCity(city);
-      final forecastData = await _fetchForecastData(geo.latitude, geo.longitude);
-      return _buildDailyForecast(forecastData);
+      final response = await _dio.get(
+        '$_baseUrl/forecast',
+        queryParameters: {'q': city, 'appid': _apiKey, 'units': 'metric'},
+      );
+      if (response.statusCode == 200) {
+        List<dynamic> list = response.data['list'] as List<dynamic>;
+        return list
+            .map((item) => ForecastModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception('Failed to load forecast data');
+      }
     } catch (e) {
       throw Exception('Failed to load daily forecast: $e');
     }
   }
 
-  Future<WeatherModel> getWeatherByCoordinates(
-    double latitude,
-    double longitude,
-  ) async {
-    return getWeatherByCoordinatesWithLocation(
-      latitude,
-      longitude,
-      locationName: null,
-    );
-  }
+  // --- PHẦN 2: GIỮ CÁC HÀM NÂNG CAO TỪ DEVELOP (Phục vụ Calendar và One Call) ---
 
-  Future<WeatherModel> getWeatherByCoordinatesWithLocation(
-    double latitude,
-    double longitude, {
-    String? locationName,
+  Future<WeatherHistory> fetchCurrentWeatherSnapshot({
+    required double lat,
+    required double lon,
   }) async {
-    try {
-      final placeName = locationName ?? await _reverseGeocode(latitude, longitude);
-      final forecastData = await _fetchForecastData(latitude, longitude);
-      return _buildCurrentWeather(forecastData, placeName);
-    } catch (e) {
-      throw Exception('Failed to load weather by coordinates: $e');
-    }
-  }
-
-  Future<_GeoPoint> _searchCity(String city) async {
-    final response = await _dio.get(
-      '$_geocodingBaseUrl/search',
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/weather',
       queryParameters: {
-        'name': city,
-        'count': 1,
-        'language': 'en',
-        'format': 'json',
+        'lat': lat,
+        'lon': lon,
+        'appid': _apiKey,
+        'units': 'metric',
       },
     );
 
-    final results = response.data['results'] as List<dynamic>?;
-    if (results == null || results.isEmpty) {
-      throw Exception('City not found: $city');
-    }
+    final data = response.data ?? <String, dynamic>{};
+    final weatherList = (data['weather'] as List?) ?? const [];
+    final weather = weatherList.isNotEmpty ? weatherList.first as Map : const {};
+    final main = (data['main'] as Map?) ?? const {};
+    final wind = (data['wind'] as Map?) ?? const {};
+    final rainMap = (data['rain'] as Map?) ?? const {};
 
-    final first = results.first as Map<String, dynamic>;
-    return _GeoPoint(
-      name: (first['name'] ?? city).toString(),
-      country: (first['country'] ?? '').toString(),
-      latitude: _toDouble(first['latitude']),
-      longitude: _toDouble(first['longitude']),
+    final rainMm = ((rainMap['1h'] ?? rainMap['3h'] ?? 0) as num).toDouble();
+    final normalizedPrecipitation = (rainMm / 10).clamp(0, 1).toDouble();
+
+    return WeatherHistory(
+      date: DateTime.now(),
+      tempMax: (main['temp_max'] as num?)?.toDouble() ?? 0,
+      tempMin: (main['temp_min'] as num?)?.toDouble() ?? 0,
+      condition: (weather['main'] as String?) ?? 'Unknown',
+      icon: (weather['icon'] as String?) ?? '01d',
+      humidity: (main['humidity'] as num?)?.toInt() ?? 0,
+      windSpeed: (wind['speed'] as num?)?.toDouble() ?? 0,
+      precipitation: normalizedPrecipitation,
     );
   }
 
-  Future<String> _reverseGeocode(double latitude, double longitude) async {
-    try {
-      final response = await _dio.get(
-        '$_geocodingBaseUrl/reverse',
-        queryParameters: {
-          'latitude': latitude,
-          'longitude': longitude,
-          'count': 1,
-          'language': 'en',
-          'format': 'json',
-        },
-      );
+  // --- PHẦN 3: CÁC HÀM NÂNG CAO CHO CALENDAR (TỪ DEVELOP) ---
 
-      final results = response.data['results'] as List<dynamic>?;
-      if (results == null || results.isEmpty) {
-        return '${latitude.toStringAsFixed(2)}, ${longitude.toStringAsFixed(2)}';
-      }
-
-      final first = results.first as Map<String, dynamic>;
-      final name = (first['name'] ?? '').toString();
-      final country = (first['country'] ?? '').toString();
-      if (name.isEmpty) return country;
-      if (country.isEmpty) return name;
-      return '$name, $country';
-    } catch (_) {
-      return '${latitude.toStringAsFixed(2)}, ${longitude.toStringAsFixed(2)}';
-    }
-  }
-
-  Future<Map<String, dynamic>> _fetchForecastData(
-    double latitude,
-    double longitude,
-  ) async {
-    final response = await _dio.get(
-      '$_forecastBaseUrl/forecast',
+  Future<List<WeatherDayModel>> fetchFiveDayForecast({
+    required double lat,
+    required double lon,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/onecall',
       queryParameters: {
-        'latitude': latitude,
-        'longitude': longitude,
-        'current':
-            'temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,surface_pressure,weather_code',
-        'hourly':
-            'temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,precipitation_probability,cloud_cover,weather_code,visibility,dew_point_2m,uv_index',
-        'daily':
-            'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,wind_speed_10m_max,precipitation_probability_max',
-        'forecast_days': 7,
-        'timezone': 'auto',
+        'lat': lat,
+        'lon': lon,
+        'exclude': 'minutely,hourly,alerts',
+        'appid': _apiKey,
+        'units': 'metric',
       },
     );
 
-    return response.data as Map<String, dynamic>;
+    final data = response.data ?? <String, dynamic>{};
+    final dailyList = (data['daily'] as List?) ?? const <Map>[];
+    return _parseOneCallDays(dailyList.cast<Map<dynamic, dynamic>>());
   }
 
-  WeatherModel _buildCurrentWeather(
-    Map<String, dynamic> data,
-    String locationName,
-  ) {
-    final current = data['current'] as Map<String, dynamic>? ?? {};
-    final hourly = data['hourly'] as Map<String, dynamic>? ?? {};
-    final daily = data['daily'] as Map<String, dynamic>? ?? {};
+  Future<List<WeatherDayModel>> fetchTodayWithForecast({
+    required double lat,
+    required double lon,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/onecall',
+      queryParameters: {
+        'lat': lat,
+        'lon': lon,
+        'exclude': 'minutely,hourly,alerts',
+        'appid': _apiKey,
+        'units': 'metric',
+      },
+    );
 
-    final hourlyTimes = (hourly['time'] as List<dynamic>? ?? [])
-        .map((item) => item.toString())
-        .toList();
-    final currentTime = (current['time'] ?? '').toString();
-    int index = hourlyTimes.indexOf(currentTime);
-    if (index < 0) index = 0;
+    final data = response.data ?? <String, dynamic>{};
+    final dailyList = (data['daily'] as List?) ?? const <Map>[];
+    return _parseOneCallDays(dailyList.cast<Map<dynamic, dynamic>>());
+  }
 
-    final visibilityMeters = _valueAt(hourly['visibility'], index, 0);
-    final uvIndex = _valueAt(hourly['uv_index'], index, 0);
-    final dewPoint = _valueAt(hourly['dew_point_2m'], index, 0);
+  Future<WeatherDayModel?> fetchHistoricalDay({
+    required double lat,
+    required double lon,
+    required DateTime date,
+  }) async {
+    final ts = date.millisecondsSinceEpoch ~/ 1000;
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/onecall/timemachine',
+      queryParameters: {
+        'lat': lat,
+        'lon': lon,
+        'dt': ts,
+        'appid': _apiKey,
+        'units': 'metric',
+      },
+    );
 
-    final sunriseList = daily['sunrise'] as List<dynamic>? ?? [];
-    final sunsetList = daily['sunset'] as List<dynamic>? ?? [];
+    final data = response.data ?? <String, dynamic>{};
+    final current = (data['current'] as Map?) ?? const {};
+    final weatherList = (current['weather'] as List?) ?? const [];
+    final weather = weatherList.isNotEmpty ? weatherList.first as Map : const {};
+    final main = (current['main'] as Map?) ?? const {};
+    final wind = (current['wind'] as Map?) ?? const {};
+    final rainMap = (current['rain'] as Map?) ?? const {};
 
-    final weatherCode = _toInt(current['weather_code']);
-    final condition = _legacyConditionFromCode(weatherCode);
+    final rainMm = ((rainMap['1h'] ?? rainMap['3h'] ?? 0) as num).toDouble();
+    final normalizedPrecipitation = (rainMm / 10).clamp(0, 1).toDouble();
 
-    return WeatherModel(
-      location: locationName,
-      temperature: _toDouble(current['temperature_2m']),
-      description: condition,
-      icon: _iconFromCondition(condition),
-      feelsLike: _toDouble(current['apparent_temperature']),
-      humidity: _toInt(current['relative_humidity_2m']),
-      windSpeed: _toDouble(current['wind_speed_10m']),
-      pressure: _toInt(current['surface_pressure']),
-      visibility: _toDouble(visibilityMeters) / 1000,
-      uvIndex: _toDouble(uvIndex),
-      dewPoint: _toDouble(dewPoint),
-      sunrise: _parseDateTime(
-        sunriseList.isNotEmpty ? sunriseList.first.toString() : null,
-      ),
-      sunset: _parseDateTime(
-        sunsetList.isNotEmpty ? sunsetList.first.toString() : null,
-      ),
-      lastUpdated: DateTime.now(),
+    return WeatherDayModel(
+      date: CalendarDateUtils.normalize(date),
+      temp: (main['temp'] as num?)?.toDouble() ?? 0,
+      tempMax: (main['temp_max'] as num?)?.toDouble() ?? 0,
+      tempMin: (main['temp_min'] as num?)?.toDouble() ?? 0,
+      feelsLike: (main['feels_like'] as num?)?.toDouble() ?? 0,
+      humidity: (main['humidity'] as num?)?.toInt() ?? 0,
+      windSpeed: (wind['speed'] as num?)?.toDouble() ?? 0,
+      windDeg: (wind['deg'] as num?)?.toInt() ?? 0,
+      precipitationProbability: 0.0,
+      precipitationAmount: normalizedPrecipitation,
+      uvIndex: (current['uvi'] as num?)?.toDouble() ?? 0,
+      sunrise: DateTime.fromMillisecondsSinceEpoch((current['sunrise'] as num?)?.toInt() ?? 0 * 1000),
+      sunset: DateTime.fromMillisecondsSinceEpoch((current['sunset'] as num?)?.toInt() ?? 0 * 1000),
+      condition: (weather['main'] as String?) ?? 'Unknown',
+      iconCode: (weather['icon'] as String?) ?? '01d',
+      hourlyTemperatures: <double>[0, 0, 0],
     );
   }
 
-  List<ForecastModel> _buildHourlyForecast(Map<String, dynamic> data) {
-    final hourly = data['hourly'] as Map<String, dynamic>? ?? {};
-    final time = (hourly['time'] as List<dynamic>? ?? [])
-        .map((item) => item.toString())
-        .toList();
-    final temp = hourly['temperature_2m'] as List<dynamic>? ?? [];
-    final feelsLike = hourly['apparent_temperature'] as List<dynamic>? ?? [];
-    final humidity = hourly['relative_humidity_2m'] as List<dynamic>? ?? [];
-    final wind = hourly['wind_speed_10m'] as List<dynamic>? ?? [];
-    final weatherCode = hourly['weather_code'] as List<dynamic>? ?? [];
-    final pop = hourly['precipitation_probability'] as List<dynamic>? ?? [];
-    final clouds = hourly['cloud_cover'] as List<dynamic>? ?? [];
+  List<WeatherDayModel> _parseOneCallDays(List<Map> dailyList) {
+    final List<WeatherDayModel> days = <WeatherDayModel>[];
+    for (final day in dailyList) {
+      final dt = (day['dt'] as num?)?.toInt() ?? 0;
+      final date = DateTime.fromMillisecondsSinceEpoch(dt * 1000);
+      final weatherList = (day['weather'] as List?) ?? const [];
+      final weather = weatherList.isNotEmpty ? weatherList.first as Map : const {};
+      final temp = (day['temp'] as Map?) ?? const {};
+      final rainMap = (day['rain'] as Map?) ?? const {};
 
-    final int count = time.length < 48 ? time.length : 48;
-    final List<ForecastModel> items = [];
+      final rainMm = ((rainMap['1h'] ?? rainMap['3h'] ?? 0) as num).toDouble();
+      final normalizedPrecipitation = (rainMm / 10).clamp(0, 1).toDouble();
 
-    for (int i = 0; i < count; i++) {
-      final condition = _legacyConditionFromCode(_valueAt(weatherCode, i, 3));
-      final currentTemp = _toDouble(_valueAt(temp, i, 0));
-
-      items.add(
-        ForecastModel(
-          dt: _normalizeDateTimeString(time[i]),
-          temp: currentTemp,
-          tempMin: currentTemp - 1,
-          tempMax: currentTemp + 1,
-          feelsLike: _toDouble(_valueAt(feelsLike, i, currentTemp)),
-          humidity: _toInt(_valueAt(humidity, i, 0)),
-          windSpeed: _toDouble(_valueAt(wind, i, 0)),
-          description: condition,
-          icon: _iconFromCondition(condition),
-          precipitation: _toDouble(_valueAt(pop, i, 0)) / 100,
-          cloudiness: _toInt(_valueAt(clouds, i, 0)),
-        ),
-      );
+      days.add(WeatherDayModel(
+        date: CalendarDateUtils.normalize(date),
+        temp: (temp['day'] as num?)?.toDouble() ?? 0,
+        tempMax: (temp['max'] as num?)?.toDouble() ?? 0,
+        tempMin: (temp['min'] as num?)?.toDouble() ?? 0,
+        feelsLike: (temp['feels_like'] as num?)?.toDouble() ?? 0,
+        humidity: (day['humidity'] as num?)?.toInt() ?? 0,
+        windSpeed: (day['wind_speed'] as num?)?.toDouble() ?? 0,
+        windDeg: (day['wind_deg'] as num?)?.toInt() ?? 0,
+        precipitationProbability: (day['pop'] as num?)?.toDouble() ?? 0.0,
+        precipitationAmount: normalizedPrecipitation,
+        uvIndex: (day['uvi'] as num?)?.toDouble() ?? 0,
+        sunrise: DateTime.fromMillisecondsSinceEpoch((day['sunrise'] as num?)?.toInt() ?? 0 * 1000),
+        sunset: DateTime.fromMillisecondsSinceEpoch((day['sunset'] as num?)?.toInt() ?? 0 * 1000),
+        condition: (weather['main'] as String?) ?? 'Unknown',
+        iconCode: (weather['icon'] as String?) ?? '01d',
+        hourlyTemperatures: <double>[0, 0, 0],
+      ));
     }
-
-    return items;
+    return days;
   }
 
   List<ForecastModel> _buildDailyForecast(Map<String, dynamic> data) {

@@ -1,100 +1,81 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
+
 import 'app.dart';
 import 'providers/settings_provider.dart';
 import 'providers/news_provider.dart';
+
+// --- Imports từ develop ---
+import 'data/services/open_meteo_service.dart';
+import 'data/services/weather_api_service.dart';
+import 'screens/sv5_screens/calendar_screen/providers/calendar_provider.dart';
+
+// --- Imports từ TungNQ ---
 import 'providers/weather_provider.dart';
-import 'providers/notification_provider.dart';
+import 'providers/location_provider.dart';
+import 'providers/saved_locations_provider.dart';
+import 'features/location_search_screen/location_search_screen.dart';
 
-/// Entry point của ứng dụn
-/// main(): hàm chính được gọi khi app khởi động
 void main() async {
-  // Đảm bảo Flutter bindings được khởi tạo
-  // Điều này cần thiết để các plugin native hoạt động đúng cách
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load file .env (Sử dụng cách viết explicit của develop)
+  await dotenv.load(fileName: '.env');
 
-  try {
-    // Tải environment variables từ file .env
-    // Điều này cho phép lưu trữ API keys trong file .env thay vì hardcode
-    await dotenv.load();
-  } catch (e) {
-    // Nếu .env không tồn tại, in warning nhưng không dừng app
-    print('⚠️ Warning: Không thể tải file .env: $e');
-  }
+  final settingsProvider = SettingsProvider();
+  await settingsProvider.init();
 
-  try {
-    // Khởi tạo SettingsProvider và tải cài đặt từ SharedPreferences
-    final settingsProvider = SettingsProvider();
-    await settingsProvider.init();
-    // settingsProvider.init(): tải cấu hình đã lưu trước đó
+  runApp(
+    MultiProvider(
+      providers: [
+        // 1. Cấu hình chung
+        ChangeNotifierProvider.value(value: settingsProvider),
+        ChangeNotifierProvider(create: (_) => NewsProvider()),
 
-    // Chạy ứng dụng
-    runApp(
-      MultiProvider(
-        // MultiProvider: cung cấp nhiều providers cho toàn bộ app
-        // Tất cả widget con có thể truy cập các provider này thông qua context.watch(), context.read(), v.v.
-        providers: [
-          // Cung cấp SettingsProvider cho toàn bộ app
-          // ChangeNotifierProvider.value: sử dụng instance đã tạo sẵn
-          ChangeNotifierProvider.value(value: settingsProvider),
-
-          // Cung cấp NewsProvider cho toàn bộ app
-          // ChangeNotifierProvider(create: (_) => ...): tạo instance mới
-          ChangeNotifierProvider(create: (_) => NewsProvider()),
-
-          // Cung cấp WeatherProvider cho toàn bộ app
-          ChangeNotifierProvider(create: (_) => WeatherProvider()),
-
-          // Cung cấp NotificationProvider cho toàn bộ app
-          ChangeNotifierProvider(create: (_) => NotificationProvider()),
-        ],
-        child: const MyApp(),
-      ),
-    );
-  } catch (e, stackTrace) {
-    // Nếu có lỗi khởi tạo, hiển thị error screen thay vì trắng xóa
-    runApp(
-      MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 64),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Initialization Error',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    e.toString(),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    stackTrace.toString(),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        // 2. Services (Dùng Provider thường - Dependency Injection từ develop)
+        Provider<WeatherApiService>(
+          create: (_) => WeatherApiService(
+            dio: Dio(),
+            apiKey: dotenv.env['OPENWEATHER_API_KEY'] ?? '',
+            baseUrl: dotenv.env['OPENWEATHER_BASE_URL'] ?? 'https://api.openweathermap.org/data/2.5',
           ),
         ),
-      ),
+        Provider<OpenMeteoService>(
+          create: (_) => OpenMeteoService(dio: Dio()),
+        ),
+
+        // 3. ViewModels / Providers logic
+        ChangeNotifierProvider<CalendarProvider>(
+          create: (context) => CalendarProvider(
+            weatherApiService: context.read<WeatherApiService>(),
+          ),
+        ),
+        
+        // --- Providers giữ lại từ branch của Tùng ---
+        ChangeNotifierProvider(create: (_) => WeatherProvider()), 
+        ChangeNotifierProvider(create: (_) => LocationProvider()),
+        ChangeNotifierProvider(create: (_) => SavedLocationsProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
+}
+
+// Lưu ý: Nếu trong app.dart đã có MyApp, bạn nên vào đó để sửa 'home'
+// Còn nếu chưa có, hãy giữ nguyên khai báo này.
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Weather App Group 6',
+      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+      // Màn hình khởi đầu của Tùng
+      home: const LocationSearchScreen(), 
     );
   }
 }
