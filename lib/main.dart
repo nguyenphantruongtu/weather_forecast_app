@@ -15,6 +15,7 @@ import 'screens/sv5_screens/calendar_screen/providers/calendar_provider.dart';
 // --- Imports từ TungNQ ---
 import 'providers/weather_provider.dart';
 import 'providers/location_provider.dart';
+import 'providers/saved_locations_provider.dart';
 import 'features/location_search_screen/location_search_screen.dart';
 
 void main() async {
@@ -55,6 +56,7 @@ void main() async {
         // --- Providers giữ lại từ branch của Tùng ---
         ChangeNotifierProvider(create: (_) => WeatherProvider()), 
         ChangeNotifierProvider(create: (_) => LocationProvider()),
+        ChangeNotifierProvider(create: (_) => SavedLocationsProvider()),
       ],
       child: const MyApp(),
     ),

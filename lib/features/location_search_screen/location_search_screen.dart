@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/location_provider.dart';
+import '../../data/models/location_model.dart';
 import '../saved_locations_screen/saved_locations_screen.dart';
 import '../map_view_screen/map_view_screen.dart';
 import '../location_compare_screen/location_compare_screen.dart';
+import '../weather_detail_screen/weather_detail_screen.dart';
 
 class LocationSearchScreen extends StatefulWidget {
   const LocationSearchScreen({super.key});
@@ -180,22 +182,10 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
           leading: const Icon(Icons.location_on, color: Colors.blue),
           title: Text(loc.country), // Hiển thị tên quốc gia thay vì tên thành phố
           subtitle: Text("${loc.name} ${loc.state ?? ''}"), // Hiển thị tên thành phố trong subtitle
-          onTap: () async {
-            // Khi chọn 1 gợi ý -> Lưu vào lịch sử và xem thời tiết
-            provider.searchCity(loc.name); 
+          onTap: () {
+            // Khi chọn 1 gợi ý -> Gọi API thời tiết và hiển thị thông tin
+            _fetchAndShowWeather(loc);
             _focusNode.unfocus();
-            
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => const Center(child: CircularProgressIndicator()),
-            );
-
-            await provider.fetchWeather(loc.lat, loc.lon);
-            if (mounted) {
-              Navigator.pop(context);
-              _showWeatherBottomSheet(context, provider, loc.name);
-            }
           },
           trailing: _buildTrailingIcons(provider, loc),
         );
@@ -203,9 +193,9 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
     );
   }
 
-  Widget _buildTrailingIcons(LocationProvider provider, dynamic loc) {
-    final isSaved = provider.savedLocations.any((e) => e.uniqueId == loc.uniqueId);
-    final isComparing = provider.compareList.any((e) => e.uniqueId == loc.uniqueId);
+  Widget _buildTrailingIcons(LocationProvider provider, Location loc) {
+    final isSaved = provider.savedLocations.any((e) => e.id == loc.id);
+    final isComparing = provider.compareList.any((e) => e.id == loc.id);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -219,6 +209,39 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
         ),
       ],
     );
+  }
+
+  // Hàm mới: Gọi API thời tiết và hiển thị thông tin
+  Future<void> _fetchAndShowWeather(Location loc) async {
+    final provider = Provider.of<LocationProvider>(context, listen: false);
+    
+    // Hiển thị loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // Gọi API thời tiết
+      await provider.fetchWeather(loc.latitude, loc.longitude);
+      
+      // Đóng loading
+      Navigator.pop(context);
+      
+      // Điều hướng đến WeatherDetailScreen để hiển thị thông tin chi tiết
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WeatherDetailScreen(location: loc),
+        ),
+      );
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi khi lấy thời tiết: $e')),
+      );
+    }
   }
 
   void _showWeatherBottomSheet(BuildContext context, LocationProvider provider, String cityName) {

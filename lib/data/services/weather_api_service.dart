@@ -56,6 +56,25 @@ class WeatherApiService {
     }
   }
 
+  Future<List<ForecastModel>> getForecast(String city) async {
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/forecast',
+        queryParameters: {'q': city, 'appid': _apiKey, 'units': 'metric'},
+      );
+      if (response.statusCode == 200) {
+        List<dynamic> list = response.data['list'] as List<dynamic>;
+        return list
+            .map((item) => ForecastModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception('Failed to load forecast data');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
   // --- PHẦN 2: GIỮ CÁC HÀM NÂNG CAO TỪ DEVELOP (Phục vụ Calendar và One Call) ---
 
   Future<WeatherHistory> fetchCurrentWeatherSnapshot({
@@ -94,8 +113,128 @@ class WeatherApiService {
     );
   }
 
-  // ... (Giữ nguyên các hàm fetchFiveDayForecast, fetchTodayWithForecast, 
-  // fetchHistoricalDay và _parseOneCallDays từ branch develop của bạn) ...
-  
-  // Lưu ý: Hãy copy toàn bộ nội dung các hàm đó vào đây để file hoàn chỉnh.
+  // --- PHẦN 3: CÁC HÀM NÂNG CAO CHO CALENDAR (TỪ DEVELOP) ---
+
+  Future<List<WeatherDayModel>> fetchFiveDayForecast({
+    required double lat,
+    required double lon,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/onecall',
+      queryParameters: {
+        'lat': lat,
+        'lon': lon,
+        'exclude': 'minutely,hourly,alerts',
+        'appid': _apiKey,
+        'units': 'metric',
+      },
+    );
+
+    final data = response.data ?? <String, dynamic>{};
+    final dailyList = (data['daily'] as List?) ?? const <Map>[];
+    return _parseOneCallDays(dailyList.cast<Map<dynamic, dynamic>>());
+  }
+
+  Future<List<WeatherDayModel>> fetchTodayWithForecast({
+    required double lat,
+    required double lon,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/onecall',
+      queryParameters: {
+        'lat': lat,
+        'lon': lon,
+        'exclude': 'minutely,hourly,alerts',
+        'appid': _apiKey,
+        'units': 'metric',
+      },
+    );
+
+    final data = response.data ?? <String, dynamic>{};
+    final dailyList = (data['daily'] as List?) ?? const <Map>[];
+    return _parseOneCallDays(dailyList.cast<Map<dynamic, dynamic>>());
+  }
+
+  Future<WeatherDayModel?> fetchHistoricalDay({
+    required double lat,
+    required double lon,
+    required DateTime date,
+  }) async {
+    final ts = date.millisecondsSinceEpoch ~/ 1000;
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/onecall/timemachine',
+      queryParameters: {
+        'lat': lat,
+        'lon': lon,
+        'dt': ts,
+        'appid': _apiKey,
+        'units': 'metric',
+      },
+    );
+
+    final data = response.data ?? <String, dynamic>{};
+    final current = (data['current'] as Map?) ?? const {};
+    final weatherList = (current['weather'] as List?) ?? const [];
+    final weather = weatherList.isNotEmpty ? weatherList.first as Map : const {};
+    final main = (current['main'] as Map?) ?? const {};
+    final wind = (current['wind'] as Map?) ?? const {};
+    final rainMap = (current['rain'] as Map?) ?? const {};
+
+    final rainMm = ((rainMap['1h'] ?? rainMap['3h'] ?? 0) as num).toDouble();
+    final normalizedPrecipitation = (rainMm / 10).clamp(0, 1).toDouble();
+
+    return WeatherDayModel(
+      date: CalendarDateUtils.normalize(date),
+      temp: (main['temp'] as num?)?.toDouble() ?? 0,
+      tempMax: (main['temp_max'] as num?)?.toDouble() ?? 0,
+      tempMin: (main['temp_min'] as num?)?.toDouble() ?? 0,
+      feelsLike: (main['feels_like'] as num?)?.toDouble() ?? 0,
+      humidity: (main['humidity'] as num?)?.toInt() ?? 0,
+      windSpeed: (wind['speed'] as num?)?.toDouble() ?? 0,
+      windDeg: (wind['deg'] as num?)?.toInt() ?? 0,
+      precipitationProbability: 0.0,
+      precipitationAmount: normalizedPrecipitation,
+      uvIndex: (current['uvi'] as num?)?.toDouble() ?? 0,
+      sunrise: DateTime.fromMillisecondsSinceEpoch((current['sunrise'] as num?)?.toInt() ?? 0 * 1000),
+      sunset: DateTime.fromMillisecondsSinceEpoch((current['sunset'] as num?)?.toInt() ?? 0 * 1000),
+      condition: (weather['main'] as String?) ?? 'Unknown',
+      iconCode: (weather['icon'] as String?) ?? '01d',
+      hourlyTemperatures: <double>[0, 0, 0],
+    );
+  }
+
+  List<WeatherDayModel> _parseOneCallDays(List<Map> dailyList) {
+    final List<WeatherDayModel> days = <WeatherDayModel>[];
+    for (final day in dailyList) {
+      final dt = (day['dt'] as num?)?.toInt() ?? 0;
+      final date = DateTime.fromMillisecondsSinceEpoch(dt * 1000);
+      final weatherList = (day['weather'] as List?) ?? const [];
+      final weather = weatherList.isNotEmpty ? weatherList.first as Map : const {};
+      final temp = (day['temp'] as Map?) ?? const {};
+      final rainMap = (day['rain'] as Map?) ?? const {};
+
+      final rainMm = ((rainMap['1h'] ?? rainMap['3h'] ?? 0) as num).toDouble();
+      final normalizedPrecipitation = (rainMm / 10).clamp(0, 1).toDouble();
+
+      days.add(WeatherDayModel(
+        date: CalendarDateUtils.normalize(date),
+        temp: (temp['day'] as num?)?.toDouble() ?? 0,
+        tempMax: (temp['max'] as num?)?.toDouble() ?? 0,
+        tempMin: (temp['min'] as num?)?.toDouble() ?? 0,
+        feelsLike: (temp['feels_like'] as num?)?.toDouble() ?? 0,
+        humidity: (day['humidity'] as num?)?.toInt() ?? 0,
+        windSpeed: (day['wind_speed'] as num?)?.toDouble() ?? 0,
+        windDeg: (day['wind_deg'] as num?)?.toInt() ?? 0,
+        precipitationProbability: (day['pop'] as num?)?.toDouble() ?? 0.0,
+        precipitationAmount: normalizedPrecipitation,
+        uvIndex: (day['uvi'] as num?)?.toDouble() ?? 0,
+        sunrise: DateTime.fromMillisecondsSinceEpoch((day['sunrise'] as num?)?.toInt() ?? 0 * 1000),
+        sunset: DateTime.fromMillisecondsSinceEpoch((day['sunset'] as num?)?.toInt() ?? 0 * 1000),
+        condition: (weather['main'] as String?) ?? 'Unknown',
+        iconCode: (weather['icon'] as String?) ?? '01d',
+        hourlyTemperatures: <double>[0, 0, 0],
+      ));
+    }
+    return days;
+  }
 }
