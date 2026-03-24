@@ -23,6 +23,11 @@ class _AlertsScreenState extends State<AlertsScreen>
     super.initState();
     _activeAlerts = [];
     _tabController = TabController(length: 2, vsync: this);
+
+    Future.microtask(() {
+    final provider = Provider.of<WeatherProvider>(context, listen: false);
+    provider.fetchCurrentWeather("Da Nang"); // hoặc city bạn muốn
+  });
   }
 
   List<AlertModel> get _filteredAlerts {
@@ -46,15 +51,15 @@ class _AlertsScreenState extends State<AlertsScreen>
   void _generateAlertsFromWeather(weather) {
     int alertId = 1;
 
-    // Heat Warning - if temp > 38°C
-    if (weather.temperature > 38) {
+    // Heat Warning - if temp > 25°C
+    if (weather.temperature > 25) {
       _activeAlerts.add(
         AlertModel(
           id: (alertId++).toString(),
           title: 'Excessive Heat Warning',
           description:
               'Dangerous heat conditions expected. High temperatures of ${weather.temperature.toStringAsFixed(1)}°C detected. Heat index values may reach ${(weather.temperature + 5).toStringAsFixed(1)}°C. Stay hydrated and avoid prolonged outdoor activities.',
-          severity: weather.temperature > 42
+          severity: weather.temperature > 30
               ? AlertSeverity.extreme
               : AlertSeverity.severe,
           type: AlertType.heat,
@@ -62,21 +67,21 @@ class _AlertsScreenState extends State<AlertsScreen>
           startTime: DateTime.now(),
           endTime: DateTime.now().add(const Duration(hours: 24)),
           updatedAt: DateTime.now(),
-          impact: weather.temperature > 42 ? 'High Risk' : 'Moderate Risk',
+          impact: weather.temperature > 30 ? 'High Risk' : 'Moderate Risk',
           isActive: true,
         ),
       );
     }
 
-    // High Wind Warning - if windSpeed > 50 km/h
-    if (weather.windSpeed > 50) {
+    // High Wind Warning - if windSpeed > 30 km/h
+    if (weather.windSpeed > 30) {
       _activeAlerts.add(
         AlertModel(
           id: (alertId++).toString(),
           title: 'High Wind Warning',
           description:
               'Strong winds with speeds of ${weather.windSpeed.toStringAsFixed(1)} km/h detected. Damaging winds and flying debris expected. Secure loose objects and avoid outdoor activities.',
-          severity: weather.windSpeed > 75
+          severity: weather.windSpeed > 50
               ? AlertSeverity.extreme
               : AlertSeverity.severe,
           type: AlertType.wind,
@@ -84,7 +89,7 @@ class _AlertsScreenState extends State<AlertsScreen>
           startTime: DateTime.now(),
           endTime: DateTime.now().add(const Duration(hours: 12)),
           updatedAt: DateTime.now(),
-          impact: weather.windSpeed > 75 ? 'High Risk' : 'Moderate Risk',
+          impact: weather.windSpeed > 50 ? 'High Risk' : 'Moderate Risk',
           isActive: true,
         ),
       );
@@ -153,15 +158,15 @@ class _AlertsScreenState extends State<AlertsScreen>
       );
     }
 
-    // Cold Warning - if temp < 0°C
-    if (weather.temperature < 0) {
+    // Cold Warning - if temp < 10°C
+    if (weather.temperature < 10) {
       _activeAlerts.add(
         AlertModel(
           id: (alertId++).toString(),
           title: 'Extreme Cold Warning',
           description:
               'Dangerous cold conditions with temperatures of ${weather.temperature.toStringAsFixed(1)}°C. Frostbite can occur in minutes on exposed skin. Limit time outdoors and dress in layers.',
-          severity: weather.temperature < -10
+          severity: weather.temperature < 0
               ? AlertSeverity.extreme
               : AlertSeverity.severe,
           type: AlertType.cold,
@@ -169,7 +174,7 @@ class _AlertsScreenState extends State<AlertsScreen>
           startTime: DateTime.now(),
           endTime: DateTime.now().add(const Duration(hours: 24)),
           updatedAt: DateTime.now(),
-          impact: weather.temperature < -10 ? 'High Risk' : 'Moderate Risk',
+          impact: weather.temperature < 0 ? 'High Risk' : 'Moderate Risk',
           isActive: true,
         ),
       );

@@ -5,6 +5,7 @@ import 'app.dart';
 import 'providers/settings_provider.dart';
 import 'providers/news_provider.dart';
 import 'providers/weather_provider.dart';
+import 'providers/notification_provider.dart';
 
 /// Entry point của ứng dụn
 /// main(): hàm chính được gọi khi app khởi động
@@ -44,6 +45,9 @@ void main() async {
 
           // Cung cấp WeatherProvider cho toàn bộ app
           ChangeNotifierProvider(create: (_) => WeatherProvider()),
+
+          // Cung cấp NotificationProvider cho toàn bộ app
+          ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ],
         child: const MyApp(),
       ),

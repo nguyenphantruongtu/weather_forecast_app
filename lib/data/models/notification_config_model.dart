@@ -1,5 +1,6 @@
 class NotificationConfigModel {
   bool pushNotificationsEnabled;
+  bool hourlyForecastEnabled;
   bool morningForecastEnabled;
   TimeOfDayModel morningForecastTime;
   bool eveningForecastEnabled;
@@ -12,6 +13,7 @@ class NotificationConfigModel {
 
   NotificationConfigModel({
     this.pushNotificationsEnabled = true,
+    this.hourlyForecastEnabled = false,
     this.morningForecastEnabled = true,
     TimeOfDayModel? morningForecastTime,
     this.eveningForecastEnabled = true,
@@ -27,6 +29,7 @@ class NotificationConfigModel {
 
   Map<String, dynamic> toJson() => {
         'pushNotificationsEnabled': pushNotificationsEnabled,
+        'hourlyForecastEnabled': hourlyForecastEnabled,
         'morningForecastEnabled': morningForecastEnabled,
         'morningForecastTime': morningForecastTime.toJson(),
         'eveningForecastEnabled': eveningForecastEnabled,
@@ -39,14 +42,31 @@ class NotificationConfigModel {
       };
 
   factory NotificationConfigModel.fromJson(Map<String, dynamic> json) {
+    TimeOfDayModel parseTimeOfDay(dynamic map, TimeOfDayModel fallback) {
+      if (map is Map<String, dynamic>) {
+        final hour = map['hour'];
+        final minute = map['minute'];
+        if (hour is int && minute is int) {
+          return TimeOfDayModel(hour: hour, minute: minute);
+        }
+      }
+      return fallback;
+    }
+
     return NotificationConfigModel(
       pushNotificationsEnabled: json['pushNotificationsEnabled'] ?? true,
+      hourlyForecastEnabled: json['hourlyForecastEnabled'] ?? false,
       morningForecastEnabled: json['morningForecastEnabled'] ?? true,
+      morningForecastTime: parseTimeOfDay(
+          json['morningForecastTime'], const TimeOfDayModel(hour: 7, minute: 0)),
       eveningForecastEnabled: json['eveningForecastEnabled'] ?? true,
+      eveningForecastTime: parseTimeOfDay(
+          json['eveningForecastTime'], const TimeOfDayModel(hour: 19, minute: 0)),
       weekendSummaryEnabled: json['weekendSummaryEnabled'] ?? true,
       severeWeatherWarningsEnabled: json['severeWeatherWarningsEnabled'] ?? true,
       weatherAdvisoriesEnabled: json['weatherAdvisoriesEnabled'] ?? true,
-      subscribedLocations: List<String>.from(json['subscribedLocations'] ?? ['Hanoi']),
+      subscribedLocations:
+          List<String>.from(json['subscribedLocations'] ?? ['Hanoi', 'Da Nang']),
       useCurrentLocation: json['useCurrentLocation'] ?? true,
     );
   }

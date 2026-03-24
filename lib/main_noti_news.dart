@@ -5,6 +5,7 @@ import 'screens/NotiAndNewsScreens/noti_news_main_screen.dart';
 import 'providers/settings_provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/news_provider.dart';
+import 'providers/notification_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +20,7 @@ void main() async {
         ChangeNotifierProvider.value(value: settingsProvider),
         ChangeNotifierProvider(create: (_) => NewsProvider()),
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: const NotiNewsApp(),
     ),
