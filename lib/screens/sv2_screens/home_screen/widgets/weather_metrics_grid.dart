@@ -1,10 +1,34 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/weather_model.dart';
+import '../../../../data/models/settings_model.dart';
+import '../../../../utils/unit_converter.dart';
 
 class WeatherMetricsGrid extends StatelessWidget {
   final WeatherModel weather;
+  final TemperatureUnit temperatureUnit;
+  final WindSpeedUnit windSpeedUnit;
 
-  const WeatherMetricsGrid({Key? key, required this.weather}) : super(key: key);
+  const WeatherMetricsGrid({
+    super.key,
+    required this.weather,
+    required this.temperatureUnit,
+    required this.windSpeedUnit,
+  });
+
+  double _displayTemperature(double celsiusValue) {
+    if (temperatureUnit == TemperatureUnit.fahrenheit) {
+      return UnitConverter.celsiusToFahrenheit(celsiusValue);
+    }
+    return celsiusValue;
+  }
+
+  String _windLabel() {
+    if (windSpeedUnit == WindSpeedUnit.mph) {
+      final mph = weather.windSpeed * 0.621371;
+      return '${mph.toStringAsFixed(1)} mph';
+    }
+    return '${weather.windSpeed.toStringAsFixed(1)} km/h';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +48,7 @@ class WeatherMetricsGrid extends StatelessWidget {
         _MetricCard(
           icon: Icons.air,
           label: 'Wind',
-          value: '${weather.windSpeed.toStringAsFixed(1)} km/h',
+          value: _windLabel(),
           color: Colors.cyan,
         ),
         _MetricCard(
@@ -48,7 +72,7 @@ class WeatherMetricsGrid extends StatelessWidget {
         _MetricCard(
           icon: Icons.thermostat,
           label: 'Dew Point',
-          value: '${weather.dewPoint.toStringAsFixed(0)}°',
+          value: '${_displayTemperature(weather.dewPoint).toStringAsFixed(0)}°',
           color: Colors.purple,
         ),
       ],
@@ -74,9 +98,9 @@ class _MetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

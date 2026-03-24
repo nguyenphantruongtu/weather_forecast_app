@@ -45,6 +45,7 @@ dependencies:
 
   # Date & Time
   intl: ^0.19.0
+  timezone: ^0.9.0
 
   # Notifications
   flutter_local_notifications: ^17.1.2
@@ -77,13 +78,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
+  
+  # Assets cho app
   assets:
     - .env
     - assets/images/
-    - assets/images/logo/
-    - assets/images/onboarding/
-    - assets/images/weather_icons/
-    - assets/images/illustrations/
     - assets/lottie/
     - assets/data/

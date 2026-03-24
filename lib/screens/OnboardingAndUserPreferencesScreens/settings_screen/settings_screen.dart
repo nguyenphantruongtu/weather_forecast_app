@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../data/models/settings_model.dart';
-import '../info_screen/info_screen.dart';
-import 'widgets/setting_tile.dart';
+import '../../../utils/app_strings.dart';
 
-/// Màn hình Cài đặt (Màn 3 - Settings & Preferences)
-/// Cho phép người dùng tùy chỉnh nhiệt độ, theme, định dạng giờ, ngôn ngữ
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -15,226 +13,321 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  String? _appearanceOverride;
+
   @override
   Widget build(BuildContext context) {
-    // context.watch: theo dõi provider, rebuild khi provider thay đổi
     final settingsProvider = context.watch<SettingsProvider>();
     final settings = settingsProvider.settings;
+    final languageCode = settings.language;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBackground = isDark ? const Color(0xFF11141C) : const Color(0xFFF6F7FB);
+    final titleColor = isDark ? Colors.white : const Color(0xFF1C2232);
+    final appearance = _appearanceOverride ??
+        (settings.theme == AppTheme.dark ? 'dark' : 'light');
+    final timePattern = settings.timeFormat == TimeFormat.h24 ? 'HH:mm' : 'h:mm a';
+    final currentTime = DateFormat(timePattern).format(DateTime.now());
 
     return Scaffold(
+      backgroundColor: pageBackground,
       appBar: AppBar(
-        title: const Text('Settings'),
+        backgroundColor: pageBackground,
+        surfaceTintColor: Colors.transparent,
+        foregroundColor: titleColor,
+        iconTheme: IconThemeData(color: titleColor),
+        title: Text(
+          AppStrings.tr(
+            languageCode,
+            en: 'Settings & Preferences',
+            vi: 'Cài đặt & Tùy chỉnh',
+          ),
+          style: TextStyle(
+            color: titleColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // === SECTION: Units ===
-            _buildSectionHeader(context, 'Units'),
-            SettingTile(
-              title: 'Temperature Unit',
-              subtitle: settings.temperatureUnit == TemperatureUnit.celsius
-                  ? 'Celsius (°C)'
-                  : 'Fahrenheit (°F)',
-              icon: Icons.thermostat,
-              onTap: () => _showTemperatureUnitSelector(context),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: [
+          _sectionLabel(AppStrings.tr(languageCode, en: 'UNITS', vi: 'ĐƠN VỊ')),
+          _card(
+            child: Column(
+              children: [
+                _settingRow(
+                  icon: Icons.thermostat,
+                  iconColor: const Color(0xFF6FA1F0),
+                  title: AppStrings.tr(languageCode, en: 'Temperature', vi: 'Nhiệt độ'),
+                  trailing: _InlineBinarySwitch(
+                    leftText: '°C',
+                    rightText: '°F',
+                    isRightSelected:
+                        settings.temperatureUnit == TemperatureUnit.fahrenheit,
+                    onChanged: (right) {
+                      settingsProvider.updateTemperatureUnit(
+                        right
+                            ? TemperatureUnit.fahrenheit
+                            : TemperatureUnit.celsius,
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _settingRow(
+                  icon: Icons.air,
+                  iconColor: const Color(0xFF77AFE8),
+                  title: AppStrings.tr(languageCode, en: 'Wind Speed', vi: 'Tốc độ gió'),
+                  trailing: _InlineBinarySwitch(
+                    leftText: 'km/h',
+                    rightText: 'mph',
+                    isRightSelected: settings.windSpeedUnit == WindSpeedUnit.mph,
+                    onChanged: (right) {
+                      settingsProvider.updateWindUnit(
+                        right ? WindSpeedUnit.mph : WindSpeedUnit.kmh,
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-            SettingTile(
-              title: 'Wind Speed Unit',
-              subtitle: settings.windSpeedUnit == WindSpeedUnit.kmh
-                  ? 'Kilometers per hour (km/h)'
-                  : 'Miles per hour (mph)',
-              icon: Icons.air,
-              onTap: () => _showWindSpeedUnitSelector(context),
+          ),
+          const SizedBox(height: 16),
+          _sectionLabel(AppStrings.tr(languageCode, en: 'APPEARANCE', vi: 'GIAO DIỆN')),
+          _card(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _appearanceTile(
+                    label: AppStrings.tr(languageCode, en: 'Light', vi: 'Sáng'),
+                    icon: Icons.light_mode,
+                    selected: appearance == 'light',
+                    onTap: () {
+                      settingsProvider.updateTheme(AppTheme.light);
+                      setState(() => _appearanceOverride = 'light');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _appearanceTile(
+                    label: AppStrings.tr(languageCode, en: 'Dark', vi: 'Tối'),
+                    icon: Icons.dark_mode,
+                    selected: appearance == 'dark',
+                    onTap: () {
+                      settingsProvider.updateTheme(AppTheme.dark);
+                      setState(() => _appearanceOverride = 'dark');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _appearanceTile(
+                    label: AppStrings.tr(languageCode, en: 'Auto', vi: 'Tự động'),
+                    icon: Icons.brightness_4,
+                    selected: appearance == 'auto',
+                    onTap: () {
+                      final brightness = MediaQuery.platformBrightnessOf(context);
+                      settingsProvider.updateTheme(
+                        brightness == Brightness.dark
+                            ? AppTheme.dark
+                            : AppTheme.light,
+                      );
+                      setState(() => _appearanceOverride = 'auto');
+                    },
+                  ),
+                ),
+              ],
             ),
-            const Divider(),
-
-            // === SECTION: Display ===
-            _buildSectionHeader(context, 'Display'),
-            ToggleSettingTile(
-              title: 'Dark Mode',
-              subtitle: settings.theme == AppTheme.dark ? 'Enabled' : 'Disabled',
-              icon: Icons.dark_mode,
-              value: settings.theme == AppTheme.dark,
-              onChanged: (value) {
-                // onChanged: callback khi toggle thay đổi
-                settingsProvider.updateTheme(
-                  value ? AppTheme.dark : AppTheme.light,
-                );
-              },
+          ),
+          const SizedBox(height: 16),
+          _sectionLabel(AppStrings.tr(languageCode, en: 'TIME & DATE', vi: 'THỜI GIAN & NGÀY')),
+          _card(
+            child: Column(
+              children: [
+                _settingRow(
+                  icon: Icons.schedule,
+                  iconColor: const Color(0xFF76ACE8),
+                  title: AppStrings.tr(languageCode, en: 'Time Format', vi: 'Định dạng giờ'),
+                  trailing: _InlineBinarySwitch(
+                    leftText: '12h',
+                    rightText: '24h',
+                    isRightSelected: settings.timeFormat == TimeFormat.h24,
+                    onChanged: (right) {
+                      settingsProvider.updateTimeFormat(
+                        right ? TimeFormat.h24 : TimeFormat.h12,
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 44),
+                    child: Text(
+                      '${AppStrings.tr(languageCode, en: 'Current time', vi: 'Giờ hiện tại')}: $currentTime',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFFA1A9BC),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            SettingTile(
-              title: 'Time Format',
-              subtitle: settings.timeFormat == TimeFormat.h24 ? '24-hour' : '12-hour',
-              icon: Icons.schedule,
-              onTap: () => _showTimeFormatSelector(context),
-            ),
-            const Divider(),
-
-            // === SECTION: Localization ===
-            _buildSectionHeader(context, 'Localization'),
-            SettingTile(
-              title: 'Language',
-              subtitle: settings.language == 'en' ? 'English' : 'Tiếng Việt',
-              icon: Icons.language,
+          ),
+          const SizedBox(height: 16),
+          _sectionLabel(AppStrings.tr(languageCode, en: 'LANGUAGE', vi: 'NGÔN NGỮ')),
+          _card(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
               onTap: () => _showLanguageSelector(context),
-            ),
-            const Divider(),
-
-            // === SECTION: About ===
-            _buildSectionHeader(context, 'About'),
-            SettingTile(
-              title: 'About App',
-              subtitle: 'Version, privacy, etc.',
-              icon: Icons.info,
-              onTap: () {
-                // Chuyển sang màn Info Screen
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const InfoScreen()),
-                );
-              },
-            ),
-
-            // Khoảng trắng dưới cùng
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Build section header
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      // fromLTRB: Left, Top, Right, Bottom
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    const _IconBadge(
+                      icon: Icons.language,
+                      color: Color(0xFF76ACE8),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      AppStrings.tr(languageCode, en: 'Language', vi: 'Ngôn ngữ'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF1F2637),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      settings.language == 'en' ? 'English' : 'Tiếng Việt',
+                      style: TextStyle(
+                        color: isDark ? const Color(0xFFBAC2D6) : const Color(0xFF9098AD),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: Color(0xFFC3C8D7),
+                    ),
+                  ],
+                ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String title) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 11,
+          letterSpacing: 0.8,
+          color: isDark ? const Color(0xFF9FA9C2) : const Color(0xFFB0B7C7),
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
   }
 
-  /// Hiển thị dialog chọn đơn vị nhiệt độ
-  void _showTemperatureUnitSelector(BuildContext context) {
-    final provider = context.read<SettingsProvider>();
-    // context.read: không theo dõi, chỉ lấy provider một lần
+  Widget _card({required Widget child}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A1F2B) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2A3143) : const Color(0xFFE8ECF4),
+        ),
+      ),
+      child: child,
+    );
+  }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Temperature Unit'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          // mainAxisSize: chỉ chiếm không gian cần thiết
-          children: [
-            _buildUnitRadioTile(
-              'Celsius (°C)',
-              provider.settings.temperatureUnit == TemperatureUnit.celsius,
-              () {
-                provider.updateTemperatureUnit(TemperatureUnit.celsius);
-                Navigator.pop(context);
-              },
-            ),
-            _buildUnitRadioTile(
-              'Fahrenheit (°F)',
-              provider.settings.temperatureUnit == TemperatureUnit.fahrenheit,
-              () {
-                provider.updateTemperatureUnit(TemperatureUnit.fahrenheit);
-                Navigator.pop(context);
-              },
-            ),
-          ],
+  Widget _settingRow({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required Widget trailing,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      children: [
+        _IconBadge(icon: icon, color: iconColor),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : const Color(0xFF1F2637),
+          ),
+        ),
+        const Spacer(),
+        trailing,
+      ],
+    );
+  }
+
+  Widget _appearanceTile({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: selected ? const Color(0xFF1D2340) : const Color(0xFFF4F6FB),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: selected ? Colors.white : const Color(0xFF8F97AB),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: selected ? Colors.white : const Color(0xFF8F97AB),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  /// Hiển thị dialog chọn đơn vị tốc độ gió
-  void _showWindSpeedUnitSelector(BuildContext context) {
-    final provider = context.read<SettingsProvider>();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Wind Speed Unit'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildUnitRadioTile(
-              'Kilometers per hour (km/h)',
-              provider.settings.windSpeedUnit == WindSpeedUnit.kmh,
-              () {
-                provider.updateWindUnit(WindSpeedUnit.kmh);
-                Navigator.pop(context);
-              },
-            ),
-            _buildUnitRadioTile(
-              'Miles per hour (mph)',
-              provider.settings.windSpeedUnit == WindSpeedUnit.mph,
-              () {
-                provider.updateWindUnit(WindSpeedUnit.mph);
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Hiển thị dialog chọn định dạng giờ
-  void _showTimeFormatSelector(BuildContext context) {
-    final provider = context.read<SettingsProvider>();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Time Format'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildUnitRadioTile(
-              '24-hour (13:30)',
-              provider.settings.timeFormat == TimeFormat.h24,
-              () {
-                provider.updateTimeFormat(TimeFormat.h24);
-                Navigator.pop(context);
-              },
-            ),
-            _buildUnitRadioTile(
-              '12-hour (1:30 PM)',
-              provider.settings.timeFormat == TimeFormat.h12,
-              () {
-                provider.updateTimeFormat(TimeFormat.h12);
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Hiển thị dialog chọn ngôn ngữ
   void _showLanguageSelector(BuildContext context) {
     final provider = context.read<SettingsProvider>();
+    final languageCode = provider.settings.language;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Language'),
+        title: Text(AppStrings.tr(languageCode, en: 'Select Language', vi: 'Chọn ngôn ngữ')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildUnitRadioTile(
+            _languageTile(
               'English',
               provider.settings.language == 'en',
               () {
@@ -242,7 +335,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
               },
             ),
-            _buildUnitRadioTile(
+            _languageTile(
               'Tiếng Việt',
               provider.settings.language == 'vi',
               () {
@@ -256,19 +349,100 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Widget helper: dòng radio button cho dialog
-  Widget _buildUnitRadioTile(
-    String label,
-    bool isSelected,
-    VoidCallback onTap,
-  ) {
-    return RadioListTile<bool>(
-      // RadioListTile: ListTile với Radio button
+  Widget _languageTile(String label, bool isSelected, VoidCallback onTap) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+        color: isSelected ? const Color(0xFF4C9BF0) : const Color(0xFFB2B8C8),
+      ),
       title: Text(label),
-      value: true,
-      groupValue: isSelected,
-      // groupValue: giá trị của nhóm radio (dùng để xác định cái nào được select)
-      onChanged: (_) => onTap(),
+      onTap: onTap,
+    );
+  }
+}
+
+class _IconBadge extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+
+  const _IconBadge({required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(icon, size: 16, color: color),
+    );
+  }
+}
+
+class _InlineBinarySwitch extends StatelessWidget {
+  final String leftText;
+  final String rightText;
+  final bool isRightSelected;
+  final ValueChanged<bool> onChanged;
+
+  const _InlineBinarySwitch({
+    required this.leftText,
+    required this.rightText,
+    required this.isRightSelected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          leftText,
+          style: TextStyle(
+            color: isRightSelected ? const Color(0xFFA3AABD) : const Color(0xFF4D5466),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: () => onChanged(!isRightSelected),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 36,
+            height: 20,
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: isRightSelected ? const Color(0xFF4C9BF0) : const Color(0xFFD8DCE8),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Align(
+              alignment: isRightSelected ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          rightText,
+          style: TextStyle(
+            color: isRightSelected ? const Color(0xFF4D5466) : const Color(0xFFA3AABD),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }

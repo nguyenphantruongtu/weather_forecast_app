@@ -1,18 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../data/models/forecast_model.dart';
+import '../../../../data/models/settings_model.dart';
+import '../../../../utils/unit_converter.dart';
 
 class HourlyItem extends StatelessWidget {
   final ForecastModel forecast;
   final bool isSelected;
   final VoidCallback onTap;
+  final TemperatureUnit temperatureUnit;
+  final TimeFormat timeFormat;
 
   const HourlyItem({
-    Key? key,
+    super.key,
     required this.forecast,
     this.isSelected = false,
     required this.onTap,
-  }) : super(key: key);
+    required this.temperatureUnit,
+    required this.timeFormat,
+  });
+
+  double _displayTemperature(double celsiusValue) {
+    if (temperatureUnit == TemperatureUnit.fahrenheit) {
+      return UnitConverter.celsiusToFahrenheit(celsiusValue);
+    }
+    return celsiusValue;
+  }
+
+  String _timePattern() {
+    return timeFormat == TimeFormat.h24 ? 'HH:mm' : 'h:mm a';
+  }
 
   String _getWeatherIcon(String description) {
     switch (description.toLowerCase()) {
@@ -35,7 +52,10 @@ class HourlyItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateTime = DateTime.parse(forecast.dt);
-    final time = DateFormat('HH:mm').format(dateTime);
+    final time = DateFormat(_timePattern()).format(dateTime);
+    final displayTemp = _displayTemperature(forecast.temp);
+    final displayTempMin = _displayTemperature(forecast.tempMin);
+    final displayTempMax = _displayTemperature(forecast.tempMax);
 
     return GestureDetector(
       onTap: onTap,
@@ -46,12 +66,12 @@ class HourlyItem extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? Colors.blue.shade400
-              : Colors.blue.withOpacity(0.1),
+              : Colors.blue.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? Colors.blue.shade600
-                : Colors.blue.withOpacity(0.2),
+                : Colors.blue.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -73,7 +93,7 @@ class HourlyItem extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '${forecast.temp.toStringAsFixed(0)}°',
+              '${displayTemp.toStringAsFixed(0)}°',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -82,7 +102,7 @@ class HourlyItem extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${forecast.tempMin.toStringAsFixed(0)}° ~ ${forecast.tempMax.toStringAsFixed(0)}°',
+              '${displayTempMin.toStringAsFixed(0)}° ~ ${displayTempMax.toStringAsFixed(0)}°',
               style: TextStyle(
                 fontSize: 10,
                 color: isSelected ? Colors.white70 : Colors.grey,

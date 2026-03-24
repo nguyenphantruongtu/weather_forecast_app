@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Widget hiểu diễn một lựa chọn vị trí (Current Location, Search, Popular Cities)
 class LocationOptionCard extends StatelessWidget {
-  final String title; // Tiêu đề (VD: "Current Location")
-  final String description; // Mô tả
-  final IconData icon; // Biểu tượng
-  final VoidCallback onTap; // Callback khi nhấn vào thẻ
-  final Color? backgroundColor; // Màu nền tùy chọn
+  final String title;
+  final String description;
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color iconColor;
+  final IconData trailingIcon;
 
   const LocationOptionCard({
     super.key,
@@ -14,64 +14,68 @@ class LocationOptionCard extends StatelessWidget {
     required this.description,
     required this.icon,
     required this.onTap,
-    this.backgroundColor,
+    this.iconColor = const Color(0xFF5B9FF3),
+    this.trailingIcon = Icons.place,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      // GestureDetector: bắt sự kiện gesture (tap, long press, v.v.)
-      onTap: onTap,
-      child: Card(
-        // Card: widget hiển thị content với shadow và corner radius
-        color: backgroundColor ?? Colors.white,
-        elevation: 4, // elevation: độ bóng của card
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(
-          // shape: hình dạng của card
-          borderRadius: BorderRadius.circular(12),
-          // circular: góc bo tròn
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            // crossAxisAlignment: căn chỉnh theo trục ngang
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE8EBF3)),
+          ),
+          child: Row(
             children: [
-              // Icon + Title ở hàng trên
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade100,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      icon,
-                      color: Colors.blue,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    // Expanded: chiếm phần còn lại của space
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ),
-                ],
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.16),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 18),
               ),
-              const SizedBox(height: 12),
-              // Description ở hàng dưới
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1A2134),
+                      ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF98A0B3),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 24,
+                height: 24,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF4F7FD),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(trailingIcon, color: iconColor, size: 14),
               ),
             ],
           ),

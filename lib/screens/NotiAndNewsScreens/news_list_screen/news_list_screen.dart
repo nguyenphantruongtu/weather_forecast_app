@@ -16,15 +16,18 @@ class _NewsListScreenState extends State<NewsListScreen> {
   final NewsApiService _apiService = NewsApiService();
   List<NewsArticleModel> _articles = [];
   bool _isLoading = true;
-  String _selectedCategory = 'All News';
+  String _selectedCategory = 'All';
   final ScrollController _scrollController = ScrollController();
 
   static const List<String> _categories = [
-    'All News',
-    'Breaking',
-    'Climate',
-    'Storms',
-    'Local',
+    'All',
+    'Business',
+    'Entertainment',
+    'General',
+    'Health',
+    'Science',
+    'Sports',
+    'Technology',
   ];
 
   static const Map<String, int> _badgeCounts = {'Breaking': 1};
@@ -43,8 +46,9 @@ class _NewsListScreenState extends State<NewsListScreen> {
 
   Future<void> _loadNews({bool refresh = false}) async {
     setState(() => _isLoading = true);
-    final articles = await _apiService.fetchWeatherNews(
+    final articles = await _apiService.fetchNews(
       category: _selectedCategory,
+      pageSize: 20,
     );
     setState(() {
       _articles = articles;
@@ -64,7 +68,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
           onPressed: () {},
         ),
         title: const Text(
-          'Weather News',
+          'Top News',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,

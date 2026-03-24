@@ -1,8 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/NotiAndNewsScreens/noti_news_main_screen.dart';
+import 'providers/settings_provider.dart';
+import 'providers/weather_provider.dart';
+import 'providers/news_provider.dart';
+import 'providers/notification_provider.dart';
 
-void main() {
-  runApp(const NotiNewsApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load();
+
+  final settingsProvider = SettingsProvider();
+  await settingsProvider.init();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: settingsProvider),
+        ChangeNotifierProvider(create: (_) => NewsProvider()),
+        ChangeNotifierProvider(create: (_) => WeatherProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
+      ],
+      child: const NotiNewsApp(),
+    ),
+  );
 }
 
 class NotiNewsApp extends StatelessWidget {

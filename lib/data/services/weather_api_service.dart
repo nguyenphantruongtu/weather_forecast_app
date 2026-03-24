@@ -22,6 +22,11 @@ class WeatherApiService {
   // --- PHẦN 1: GIỮ CÁC HÀM TỪ TUNGNQ (Để phục vụ màn hình tìm kiếm thành phố) ---
 
   Future<WeatherModel> getCurrentWeather(String city) async {
+    if (USE_MOCK_DATA) {
+      await Future.delayed(Duration(milliseconds: 500)); // Simulate API delay
+      return _getMockWeather(city);
+    }
+
     try {
       final response = await _dio.get(
         '$_baseUrl/weather',
@@ -33,7 +38,7 @@ class WeatherApiService {
         throw Exception('Failed to load weather data');
       }
     } catch (e) {
-      throw Exception('Error: $e');
+      throw Exception('Failed to load current weather: $e');
     }
   }
 
@@ -52,7 +57,7 @@ class WeatherApiService {
         throw Exception('Failed to load forecast data');
       }
     } catch (e) {
-      throw Exception('Error: $e');
+      throw Exception('Failed to load hourly forecast: $e');
     }
   }
 
@@ -71,7 +76,7 @@ class WeatherApiService {
         throw Exception('Failed to load forecast data');
       }
     } catch (e) {
-      throw Exception('Error: $e');
+      throw Exception('Failed to load daily forecast: $e');
     }
   }
 
@@ -237,4 +242,121 @@ class WeatherApiService {
     }
     return days;
   }
+
+  List<ForecastModel> _buildDailyForecast(Map<String, dynamic> data) {
+    final daily = data['daily'] as Map<String, dynamic>? ?? {};
+    final dates = (daily['time'] as List<dynamic>? ?? [])
+        .map((item) => item.toString())
+        .toList();
+    final code = daily['weather_code'] as List<dynamic>? ?? [];
+    final tempMax = daily['temperature_2m_max'] as List<dynamic>? ?? [];
+    final tempMin = daily['temperature_2m_min'] as List<dynamic>? ?? [];
+    final wind = daily['wind_speed_10m_max'] as List<dynamic>? ?? [];
+    final pop = daily['precipitation_probability_max'] as List<dynamic>? ?? [];
+
+    final List<ForecastModel> items = [];
+    for (int i = 0; i < dates.length; i++) {
+      final minT = _toDouble(_valueAt(tempMin, i, 0));
+      final maxT = _toDouble(_valueAt(tempMax, i, 0));
+      final condition = _legacyConditionFromCode(_valueAt(code, i, 3));
+      items.add(
+        ForecastModel(
+          dt: '${dates[i]} 12:00:00',
+          temp: (minT + maxT) / 2,
+          tempMin: minT,
+          tempMax: maxT,
+          feelsLike: (minT + maxT) / 2,
+          humidity: 0,
+          windSpeed: _toDouble(_valueAt(wind, i, 0)),
+          description: condition,
+          icon: _iconFromCondition(condition),
+          precipitation: _toDouble(_valueAt(pop, i, 0)) / 100,
+          cloudiness: 0,
+        ),
+      );
+    }
+
+    return items;
+  }
+
+  String _legacyConditionFromCode(int code) {
+    if (code == 0) return 'clear';
+    if (code == 1 || code == 2 || code == 3) return 'clouds';
+    if (code == 45 || code == 48) return 'mist';
+    if (code == 51 || code == 53 || code == 55 || code == 56 || code == 57) {
+      return 'drizzle';
+    }
+    if (code == 61 || code == 63 || code == 65 || code == 66 || code == 67) {
+      return 'rain';
+    }
+    if (code == 71 || code == 73 || code == 75 || code == 77 || code == 85 || code == 86) {
+      return 'snow';
+    }
+    if (code == 95 || code == 96 || code == 99) return 'thunderstorm';
+    return 'clouds';
+  }
+
+  String _iconFromCondition(String condition) {
+    switch (condition) {
+      case 'clear':
+        return '01d';
+      case 'clouds':
+        return '03d';
+      case 'drizzle':
+        return '09d';
+      case 'rain':
+        return '10d';
+      case 'thunderstorm':
+        return '11d';
+      case 'snow':
+        return '13d';
+      case 'mist':
+        return '50d';
+      default:
+        return '03d';
+    }
+  }
+
+  DateTime _parseDateTime(String? value) {
+    final parsed = DateTime.tryParse(value ?? '');
+    return parsed ?? DateTime.now();
+  }
+
+  String _normalizeDateTimeString(String value) {
+    var normalized = value.replaceFirst('T', ' ');
+    if (normalized.length == 16) {
+      normalized = '$normalized:00';
+    }
+    return normalized;
+  }
+
+  dynamic _valueAt(dynamic source, int index, dynamic fallback) {
+    if (source is! List<dynamic>) return fallback;
+    if (index < 0 || index >= source.length) return fallback;
+    return source[index];
+  }
+
+  double _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  int _toInt(dynamic value) {
+    if (value is num) return value.round();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+}
+
+class _GeoPoint {
+  final String name;
+  final String country;
+  final double latitude;
+  final double longitude;
+
+  const _GeoPoint({
+    required this.name,
+    required this.country,
+    required this.latitude,
+    required this.longitude,
+  });
 }

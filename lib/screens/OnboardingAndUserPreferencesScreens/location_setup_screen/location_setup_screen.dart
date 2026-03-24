@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
-import '../../sv2_screens/home_screen/home_screen.dart';
+import 'location_permission_screen.dart';
+import 'location_success_screen.dart';
+import 'models/location_choice.dart';
+import 'popular_cities_screen.dart';
+import 'search_location_screen.dart';
+import 'services/location_api_service.dart';
 import 'widgets/location_option_card.dart';
-import 'widgets/permission_dialog.dart';
 
-/// Màn hình cấu hình vị trí (Màn 2 - Welcome & Location Setup)
-/// Cho phép người dùng chọn vị trí ban đầu
 class LocationSetupScreen extends StatefulWidget {
   const LocationSetupScreen({super.key});
 
@@ -15,295 +15,249 @@ class LocationSetupScreen extends StatefulWidget {
 }
 
 class _LocationSetupScreenState extends State<LocationSetupScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  String? _selectedCity;
-  bool _isLoading = false;
-
-  /// Danh sách các thành phố phổ biến
-  final List<String> _popularCities = [
-    'Hanoi, Vietnam',
-    'Ho Chi Minh City, Vietnam',
-    'Da Nang, Vietnam',
-    'London, UK',
-    'New York, USA',
-    'Tokyo, Japan',
-    'Sydney, Australia',
-  ];
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  /// Lấy vị trí hiện tại của người dùng
-  Future<void> _getCurrentLocation() async {
-    // Kiểm tra quyền
-    LocationPermission permission = await Geolocator.checkPermission();
-
-    if (permission == LocationPermission.denied) {
-      // Nếu chưa được hỏi, hiển thị dialog xin quyền
-      bool? allowed = await PermissionDialog.show(
-        context,
-        title: 'Access Your Location',
-        message:
-            'We need your location to provide accurate weather information.',
-      );
-
-      if (allowed != true) return;
-
-      permission = await Geolocator.requestPermission();
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      // Nếu người dùng từ chối vĩnh viễn, hiển thị thông báo
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Location permission is denied forever. Enable it in app settings.',
-            ),
-          ),
-        );
-      }
-      return;
-    }
-
-    try {
-      setState(() => _isLoading = true);
-
-      // Lấy vị trí hiện tại
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        // desiredAccuracy: độ chính xác cao
-      );
-
-      // Chuyển đổi tọa độ thành tên thành phố
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks.first;
-        String cityName = '${place.locality}, ${place.country}';
-        // isNotEmpty: danh sách không rỗng
-
-        setState(() => _selectedCity = cityName);
-
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Selected: $cityName')));
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  /// Tìm kiếm thành phố
-  void _searchCity() {
-    String query = _searchController.text.trim();
-    // trim(): xóa khoảng trắng ở đầu và cuối
-
-    if (query.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter a city name')));
-      return;
-    }
-
-    setState(() => _selectedCity = query);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Selected: $query')));
-  }
-
-  /// Di chuyển sang Settings Screen
-  void _continueToSettings() {
-    if (_selectedCity == null || _selectedCity!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a city first')),
-      );
-      return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
-  }
+  LocationChoice? _selectedLocation;
+  final LocationApiService _locationApiService = LocationApiService();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select Location'),
-        elevation: 0,
-        // elevation: xóa shadow
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              // SingleChildScrollView: cho phép scroll khi content vượt quá màn hình
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+      backgroundColor: const Color(0xFFF6F7FB),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: TextButton(
+                  onPressed: _handleSkip,
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFB6BCCB),
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  child: const Text('Skip'),
+                ),
+              ),
+              const Text(
+                'Welcome! 🌤️',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1C2232),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Let\'s set up your location to get accurate\nweather updates',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF8A93A8),
+                  fontWeight: FontWeight.w500,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Center(child: _LocationIllustration()),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE8ECF5)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x12000000),
+                      blurRadius: 18,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Tiêu đề
-                    Text(
-                      'Choose how to find your location',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Option 1: Current Location
                     LocationOptionCard(
-                      title: 'Use Current Location',
-                      description: 'Auto-detect your location using GPS',
-                      icon: Icons.location_on,
-                      backgroundColor: Colors.blue.shade50,
-                      onTap: _getCurrentLocation,
+                      title: 'Use Current\nLocation',
+                      description: 'GPS-based location',
+                      icon: Icons.my_location,
+                      trailingIcon: Icons.push_pin,
+                      onTap: _openPermissionFlow,
                     ),
-
-                    // Option 2: Search City
+                    const SizedBox(height: 10),
                     LocationOptionCard(
-                      title: 'Search City',
-                      description: 'Find and select any city manually',
+                      title: 'Search Location',
+                      description: 'Enter city manually',
                       icon: Icons.search,
-                      backgroundColor: Colors.green.shade50,
-                      onTap: () => _showSearchDialog(),
+                      trailingIcon: Icons.travel_explore,
+                      iconColor: const Color(0xFF78A7EF),
+                      onTap: _openSearchLocation,
                     ),
-
-                    // Option 3: Popular Cities
+                    const SizedBox(height: 10),
                     LocationOptionCard(
                       title: 'Popular Cities',
-                      description: 'Choose from our list of popular cities',
+                      description: 'Browse worldwide',
                       icon: Icons.public,
-                      backgroundColor: Colors.orange.shade50,
-                      onTap: () => _showPopularCitiesDialog(),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Info về vị trí đã chọn
-                    if (_selectedCity != null) ...[
-                      // ... (spread operator): mở rộng list
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.check_circle, color: Colors.green),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Selected Location'),
-                                  Text(
-                                    _selectedCity!,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-
-                    // Nút Continue
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _continueToSettings,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text('Continue'),
-                      ),
+                      trailingIcon: Icons.public,
+                      iconColor: const Color(0xFF6BC89C),
+                      onTap: _openPopularCities,
                     ),
                   ],
                 ),
               ),
-            ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _selectedLocation == null
+                      ? null
+                      : () => _goToSuccess(_selectedLocation!),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(46),
+                    backgroundColor: const Color(0xFF4C9BF0),
+                    disabledBackgroundColor: const Color(0xFFE5E7EF),
+                    foregroundColor: Colors.white,
+                    disabledForegroundColor: const Color(0xFFADB2C2),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    _selectedLocation == null
+                        ? 'Continue'
+                        : 'Continue (${_selectedLocation!.city})',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  /// Dialog tìm kiếm thành phố
-  void _showSearchDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Search City'),
-        content: TextField(
-          controller: _searchController,
-          decoration: const InputDecoration(
-            hintText: 'Enter city name',
-            border: OutlineInputBorder(),
+  Future<void> _openPermissionFlow() async {
+    final result = await Navigator.of(context).push<LocationChoice>(
+      MaterialPageRoute(builder: (_) => const LocationPermissionScreen()),
+    );
+
+    if (result != null && mounted) {
+      setState(() => _selectedLocation = result);
+      _goToSuccess(result);
+    }
+  }
+
+  Future<void> _openSearchLocation() async {
+    final result = await Navigator.of(context).push<LocationChoice>(
+      MaterialPageRoute(builder: (_) => const SearchLocationScreen()),
+    );
+
+    if (result != null && mounted) {
+      setState(() => _selectedLocation = result);
+    }
+  }
+
+  Future<void> _openPopularCities() async {
+    final result = await Navigator.of(context).push<LocationChoice>(
+      MaterialPageRoute(builder: (_) => const PopularCitiesScreen()),
+    );
+
+    if (result != null && mounted) {
+      setState(() => _selectedLocation = result);
+    }
+  }
+
+  Future<void> _handleSkip() async {
+    if (_selectedLocation != null) {
+      _goToSuccess(_selectedLocation!);
+      return;
+    }
+
+    try {
+      final popular = await _locationApiService.getPopularCities();
+      if (!mounted) return;
+      if (popular.isNotEmpty) {
+        _goToSuccess(popular.first);
+        return;
+      }
+    } catch (_) {
+      // Fallback below keeps the flow unblocked when API is unavailable.
+    }
+
+    if (!mounted) return;
+    _goToSuccess(
+      const LocationChoice(city: 'Hanoi', country: 'Vietnam'),
+    );
+  }
+
+  void _goToSuccess(LocationChoice location) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LocationSuccessScreen(location: location),
+      ),
+    );
+  }
+}
+
+class _LocationIllustration extends StatelessWidget {
+  const _LocationIllustration();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 180,
+      height: 180,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 170,
+            height: 170,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFFE8EEF9),
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+          Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              color: const Color(0xFF5A9EEB),
+              borderRadius: BorderRadius.circular(38),
+            ),
+            child: const Icon(Icons.place, color: Colors.white, size: 36),
           ),
-          ElevatedButton(
-            onPressed: () {
-              _searchCity();
-              Navigator.pop(context);
-            },
-            child: const Text('Search'),
+          Positioned(
+            top: 52,
+            right: 38,
+            child: _dotNode(Colors.amber.shade500, Icons.wb_sunny),
+          ),
+          Positioned(
+            left: 30,
+            bottom: 52,
+            child: _dotNode(Colors.blue.shade200, Icons.cloud),
+          ),
+          Positioned(
+            right: 62,
+            bottom: 30,
+            child: _dotNode(Colors.grey.shade300, Icons.air),
           ),
         ],
       ),
     );
   }
 
-  /// Dialog chọn thành phố phổ biến
-  void _showPopularCitiesDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Popular Cities'),
-        content: SizedBox(
-          width: double.maxFinite,
-          // maxFinite: chiều rộng tối đa có sẵn
-          child: ListView.builder(
-            itemCount: _popularCities.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                // ListTile: widget chiếu diễn một item trong list
-                title: Text(_popularCities[index]),
-                onTap: () {
-                  setState(() => _selectedCity = _popularCities[index]);
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Selected: ${_popularCities[index]}'),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ),
+  Widget _dotNode(Color color, IconData icon) {
+    return Container(
+      width: 30,
+      height: 30,
+      decoration: BoxDecoration(color: color.withOpacity(0.25), shape: BoxShape.circle),
+      child: Icon(icon, size: 14, color: color),
     );
   }
 }
