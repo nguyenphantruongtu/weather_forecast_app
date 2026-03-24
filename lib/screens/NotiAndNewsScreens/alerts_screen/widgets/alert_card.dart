@@ -204,7 +204,6 @@ class AlertCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Icon(Icons.share_outlined, size: 18, color: Colors.grey[500]),
                 ],
               ),
             ],

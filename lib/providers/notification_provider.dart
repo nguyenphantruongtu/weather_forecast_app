@@ -10,22 +10,35 @@ class NotificationProvider extends ChangeNotifier {
   NotificationProvider({NotificationService? service})
       : _service = service ?? NotificationService() {
     _config = NotificationConfigModel();
-    _loadConfig();
+    _initialize();
   }
 
   NotificationConfigModel get config => _config;
   bool get isLoading => _isLoading;
 
+  Future<void> _initialize() async {
+    await _service.initialize();
+    await _loadConfig();
+  }
+
   Future<void> _loadConfig() async {
     _isLoading = true;
     notifyListeners();
+
     _config = await _service.loadConfig();
+    await _service.scheduleNotifications(_config);
+
     _isLoading = false;
     notifyListeners();
   }
 
   Future<void> togglePushNotifications(bool value) async {
     _config.pushNotificationsEnabled = value;
+    await _save();
+  }
+
+  Future<void> toggleHourlyForecast(bool value) async {
+    _config.hourlyForecastEnabled = value;
     await _save();
   }
 
@@ -70,12 +83,22 @@ class NotificationProvider extends ChangeNotifier {
     await _save();
   }
 
+  Future<void> updateForecastTime({required bool isMorning, required TimeOfDayModel newTime}) async {
+    if (isMorning) {
+      _config.morningForecastTime = newTime;
+    } else {
+      _config.eveningForecastTime = newTime;
+    }
+    await _save();
+  }
+
   Future<void> sendTestNotification() async {
     await _service.showTestNotification();
   }
 
   Future<void> _save() async {
     await _service.saveConfig(_config);
+    await _service.scheduleNotifications(_config);
     notifyListeners();
   }
 }

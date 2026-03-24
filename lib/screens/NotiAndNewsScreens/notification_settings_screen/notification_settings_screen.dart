@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../data/models/notification_config_model.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/notification_provider.dart';
 import 'widgets/notification_toggle.dart';
 import 'widgets/time_picker_tile.dart';
 
@@ -13,19 +14,21 @@ class NotificationSettingsScreen extends StatefulWidget {
 
 class _NotificationSettingsScreenState
     extends State<NotificationSettingsScreen> {
-  late NotificationConfigModel _config;
   bool _showTestNotif = false;
 
   final List<String> _availableLocations = ['Hanoi', 'Ho Chi Minh City', 'Da Nang'];
 
   @override
-  void initState() {
-    super.initState();
-    _config = NotificationConfigModel();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final provider = context.watch<NotificationProvider>();
+    final config = provider.config;
+
+    if (provider.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
@@ -55,55 +58,58 @@ class _NotificationSettingsScreenState
                 child: NotificationToggle(
                   title: 'Push Notifications',
                   subtitle: 'Enable to receive weather updates',
-                  value: _config.pushNotificationsEnabled,
-                  onChanged: (v) =>
-                      setState(() => _config.pushNotificationsEnabled = v),
+                  value: config.pushNotificationsEnabled,
+                  onChanged: (v) => provider.togglePushNotifications(v),
                 ),
               ),
               const SizedBox(height: 20),
               // Daily Forecasts
-              _buildSectionTitle('DAILY FORECASTS'),
+              _buildSectionTitle('DAILY & HOURLY FORECASTS'),
               _buildCard(
                 child: Column(
                   children: [
                     NotificationToggle(
-                      title: 'Morning Forecast',
-                      subtitle: 'Daily weather at 7:00 AM',
-                      value: _config.morningForecastEnabled,
-                      onChanged: (v) =>
-                          setState(() => _config.morningForecastEnabled = v),
+                      title: 'Hourly Forecast',
+                      subtitle: 'Receive weather updates each hour',
+                      value: config.hourlyForecastEnabled,
+                      onChanged: (v) => provider.toggleHourlyForecast(v),
                     ),
-                    if (_config.morningForecastEnabled) ...[
+                    const Divider(height: 24),
+                    NotificationToggle(
+                      title: 'Morning Forecast',
+                      subtitle: 'Daily weather at selected time',
+                      value: config.morningForecastEnabled,
+                      onChanged: (v) => provider.toggleMorningForecast(v),
+                    ),
+                    if (config.morningForecastEnabled) ...[
                       const SizedBox(height: 4),
                       TimePickerTile(
-                        time: _config.morningForecastTime,
+                        time: config.morningForecastTime,
                         onTimeChanged: (t) =>
-                            setState(() => _config.morningForecastTime = t),
+                            provider.updateForecastTime(isMorning: true, newTime: t),
                       ),
                     ],
                     const Divider(height: 24),
                     NotificationToggle(
                       title: 'Evening Forecast',
-                      subtitle: 'Daily weather at 7:00 PM',
-                      value: _config.eveningForecastEnabled,
-                      onChanged: (v) =>
-                          setState(() => _config.eveningForecastEnabled = v),
+                      subtitle: 'Daily weather at selected time',
+                      value: config.eveningForecastEnabled,
+                      onChanged: (v) => provider.toggleEveningForecast(v),
                     ),
-                    if (_config.eveningForecastEnabled) ...[
+                    if (config.eveningForecastEnabled) ...[
                       const SizedBox(height: 4),
                       TimePickerTile(
-                        time: _config.eveningForecastTime,
+                        time: config.eveningForecastTime,
                         onTimeChanged: (t) =>
-                            setState(() => _config.eveningForecastTime = t),
+                            provider.updateForecastTime(isMorning: false, newTime: t),
                       ),
                     ],
                     const Divider(height: 24),
                     NotificationToggle(
                       title: 'Weekend Summary',
-                      subtitle: 'Friday evening forecast for weekend',
-                      value: _config.weekendSummaryEnabled,
-                      onChanged: (v) =>
-                          setState(() => _config.weekendSummaryEnabled = v),
+                      subtitle: 'Friday evening summary for the next days',
+                      value: config.weekendSummaryEnabled,
+                      onChanged: (v) => provider.toggleWeekendSummary(v),
                     ),
                   ],
                 ),
@@ -118,18 +124,16 @@ class _NotificationSettingsScreenState
                       title: 'Severe Weather Warnings ⚠️',
                       subtitle: 'Storm, flood, extreme weather',
                       warningText: 'Always recommended ON',
-                      value: _config.severeWeatherWarningsEnabled,
-                      onChanged: (v) => setState(
-                          () => _config.severeWeatherWarningsEnabled = v),
+                      value: config.severeWeatherWarningsEnabled,
+                      onChanged: (v) => provider.toggleSevereWeatherWarnings(v),
                       alwaysOn: true,
                     ),
                     const Divider(height: 24),
                     NotificationToggle(
                       title: 'Weather Advisories 🔔',
                       subtitle: 'Wind, fog, heat advisories',
-                      value: _config.weatherAdvisoriesEnabled,
-                      onChanged: (v) =>
-                          setState(() => _config.weatherAdvisoriesEnabled = v),
+                      value: config.weatherAdvisoriesEnabled,
+                      onChanged: (v) => provider.toggleWeatherAdvisories(v),
                     ),
                   ],
                 ),
@@ -181,15 +185,14 @@ class _NotificationSettingsScreenState
                         ),
                       ),
                     // Location checkboxes
-                    ..._availableLocations.map((loc) => _buildLocationCheckbox(loc)),
+                    ..._availableLocations.map((loc) => _buildLocationCheckbox(loc, provider)),
                     const Divider(height: 20),
                     // Current location toggle
                     NotificationToggle(
                       title: 'Current Location',
                       subtitle: 'Uses GPS when app is open',
-                      value: _config.useCurrentLocation,
-                      onChanged: (v) =>
-                          setState(() => _config.useCurrentLocation = v),
+                      value: config.useCurrentLocation,
+                      onChanged: (v) => provider.toggleCurrentLocation(v),
                     ),
                   ],
                 ),
@@ -199,7 +202,10 @@ class _NotificationSettingsScreenState
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () => setState(() => _showTestNotif = true),
+                  onPressed: () {
+                    provider.sendTestNotification();
+                    setState(() => _showTestNotif = true);
+                  },
                   icon: const Icon(Icons.notifications_outlined,
                       size: 18, color: Color(0xFF6B7AEF)),
                   label: const Text(
@@ -223,21 +229,15 @@ class _NotificationSettingsScreenState
     );
   }
 
-  Widget _buildLocationCheckbox(String location) {
-    final isSelected = _config.subscribedLocations.contains(location);
+  Widget _buildLocationCheckbox(String location, NotificationProvider provider) {
+    final isSelected = provider.config.subscribedLocations.contains(location);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           GestureDetector(
             onTap: () {
-              setState(() {
-                if (isSelected) {
-                  _config.subscribedLocations.remove(location);
-                } else {
-                  _config.subscribedLocations.add(location);
-                }
-              });
+              provider.toggleLocation(location, !isSelected);
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
