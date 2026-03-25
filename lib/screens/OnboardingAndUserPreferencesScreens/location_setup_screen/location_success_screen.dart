@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../sv2_screens/home_screen/home_screen.dart';
+import '../../main_wrapper_screen.dart';
 import 'models/location_choice.dart';
 
 class LocationSuccessScreen extends StatelessWidget {
@@ -63,7 +63,7 @@ class LocationSuccessScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      MaterialPageRoute(builder: (_) => const MainWrapperScreen()),
                       (route) => false,
                     );
                   },

@@ -8,6 +8,7 @@ import '../../../../utils/unit_converter.dart';
 class CurrentWeatherCard extends StatelessWidget {
   final WeatherModel weather;
   final VoidCallback onSettingsTap;
+  final VoidCallback? onCompareTap;
   final TemperatureUnit temperatureUnit;
   final TimeFormat timeFormat;
   final String languageCode;
@@ -16,6 +17,7 @@ class CurrentWeatherCard extends StatelessWidget {
     super.key,
     required this.weather,
     required this.onSettingsTap,
+    this.onCompareTap,
     required this.temperatureUnit,
     required this.timeFormat,
     required this.languageCode,
@@ -100,9 +102,20 @@ class CurrentWeatherCard extends StatelessWidget {
                   ),
                 ],
               ),
-              IconButton(
-                onPressed: onSettingsTap,
-                icon: const Icon(Icons.settings, color: Colors.white),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onCompareTap != null)
+                    IconButton(
+                      onPressed: onCompareTap,
+                      icon: const Icon(Icons.compare_arrows, color: Colors.white),
+                      tooltip: AppStrings.tr(languageCode, en: 'Compare', vi: 'So sánh'),
+                    ),
+                  IconButton(
+                    onPressed: onSettingsTap,
+                    icon: const Icon(Icons.settings, color: Colors.white),
+                  ),
+                ],
               ),
             ],
           ),

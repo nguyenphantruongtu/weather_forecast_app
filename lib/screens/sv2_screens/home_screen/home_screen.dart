@@ -10,7 +10,8 @@ import 'widgets/weather_metrics_grid.dart';
 import 'widgets/forecast_preview.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback? onNavigateToCompare;
+  const HomeScreen({super.key, this.onNavigateToCompare});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -18,7 +19,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _currentCity = 'Hanoi';
 
   @override
   void initState() {
@@ -31,16 +31,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _loadWeatherData() {
     final weatherProvider = context.read<WeatherProvider>();
-    weatherProvider.fetchCurrentWeather(_currentCity);
-    weatherProvider.fetchHourlyForecast(_currentCity);
+    if (weatherProvider.currentWeather == null) {
+      weatherProvider.fetchCurrentWeather('Hanoi');
+      weatherProvider.fetchHourlyForecast('Hanoi');
+    }
   }
 
   void _handleSearch(String city) {
     setState(() {
-      _currentCity = city;
       _searchController.clear();
     });
-    _loadWeatherData();
+    final weatherProvider = context.read<WeatherProvider>();
+    weatherProvider.fetchCurrentWeather(city);
+    weatherProvider.fetchHourlyForecast(city);
   }
 
   @override
@@ -159,6 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Current Weather Card
                         CurrentWeatherCard(
                           weather: currentWeather,
+                          onCompareTap: widget.onNavigateToCompare,
                           onSettingsTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
@@ -191,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Hourly Forecast Preview
                         ForecastPreview(
                           hourlyForecast: weatherProvider.hourlyForecast,
-                          city: _currentCity,
+                          city: currentWeather.location.split(',').first.trim(),
                           temperatureUnit: settings.temperatureUnit,
                           timeFormat: settings.timeFormat,
                           languageCode: languageCode,

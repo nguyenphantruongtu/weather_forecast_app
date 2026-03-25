@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:fl_chart/fl_chart.dart';
+import '../../providers/weather_provider.dart';
+import '../../data/models/weather_model.dart';
 
 class CompareLocationsScreen extends StatefulWidget {
   const CompareLocationsScreen({super.key});
@@ -9,41 +13,80 @@ class CompareLocationsScreen extends StatefulWidget {
 
 class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
   bool _isSideBySide = true;
-  List<Map<String, dynamic>> _selectedLocations = [
-    {
-      'name': 'Ho Chi Minh City',
-      'country': 'Vietnam',
-      'weatherIcon': Icons.wb_sunny,
-      'temperature': '28°',
-    },
-    {
-      'name': 'Hanoi',
-      'country': 'Vietnam',
-      'weatherIcon': Icons.cloud,
-      'temperature': '25°',
-    },
-  ];
+  List<Map<String, dynamic>> _selectedLocations = [];
+  List<Map<String, dynamic>> _compareData = [];
 
-  List<Map<String, dynamic>> _compareData = [
-    {'metric': 'Current', 'hcm': '28°', 'hanoi': '25°'},
-    {'metric': 'Feels Like', 'hcm': '30°', 'hanoi': '27°'},
-    {'metric': 'High / Low', 'hcm': '32° / 24°', 'hanoi': '28° / 22°'},
-    {'metric': 'Weather', 'hcm': 'Sunny', 'hanoi': 'Cloudy'},
-    {'metric': 'Humidity', 'hcm': '65%', 'hanoi': '75%'},
-    {'metric': 'Precipitation', 'hcm': '0%', 'hanoi': '10%'},
-    {'metric': 'Wind Speed', 'hcm': '12 km/h', 'hanoi': '15 km/h'},
-  ];
+  IconData _getIconData(String description) {
+    switch (description.toLowerCase()) {
+      case 'clear':
+        return Icons.wb_sunny;
+      case 'clouds':
+        return Icons.cloud;
+      case 'rain':
+      case 'drizzle':
+        return Icons.water_drop;
+      case 'thunderstorm':
+        return Icons.thunderstorm;
+      case 'snow':
+        return Icons.ac_unit;
+      default:
+        return Icons.cloud;
+    }
+  }
+
+  void _updateDataFromProvider(List<WeatherModel> locations) {
+    if (locations.isEmpty) {
+      _selectedLocations = [];
+      _compareData = [];
+      return;
+    }
+
+    _selectedLocations = locations.map((w) {
+      final parts = w.location.split(',');
+      return {
+        'name': parts.first,
+        'country': parts.length > 1 ? parts.last.trim() : '',
+        'weatherIcon': _getIconData(w.description),
+        'temperature': '${w.temperature.round()}°',
+        'fullName': w.location,
+      };
+    }).toList();
+
+    if (locations.length >= 2) {
+      final w1 = locations[0];
+      final w2 = locations[1];
+      _compareData = [
+        {'metric': 'Current', 'v1': '${w1.temperature.round()}°', 'v2': '${w2.temperature.round()}°'},
+        {'metric': 'Feels Like', 'v1': '${w1.feelsLike.round()}°', 'v2': '${w2.feelsLike.round()}°'},
+        {'metric': 'Weather', 'v1': w1.description, 'v2': w2.description},
+        {'metric': 'Humidity', 'v1': '${w1.humidity}%', 'v2': '${w2.humidity}%'},
+        {'metric': 'Wind Speed', 'v1': '${w1.windSpeed} km/h', 'v2': '${w2.windSpeed} km/h'},
+        {'metric': 'UV Index', 'v1': w1.uvIndex.toString(), 'v2': w2.uvIndex.toString()},
+      ];
+    } else if (locations.length == 1) {
+      final w1 = locations[0];
+      _compareData = [
+        {'metric': 'Current', 'v1': '${w1.temperature.round()}°', 'v2': '-'},
+        {'metric': 'Feels Like', 'v1': '${w1.feelsLike.round()}°', 'v2': '-'},
+        {'metric': 'Weather', 'v1': w1.description, 'v2': '-'},
+        {'metric': 'Humidity', 'v1': '${w1.humidity}%', 'v2': '-'},
+        {'metric': 'Wind Speed', 'v1': '${w1.windSpeed} km/h', 'v2': '-'},
+        {'metric': 'UV Index', 'v1': w1.uvIndex.toString(), 'v2': '-'},
+      ];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<WeatherProvider>();
+    final locations = provider.compareLocations;
+
+    _updateDataFromProvider(locations);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: const Text(
           'Compare Locations',
           style: TextStyle(
@@ -52,14 +95,6 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
             fontSize: 18,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: Colors.black),
-            onPressed: () {
-              // Add location to compare
-            },
-          ),
-        ],
         centerTitle: true,
       ),
       body: Padding(
@@ -81,14 +116,14 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
               child: SingleChildScrollView(
                 child: _isSideBySide 
                   ? _buildSideBySideTable()
-                  : _buildChartsView(),
+                  : _buildChartsView(locations),
               ),
             ),
 
             const SizedBox(height: 16),
 
             // Quick stats
-            _buildQuickStats(),
+            _buildQuickStats(locations),
           ],
         ),
       ),
@@ -97,7 +132,7 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
 
   Widget _buildSelectedLocationsRow() {
     return Container(
-      height: 80,
+      height: 120, // Tăng thêm height để an toàn tuyệt đối
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _selectedLocations.length + 1, // +1 for add button
@@ -115,7 +150,9 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
               child: Center(
                 child: TextButton.icon(
                   onPressed: () {
-                    // Add new location
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Vào màn hình Tìm Kiếm để thêm thành phố!')),
+                    );
                   },
                   icon: const Icon(Icons.add, color: Colors.grey),
                   label: const Text(
@@ -147,25 +184,32 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
                 // Content
                 Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        location['name'],
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  child: SingleChildScrollView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            location['name'],
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            location['country'],
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        location['country'],
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
-                      ),
-                      const Spacer(),
                       Row(
                         children: [
                           Icon(
@@ -186,19 +230,25 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
                     ],
                   ),
                 ),
+                ),
                 
                 // Remove badge
                 Positioned(
                   top: 4,
                   right: 4,
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    onTap: () {
+                      context.read<WeatherProvider>().removeCityFromCompare(location['fullName']);
+                    },
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.close, size: 12, color: Colors.white),
                     ),
-                    child: const Icon(Icons.close, size: 12, color: Colors.white),
                   ),
                 ),
               ],
@@ -286,8 +336,8 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
             // Header row
             CompareTableRow(
               metric: 'Metric',
-              value1: _selectedLocations[0]['name'],
-              value2: _selectedLocations[1]['name'],
+              value1: _selectedLocations.isNotEmpty ? _selectedLocations[0]['name'] : 'City 1',
+              value2: _selectedLocations.length > 1 ? _selectedLocations[1]['name'] : 'City 2',
               isHeader: true,
             ),
             
@@ -295,8 +345,8 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
             for (var data in _compareData)
               CompareTableRow(
                 metric: data['metric'],
-                value1: data['hcm'],
-                value2: data['hanoi'],
+                value1: data['v1'],
+                value2: data['v2'],
                 isHeader: false,
               ),
           ],
@@ -305,29 +355,117 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
     );
   }
 
-  Widget _buildChartsView() {
+  Widget _buildChartsView(List<WeatherModel> locations) {
+    if (locations.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Center(child: Text('No data to compare charts')),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        _buildComparisonChart(
+          title: 'Temperature (°C)',
+          locations: locations,
+          getValue: (w) => w.temperature,
+          color: Colors.orange,
+        ),
+        const SizedBox(height: 16),
+        _buildComparisonChart(
+          title: 'Humidity (%)',
+          locations: locations,
+          getValue: (w) => w.humidity.toDouble(),
+          color: Colors.blue,
+        ),
+        const SizedBox(height: 16),
+        _buildComparisonChart(
+          title: 'Wind Speed (km/h)',
+          locations: locations,
+          getValue: (w) => w.windSpeed,
+          color: Colors.green,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildComparisonChart({
+    required String title,
+    required List<WeatherModel> locations,
+    required double Function(WeatherModel) getValue,
+    required Color color,
+  }) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Charts View Coming Soon',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            const SizedBox(height: 20),
-            const Text(
-              'This section will display visual charts comparing the selected locations.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color.fromARGB(255, 117, 117, 117),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 150,
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: locations.fold<double>(0, (max, w) {
+                    double val = getValue(w);
+                    return val > max ? val : max;
+                  }) * 1.2,
+                  barTouchData: BarTouchData(enabled: true),
+                  titlesData: FlTitlesData(
+                    show: true,
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          int index = value.toInt();
+                          if (index < 0 || index >= locations.length) return const SizedBox();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              locations[index].location.split(',').first,
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        },
+                        reservedSize: 28,
+                      ),
+                    ),
+                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  gridData: const FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  barGroups: List.generate(locations.length, (index) {
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: getValue(locations[index]),
+                          color: index == 0 ? color : color.withOpacity(0.6),
+                          width: 30,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                          backDrawRodData: BackgroundBarChartRodData(
+                            show: true,
+                            toY: 0,
+                            color: Colors.grey[100],
+                          ),
+                        ),
+                      ],
+                      showingTooltipIndicators: [0],
+                    );
+                  }),
+                ),
               ),
             ),
           ],
@@ -336,7 +474,14 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
     );
   }
 
-  Widget _buildQuickStats() {
+  Widget _buildQuickStats(List<WeatherModel> locations) {
+    if (locations.isEmpty) return const SizedBox();
+
+    WeatherModel warmest = locations[0];
+    if (locations.length > 1 && locations[1].temperature > locations[0].temperature) {
+      warmest = locations[1];
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -352,7 +497,7 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
       ),
       child: Row(
         children: [
-          Icon(Icons.whatshot, color: Colors.red, size: 24),
+          const Icon(Icons.whatshot, color: Colors.red, size: 24),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +511,7 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Ho Chi Minh City',
+                warmest.location.split(',').first,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -376,7 +521,7 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
           ),
           const Spacer(),
           Text(
-            '28°',
+            '${warmest.temperature.round()}°',
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
