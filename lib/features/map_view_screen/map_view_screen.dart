@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../providers/location_provider.dart';
 import '../location_compare_screen/location_compare_screen.dart';
 import '../location_search_screen/location_search_screen.dart';
@@ -24,8 +25,9 @@ class _MapViewScreenState extends State<MapViewScreen> {
   
   // Trạng thái lưu lớp bản đồ hiện hành
   String _currentWeatherLayer = 'none'; 
-  // TODO: Thay YOUR_API_KEY bằng API Key thật của OpenWeatherMap
-  final String _openWeatherApiKey = '217b719f20e6ea5bdd5e3c45efd89d65'; 
+  
+  // Lấy API Key từ file .env
+  final String _openWeatherApiKey = dotenv.env['OPENWEATHER_API_KEY'] ?? ''; 
 
   // State cho thanh tìm kiếm nổi
   final TextEditingController _searchController = TextEditingController();

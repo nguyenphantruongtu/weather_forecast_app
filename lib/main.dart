@@ -21,7 +21,7 @@ import 'features/location_search_screen/location_search_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load file .env (Sử dụng cách viết explicit của develop)
+  // Load file .env
   await dotenv.load(fileName: '.env');
 
   final settingsProvider = SettingsProvider();
@@ -34,7 +34,7 @@ void main() async {
         ChangeNotifierProvider.value(value: settingsProvider),
         ChangeNotifierProvider(create: (_) => NewsProvider()),
 
-        // 2. Services (Dùng Provider thường - Dependency Injection từ develop)
+        // 2. Services (Lấy key từ file .env truyền vào API Service)
         Provider<WeatherApiService>(
           create: (_) => WeatherApiService(
             dio: Dio(),
@@ -63,8 +63,6 @@ void main() async {
   );
 }
 
-// Lưu ý: Nếu trong app.dart đã có MyApp, bạn nên vào đó để sửa 'home'
-// Còn nếu chưa có, hãy giữ nguyên khai báo này.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -74,7 +72,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Weather App Group 6',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      // Màn hình khởi đầu của Tùng
       home: const LocationSearchScreen(), 
     );
   }
