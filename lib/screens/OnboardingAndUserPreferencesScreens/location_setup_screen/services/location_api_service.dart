@@ -17,7 +17,8 @@ class LocationApiService {
                 receiveTimeout: const Duration(seconds: 10),
               ),
             ),
-        _weatherApiService = weatherApiService ?? WeatherApiService();
+        _weatherApiService = weatherApiService ?? WeatherApiService(
+            dio: Dio(), apiKey: 'dummy_key', baseUrl: 'https://api.openweathermap.org/data/2.5');
 
   Future<LocationChoice> resolveCurrentLocation(
     double latitude,
