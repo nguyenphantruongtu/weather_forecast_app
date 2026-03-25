@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -8,9 +9,12 @@ import 'weather_api_service.dart';
 
 class NotificationService {
   static const String _configKey = 'notification_config';
-  final FlutterLocalNotificationsPlugin _plugin =
-      FlutterLocalNotificationsPlugin();
-  final WeatherApiService _weatherService = WeatherApiService();
+  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  final WeatherApiService _weatherService = WeatherApiService(
+    dio: Dio(),
+    apiKey: 'dummy_key',
+    baseUrl: 'https://api.openweathermap.org/data/2.5',
+  );
 
   static const _channelId = 'weather_forecast_channel';
   static const _channelName = 'Weather Forecast Updates';

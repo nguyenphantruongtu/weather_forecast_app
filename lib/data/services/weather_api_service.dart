@@ -2,19 +2,25 @@ import 'package:dio/dio.dart';
 import '../models/weather_model.dart';
 import '../models/forecast_model.dart';
 
+// Mock data flag
+const bool USE_MOCK_DATA = true;
+
 class WeatherApiService {
   static const String _forecastBaseUrl = 'https://api.open-meteo.com/v1';
   static const String _geocodingBaseUrl = 'https://geocoding-api.open-meteo.com/v1';
 
-  final Dio _dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ),
-  );
+  final Dio _dio;
 
   // Use mock data for testing
   static const bool USE_MOCK_DATA = true;
+
+  WeatherApiService({Dio? dio, String? apiKey, String? baseUrl})
+      : _dio = dio ?? Dio(
+          BaseOptions(
+            connectTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 10),
+          ),
+        );
 
   // Mock weather data generator
   WeatherModel _getMockWeather(String city) {

@@ -6,8 +6,9 @@ import 'providers/settings_provider.dart';
 import 'providers/news_provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/notification_provider.dart';
+import 'screens/OnboardingAndUserPreferencesScreens/splash_screen/splash_screen.dart';
 
-/// Entry point của ứng dụn
+/// Entry point của ứng dụng
 /// main(): hàm chính được gọi khi app khởi động
 void main() async {
   // Đảm bảo Flutter bindings được khởi tạo
@@ -28,6 +29,9 @@ void main() async {
     final settingsProvider = SettingsProvider();
     await settingsProvider.init();
     // settingsProvider.init(): tải cấu hình đã lưu trước đó
+  
+    // Load file .env
+    await dotenv.load(fileName: '.env');
 
     // Chạy ứng dụng
     runApp(
@@ -95,6 +99,20 @@ void main() async {
           ),
         ),
       ),
+    );
+  }
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Weather App Group 6',
+      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+      home: const SplashScreen(), 
     );
   }
 }
