@@ -8,6 +8,8 @@ import 'providers/weather_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/location_provider.dart';
 import 'screens/OnboardingAndUserPreferencesScreens/splash_screen/splash_screen.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'data/services/notification_service.dart';
 
 /// Entry point của ứng dụng
 /// main(): hàm chính được gọi khi app khởi động
@@ -31,6 +33,10 @@ void main() async {
     await settingsProvider.init();
     // settingsProvider.init(): tải cấu hình đã lưu trước đó
   
+    // Khởi tạo timezone data cho tính năng thông báo theo múi giờ
+    tz.initializeTimeZones();
+    await NotificationService().initialize();
+
     // Load file .env
     await dotenv.load(fileName: '.env');
 

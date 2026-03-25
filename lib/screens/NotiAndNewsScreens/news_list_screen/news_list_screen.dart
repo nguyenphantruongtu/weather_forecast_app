@@ -4,6 +4,7 @@ import '../../../../data/services/news_api_service.dart';
 import '../news_detail_screen/news_detail_screen.dart';
 import 'widgets/category_chips.dart';
 import 'widgets/news_card.dart';
+import '../../../../screens/main_wrapper_screen.dart';
 
 class NewsListScreen extends StatefulWidget {
   const NewsListScreen({super.key});
@@ -65,7 +66,15 @@ class _NewsListScreenState extends State<NewsListScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.home, color: Color(0xFF1A1A2E)),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MainWrapperScreen(),
+              ),
+              (route) => false,
+            );
+          },
         ),
         title: const Text(
           'Top News',
