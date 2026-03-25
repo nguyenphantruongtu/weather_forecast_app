@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'app.dart';
 import 'providers/settings_provider.dart';
 import 'providers/news_provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/notification_provider.dart';
+import 'screens/OnboardingAndUserPreferencesScreens/splash_screen/splash_screen.dart';
 
-/// Entry point của ứng dụn
+/// Entry point của ứng dụng
 /// main(): hàm chính được gọi khi app khởi động
 void main() async {
   // Đảm bảo Flutter bindings được khởi tạo
@@ -33,11 +30,8 @@ void main() async {
     await settingsProvider.init();
     // settingsProvider.init(): tải cấu hình đã lưu trước đó
   
-  // Load file .env
-  await dotenv.load(fileName: '.env');
-
- 
-  
+    // Load file .env
+    await dotenv.load(fileName: '.env');
 
     // Chạy ứng dụng
     runApp(
@@ -105,33 +99,8 @@ void main() async {
           ),
         ),
       ),
-        // 2. Services (Lấy key từ file .env truyền vào API Service)
-        Provider<WeatherApiService>(
-          create: (_) => WeatherApiService(
-            dio: Dio(),
-            apiKey: dotenv.env['OPENWEATHER_API_KEY'] ?? '',
-            baseUrl: dotenv.env['OPENWEATHER_BASE_URL'] ?? 'https://api.openweathermap.org/data/2.5',
-          ),
-        ),
-        Provider<OpenMeteoService>(
-          create: (_) => OpenMeteoService(dio: Dio()),
-        ),
-
-        // 3. ViewModels / Providers logic
-        ChangeNotifierProvider<CalendarProvider>(
-          create: (context) => CalendarProvider(
-            weatherApiService: context.read<WeatherApiService>(),
-          ),
-        ),
-        
-        // --- Providers giữ lại từ branch của Tùng ---
-        ChangeNotifierProvider(create: (_) => WeatherProvider()), 
-        ChangeNotifierProvider(create: (_) => LocationProvider()),
-        ChangeNotifierProvider(create: (_) => SavedLocationsProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -143,7 +112,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Weather App Group 6',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      home: const LocationSearchScreen(), 
+      home: const SplashScreen(), 
     );
   }
 }

@@ -9,15 +9,18 @@ class WeatherApiService {
   static const String _forecastBaseUrl = 'https://api.open-meteo.com/v1';
   static const String _geocodingBaseUrl = 'https://geocoding-api.open-meteo.com/v1';
 
-  final Dio _dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ),
-  );
+  final Dio _dio;
 
   // Use mock data for testing
   static const bool USE_MOCK_DATA = true;
+
+  WeatherApiService({Dio? dio, String? apiKey, String? baseUrl})
+      : _dio = dio ?? Dio(
+          BaseOptions(
+            connectTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 10),
+          ),
+        );
 
   // Mock weather data generator
   WeatherModel _getMockWeather(String city) {
@@ -394,70 +397,6 @@ class WeatherApiService {
   int _toInt(dynamic value) {
     if (value is num) return value.round();
     return int.tryParse(value?.toString() ?? '') ?? 0;
-  }
-
-  WeatherModel _getMockWeather(String city) {
-    return WeatherModel(
-      location: city,
-      temperature: 25.0,
-      description: 'Clear',
-      icon: '01d',
-      feelsLike: 26.0,
-      humidity: 60,
-      windSpeed: 5.0,
-      pressure: 1013,
-      visibility: 10.0,
-      uvIndex: 5.0,
-      dewPoint: 20.0,
-      sunrise: DateTime.now().add(Duration(hours: 6)),
-      sunset: DateTime.now().add(Duration(hours: 18)),
-      lastUpdated: DateTime.now(),
-    );
-  }
-
-  Future<WeatherModel> getWeatherByCoordinatesWithLocation(
-    double latitude,
-    double longitude, {
-    required String locationName,
-  }) async {
-    if (USE_MOCK_DATA) {
-      await Future.delayed(Duration(milliseconds: 500));
-      return WeatherModel(
-        location: locationName,
-        temperature: 25.0,
-        description: 'Clear',
-        icon: '01d',
-        feelsLike: 26.0,
-        humidity: 60,
-        windSpeed: 5.0,
-        pressure: 1013,
-        visibility: 10.0,
-        uvIndex: 5.0,
-        dewPoint: 20.0,
-        sunrise: DateTime.now().add(Duration(hours: 6)),
-        sunset: DateTime.now().add(Duration(hours: 18)),
-        lastUpdated: DateTime.now(),
-      );
-    }
-
-    try {
-      final response = await _dio.get(
-        '$_baseUrl/weather',
-        queryParameters: {
-          'lat': latitude,
-          'lon': longitude,
-          'appid': _apiKey,
-          'units': 'metric',
-        },
-      );
-      if (response.statusCode == 200) {
-        return WeatherModel.fromJson(response.data);
-      } else {
-        throw Exception('Failed to load weather data');
-      }
-    } catch (e) {
-      throw Exception('Failed to load weather by coordinates: $e');
-    }
   }
 }
 
