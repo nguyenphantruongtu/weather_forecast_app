@@ -12,9 +12,7 @@ class AlertsScreen extends StatefulWidget {
   State<AlertsScreen> createState() => _AlertsScreenState();
 }
 
-class _AlertsScreenState extends State<AlertsScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _AlertsScreenState extends State<AlertsScreen> {
   AlertSeverity? _selectedSeverity;
   late List<AlertModel> _activeAlerts;
 
@@ -22,19 +20,17 @@ class _AlertsScreenState extends State<AlertsScreen>
   void initState() {
     super.initState();
     _activeAlerts = [];
-    _tabController = TabController(length: 2, vsync: this);
 
     Future.microtask(() {
-    final provider = Provider.of<WeatherProvider>(context, listen: false);
-    provider.fetchCurrentWeather("Da Nang"); // hoặc city bạn muốn
-  });
+      final provider = Provider.of<WeatherProvider>(context, listen: false);
+      provider
+          .fetchCurrentLocationWeather(); // Sử dụng GPS để lấy vị trí hiện tại
+    });
   }
 
   List<AlertModel> get _filteredAlerts {
     if (_selectedSeverity == null) return _activeAlerts;
-    return _activeAlerts
-        .where((a) => a.severity == _selectedSeverity)
-        .toList();
+    return _activeAlerts.where((a) => a.severity == _selectedSeverity).toList();
   }
 
   /// Generate alerts based on current weather conditions
@@ -73,8 +69,8 @@ class _AlertsScreenState extends State<AlertsScreen>
       );
     }
 
-    // High Wind Warning - if windSpeed > 30 km/h
-    if (weather.windSpeed > 30) {
+    // High Wind Warning - if windSpeed > 20 km/h
+    if (weather.windSpeed > 20) {
       _activeAlerts.add(
         AlertModel(
           id: (alertId++).toString(),
@@ -89,7 +85,7 @@ class _AlertsScreenState extends State<AlertsScreen>
           startTime: DateTime.now(),
           endTime: DateTime.now().add(const Duration(hours: 12)),
           updatedAt: DateTime.now(),
-          impact: weather.windSpeed > 50 ? 'High Risk' : 'Moderate Risk',
+          impact: weather.windSpeed > 30 ? 'High Risk' : 'Moderate Risk',
           isActive: true,
         ),
       );
@@ -174,7 +170,7 @@ class _AlertsScreenState extends State<AlertsScreen>
           startTime: DateTime.now(),
           endTime: DateTime.now().add(const Duration(hours: 24)),
           updatedAt: DateTime.now(),
-          impact: weather.temperature < 0 ? 'High Risk' : 'Moderate Risk',
+          impact: weather.temperature < 5 ? 'High Risk' : 'Moderate Risk',
           isActive: true,
         ),
       );
@@ -203,7 +199,6 @@ class _AlertsScreenState extends State<AlertsScreen>
 
   @override
   void dispose() {
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -213,9 +208,9 @@ class _AlertsScreenState extends State<AlertsScreen>
       builder: (context, weatherProvider, child) {
         // Update alerts whenever weather changes
         _updateAlertsFromWeather(weatherProvider.currentWeather);
-        
+
         final location =
-            weatherProvider.currentWeather?.location ?? 'Loading...';
+            weatherProvider.currentWeather?.location ?? 'Turn on GPS to get location';
 
         return Scaffold(
           backgroundColor: const Color(0xFFF7F8FA),
@@ -223,8 +218,8 @@ class _AlertsScreenState extends State<AlertsScreen>
             backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios, size: 20),
-              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.home, color: Color(0xFF1A1A2E)),
+              onPressed: () {},
             ),
             title: const Text(
               'Weather Alerts',
@@ -235,61 +230,21 @@ class _AlertsScreenState extends State<AlertsScreen>
               ),
             ),
             centerTitle: true,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(48),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F0F0),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  labelColor: const Color(0xFF1A1A2E),
-                  unselectedLabelColor: Colors.grey,
-                  labelStyle: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  tabs: const [
-                    Tab(text: 'Active'),
-                    Tab(text: 'Past'),
-                  ],
-                ),
-              ),
-            ),
           ),
-          body: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildActiveAlertsTab(weatherProvider, location),
-              _buildPastAlertsTab(),
-            ],
-          ),
+          body: _buildActiveAlertsTab(weatherProvider, location),
         );
       },
     );
   }
 
-  Widget _buildActiveAlertsTab(WeatherProvider weatherProvider, String location) {
+  Widget _buildActiveAlertsTab(
+    WeatherProvider weatherProvider,
+    String location,
+  ) {
     return RefreshIndicator(
       onRefresh: () async {
-        // Fetch weather data again
-        if (weatherProvider.currentWeather != null) {
-          await weatherProvider.fetchCurrentWeather(location);
-        }
+        // Fetch weather data again using GPS
+        await weatherProvider.fetchCurrentLocationWeather();
       },
       child: CustomScrollView(
         slivers: [
@@ -302,8 +257,11 @@ class _AlertsScreenState extends State<AlertsScreen>
                   // Location row
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 16, color: Color(0xFF6B7AEF)),
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: Color(0xFF6B7AEF),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         location,
@@ -315,10 +273,8 @@ class _AlertsScreenState extends State<AlertsScreen>
                       ),
                       const Spacer(),
                       GestureDetector(
-                        onTap: () {
-                          if (weatherProvider.currentWeather != null) {
-                            weatherProvider.fetchCurrentWeather(location);
-                          }
+                        onTap: () async {
+                          await weatherProvider.fetchCurrentLocationWeather();
                         },
                         child: Container(
                           padding: const EdgeInsets.all(6),
@@ -326,8 +282,11 @@ class _AlertsScreenState extends State<AlertsScreen>
                             color: const Color(0xFFEEF0FB),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.refresh,
-                              size: 18, color: Color(0xFF6B7AEF)),
+                          child: const Icon(
+                            Icons.refresh,
+                            size: 18,
+                            color: Color(0xFF6B7AEF),
+                          ),
                         ),
                       ),
                     ],
@@ -350,10 +309,7 @@ class _AlertsScreenState extends State<AlertsScreen>
                     weatherProvider.currentWeather != null
                         ? 'Updated just now'
                         : 'Loading weather data...',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[500],
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey[500]),
                   ),
                   const SizedBox(height: 16),
                   // Filter chips
@@ -363,14 +319,23 @@ class _AlertsScreenState extends State<AlertsScreen>
                       children: [
                         _buildFilterChip('All (${_activeAlerts.length})', null),
                         const SizedBox(width: 8),
-                        _buildFilterChip('Extreme', AlertSeverity.extreme,
-                            dotColor: const Color(0xFFD32F2F)),
+                        _buildFilterChip(
+                          'Extreme',
+                          AlertSeverity.extreme,
+                          dotColor: const Color(0xFFD32F2F),
+                        ),
                         const SizedBox(width: 8),
-                        _buildFilterChip('Severe', AlertSeverity.severe,
-                            dotColor: const Color(0xFFE65100)),
+                        _buildFilterChip(
+                          'Severe',
+                          AlertSeverity.severe,
+                          dotColor: const Color(0xFFE65100),
+                        ),
                         const SizedBox(width: 8),
-                        _buildFilterChip('Moderate', AlertSeverity.moderate,
-                            dotColor: const Color(0xFFF57C00)),
+                        _buildFilterChip(
+                          'Moderate',
+                          AlertSeverity.moderate,
+                          dotColor: const Color(0xFFF57C00),
+                        ),
                       ],
                     ),
                   ),
@@ -387,35 +352,39 @@ class _AlertsScreenState extends State<AlertsScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.check_circle_outline,
-                              size: 64, color: Colors.grey[300]),
+                          Icon(
+                            Icons.check_circle_outline,
+                            size: 64,
+                            color: Colors.grey[300],
+                          ),
                           const SizedBox(height: 12),
                           Text(
-                            'No active alerts',
+                            'No active alerts ',
                             style: TextStyle(
-                                color: Colors.grey[500], fontSize: 16),
+                              color: Colors.grey[500],
+                              fontSize: 16,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'All conditions are normal',
                             style: TextStyle(
-                                color: Colors.grey[400], fontSize: 14),
+                              color: Colors.grey[400],
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   )
                 : SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final alert = _filteredAlerts[index];
-                        return AlertCard(
-                          alert: alert,
-                          onTap: () => _showAlertDetail(alert),
-                        );
-                      },
-                      childCount: _filteredAlerts.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final alert = _filteredAlerts[index];
+                      return AlertCard(
+                        alert: alert,
+                        onTap: () => _showAlertDetail(alert),
+                      );
+                    }, childCount: _filteredAlerts.length),
                   ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 20)),
@@ -424,8 +393,11 @@ class _AlertsScreenState extends State<AlertsScreen>
     );
   }
 
-  Widget _buildFilterChip(String label, AlertSeverity? severity,
-      {Color? dotColor}) {
+  Widget _buildFilterChip(
+    String label,
+    AlertSeverity? severity, {
+    Color? dotColor,
+  }) {
     final isSelected = _selectedSeverity == severity;
     return GestureDetector(
       onTap: () {
@@ -453,8 +425,7 @@ class _AlertsScreenState extends State<AlertsScreen>
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color:
-                    isSelected ? Colors.white : const Color(0xFF1A1A2E),
+                color: isSelected ? Colors.white : const Color(0xFF1A1A2E),
               ),
             ),
             if (dotColor != null && !isSelected) ...[
@@ -470,22 +441,6 @@ class _AlertsScreenState extends State<AlertsScreen>
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPastAlertsTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.history, size: 64, color: Colors.grey[300]),
-          const SizedBox(height: 12),
-          Text(
-            'No past alerts',
-            style: TextStyle(color: Colors.grey[500], fontSize: 16),
-          ),
-        ],
       ),
     );
   }
@@ -527,14 +482,16 @@ class _AlertsScreenState extends State<AlertsScreen>
                 ),
               ),
               const SizedBox(height: 8),
-              Text(alert.location,
-                  style: TextStyle(color: Colors.grey[600])),
+              Text(alert.location, style: TextStyle(color: Colors.grey[600])),
               const SizedBox(height: 16),
               Text(
                 alert.description +
                     ' These conditions are expected to persist through the evening hours. Stay indoors and avoid unnecessary travel. If you must go outside, limit exposure and stay hydrated.',
-                style:
-                    TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.5),
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey[700],
+                  height: 1.5,
+                ),
               ),
             ],
           ),

@@ -25,12 +25,25 @@ class NotificationService {
   static const int _idEvening = 1003;
   static const int _idWeekend = 1004;
   static const int _idAlerts = 1005;
+  static const int _idTest = 1006;
 
   Future<void> initialize() async {
     tz.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation(DateTime.now().timeZoneName));
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    try {
+      final localZoneName = DateTime.now().timeZoneName;
+      tz.setLocalLocation(tz.getLocation(localZoneName));
+    } catch (_) {
+      try {
+        tz.setLocalLocation(tz.getLocation('Asia/Ho_Chi_Minh'));
+      } catch (_) {
+        tz.setLocalLocation(tz.UTC);
+      }
+    }
+
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings();
 
     final settings = InitializationSettings(
@@ -57,7 +70,9 @@ class NotificationService {
     );
 
     await _plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(androidChannel);
   }
 
@@ -87,7 +102,14 @@ class NotificationService {
 
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
-    tz.TZDateTime scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    tz.TZDateTime scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
@@ -111,77 +133,97 @@ class NotificationService {
     }
   }
 
-  Future<void> scheduleNotifications(NotificationConfigModel config,
-      {String city = 'Hanoi'}) async {
+  Future<void> scheduleNotifications(
+    NotificationConfigModel config, {
+    String city = 'Hanoi',
+  }) async {
     await cancelAllNotifications();
 
     if (!config.pushNotificationsEnabled) return;
 
-    if (config.hourlyForecastEnabled) {
-      await _plugin.periodicallyShow(
-        _idHourly,
-        'Hourly Weather Update',
-        'Hourly weather details are ready. Tap to view.',
-        RepeatInterval.hourly,
-        _notificationDetails(),
-        androidAllowWhileIdle: true,
-      );
-    }
+    try {
+      if (config.hourlyForecastEnabled) {
+        await _plugin.periodicallyShow(
+          _idHourly,
+          'Hourly Weather Update',
+          'Hourly weather details are ready. Tap to view.',
+          RepeatInterval.hourly,
+          _notificationDetails(),
+          androidAllowWhileIdle: true,
+        );
+      }
 
-    if (config.morningForecastEnabled) {
-      final body = await _buildBodyForForecast(city);
-      await _plugin.zonedSchedule(
-        _idMorning,
-        'Morning Forecast',
-        body,
-        _nextInstanceOfTime(config.morningForecastTime.hour, config.morningForecastTime.minute),
-        _notificationDetails(),
-        androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.wallClockTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-    }
+      if (config.morningForecastEnabled) {
+        final body = await _buildBodyForForecast(city);
+        await _plugin.zonedSchedule(
+          _idMorning,
+          'Morning Forecast',
+          body,
+          _nextInstanceOfTime(
+            config.morningForecastTime.hour,
+            config.morningForecastTime.minute,
+          ),
+          _notificationDetails(),
+          androidAllowWhileIdle: true,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.wallClockTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      }
 
-    if (config.eveningForecastEnabled) {
-      final body = await _buildBodyForForecast(city);
-      await _plugin.zonedSchedule(
-        _idEvening,
-        'Evening Forecast',
-        body,
-        _nextInstanceOfTime(config.eveningForecastTime.hour, config.eveningForecastTime.minute),
-        _notificationDetails(),
-        androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.wallClockTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-    }
+      if (config.eveningForecastEnabled) {
+        final body = await _buildBodyForForecast(city);
+        await _plugin.zonedSchedule(
+          _idEvening,
+          'Evening Forecast',
+          body,
+          _nextInstanceOfTime(
+            config.eveningForecastTime.hour,
+            config.eveningForecastTime.minute,
+          ),
+          _notificationDetails(),
+          androidAllowWhileIdle: true,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.wallClockTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      }
 
-    if (config.weekendSummaryEnabled) {
-      final body = 'Weekend summary is ready. Have a safe and enjoyable weekend!';
-      await _plugin.zonedSchedule(
-        _idWeekend,
-        'Weekend Forecast Summary',
-        body,
-        _nextInstanceOfWeekday(DateTime.friday, 18, 0),
-        _notificationDetails(),
-        androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.wallClockTime,
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-      );
-    }
+      if (config.weekendSummaryEnabled) {
+        final body =
+            'Weekend summary is ready. Have a safe and enjoyable weekend!';
+        await _plugin.zonedSchedule(
+          _idWeekend,
+          'Weekend Forecast Summary',
+          body,
+          _nextInstanceOfWeekday(DateTime.friday, 18, 0),
+          _notificationDetails(),
+          androidAllowWhileIdle: true,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.wallClockTime,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        );
+      }
 
-    if (config.severeWeatherWarningsEnabled || config.weatherAdvisoriesEnabled) {
-      await _plugin.zonedSchedule(
-        _idAlerts,
-        'Weather Alerts Check',
-        'Check for severe weather alerts and advisories in your area.',
-        _nextInstanceOfTime(8, 0),
-        _notificationDetails(),
-        androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.wallClockTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-    }
+      if (config.severeWeatherWarningsEnabled ||
+          config.weatherAdvisoriesEnabled) {
+        await _plugin.zonedSchedule(
+          _idAlerts,
+          'Weather Alerts Check',
+          'Check for severe weather alerts and advisories in your area.',
+          _nextInstanceOfTime(8, 0),
+          _notificationDetails(),
+          androidAllowWhileIdle: true,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.wallClockTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      }
+    } catch (e, st) {}
   }
 
   NotificationDetails _notificationDetails() {
@@ -209,6 +251,24 @@ class NotificationService {
       'Test Notification',
       'This is a test weather notification to verify functionality.',
       _notificationDetails(),
+    );
+  }
+
+  Future<void> scheduleTestNotification({int seconds = 5}) async {
+    final scheduledTime = tz.TZDateTime.now(
+      tz.local,
+    ).add(Duration(seconds: seconds));
+    await _plugin.zonedSchedule(
+      _idTest,
+      'Scheduled Test Notification',
+      'Notification will appear after $seconds seconds.',
+      scheduledTime,
+      _notificationDetails(),
+      androidAllowWhileIdle: true,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.wallClockTime,
+      matchDateTimeComponents: null,
     );
   }
 }

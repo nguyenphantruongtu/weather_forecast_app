@@ -8,7 +8,7 @@ class NotificationProvider extends ChangeNotifier {
   bool _isLoading = false;
 
   NotificationProvider({NotificationService? service})
-      : _service = service ?? NotificationService() {
+    : _service = service ?? NotificationService() {
     _config = NotificationConfigModel();
     _initialize();
   }
@@ -25,11 +25,16 @@ class NotificationProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    _config = await _service.loadConfig();
-    await _service.scheduleNotifications(_config);
-
-    _isLoading = false;
-    notifyListeners();
+    try {
+      _config = await _service.loadConfig();
+      await _service.scheduleNotifications(_config);
+    } catch (e, st) {
+      debugPrint('NotificationProvider._loadConfig error: $e\n$st');
+      // Nếu xảy ra lỗi schedule, vẫn tiếp tục khởi động app.
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> togglePushNotifications(bool value) async {
@@ -83,7 +88,10 @@ class NotificationProvider extends ChangeNotifier {
     await _save();
   }
 
-  Future<void> updateForecastTime({required bool isMorning, required TimeOfDayModel newTime}) async {
+  Future<void> updateForecastTime({
+    required bool isMorning,
+    required TimeOfDayModel newTime,
+  }) async {
     if (isMorning) {
       _config.morningForecastTime = newTime;
     } else {
@@ -94,6 +102,10 @@ class NotificationProvider extends ChangeNotifier {
 
   Future<void> sendTestNotification() async {
     await _service.showTestNotification();
+  }
+
+  Future<void> scheduleTestNotification({int seconds = 5}) async {
+    await _service.scheduleTestNotification(seconds: seconds);
   }
 
   Future<void> _save() async {

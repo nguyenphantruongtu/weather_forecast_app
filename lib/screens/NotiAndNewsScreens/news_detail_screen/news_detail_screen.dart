@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../data/models/news_article_model.dart';
 import 'widgets/news_header.dart';
 import 'widgets/share_button.dart';
@@ -13,7 +15,6 @@ class NewsDetailScreen extends StatefulWidget {
 }
 
 class _NewsDetailScreenState extends State<NewsDetailScreen> {
-  bool _isBookmarked = false;
   bool _isDarkMode = false;
   double _fontSize = 15.0;
 
@@ -49,63 +50,57 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                 ),
               ),
               actions: [
-                GestureDetector(
-                  onTap: () => setState(() => _isBookmarked = !_isBookmarked),
-                  child: Container(
-                    margin: const EdgeInsets.all(8),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                      size: 18,
-                      color: _isBookmarked
-                          ? const Color(0xFF6B7AEF)
-                          : const Color(0xFF1A1A2E),
-                    ),
-                  ),
-                ),
-                ShareButton(onShare: () {}),
-                GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(4, 8, 8, 8),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.more_vert,
-                        size: 18, color: Color(0xFF1A1A2E)),
-                  ),
-                ),
+                ShareButton(onShare: () => _shareArticle()),
               ],
               flexibleSpace: FlexibleSpaceBar(
                 background: Stack(
                   fit: StackFit.expand,
                   children: [
                     // Image background
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFF2C3E50),
-                            const Color(0xFF4A5568),
-                          ],
+                    if (widget.article.imageUrl != null)
+                      Image.network(
+                        widget.article.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                const Color(0xFF2C3E50),
+                                const Color(0xFF4A5568),
+                              ],
+                            ),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.image_outlined,
+                              size: 64,
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              const Color(0xFF2C3E50),
+                              const Color(0xFF4A5568),
+                            ],
+                          ),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.image_outlined,
+                            size: 64,
+                            color: Colors.white.withOpacity(0.3),
+                          ),
                         ),
                       ),
-                      child: Center(
-                        child: Icon(
-                          Icons.image_outlined,
-                          size: 64,
-                          color: Colors.white.withOpacity(0.3),
-                        ),
-                      ),
-                    ),
                     // Photo credit
                     Positioned(
                       bottom: 8,
@@ -161,7 +156,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                   children: [
                     NewsHeader(article: widget.article),
                     const SizedBox(height: 16),
-                    // Action bar (Save, Share, Size, Dark, More)
+                    // Action bar (Share, Open, Size, Dark)
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
@@ -174,8 +169,8 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildAction(Icons.bookmark_border, 'Save', () {}),
-                          _buildAction(Icons.share_outlined, 'Share', () {}),
+                          _buildAction(Icons.share_outlined, 'Share', () => _shareArticle()),
+                          _buildAction(Icons.open_in_browser, 'Open', _openArticleUrl),
                           _buildAction(Icons.text_fields, 'Size', _changeSize),
                           _buildAction(
                             _isDarkMode
@@ -184,16 +179,13 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                             'Dark',
                             () => setState(() => _isDarkMode = !_isDarkMode),
                           ),
-                          _buildAction(Icons.more_horiz, 'More', () {}),
                         ],
                       ),
                     ),
                     const SizedBox(height: 20),
                     // Article content
                     Text(
-                      widget.article.content.isNotEmpty
-                          ? widget.article.content
-                          : _generateLoremContent(),
+                      _getDisplayContent(),
                       style: TextStyle(
                         fontSize: _fontSize,
                         height: 1.7,
@@ -202,54 +194,6 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                             : const Color(0xFF444444),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    // Related topics
-                    Text(
-                      'Related Topics',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: _isDarkMode ? Colors.white : const Color(0xFF1A1A2E),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildTopicChip('Weather'),
-                        _buildTopicChip(widget.article.category),
-                        _buildTopicChip('Climate'),
-                        _buildTopicChip('Vietnam'),
-                        _buildTopicChip('Southeast Asia'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Bottom actions bar
-            SliverToBoxAdapter(
-              child: Container(
-                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: _isDarkMode ? const Color(0xFF16213E) : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildAction(Icons.bookmark_border, 'Save', () {}),
-                    _buildAction(Icons.share_outlined, 'Share', () {}),
-                    _buildAction(Icons.comment_outlined, 'Comment', () {}),
-                    _buildAction(Icons.thumb_up_outlined, 'Helpful', () {}),
                   ],
                 ),
               ),
@@ -285,23 +229,39 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     );
   }
 
-  Widget _buildTopicChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF6B7AEF).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF6B7AEF).withOpacity(0.3)),
-      ),
-      child: Text(
-        '#$label',
-        style: const TextStyle(
-          fontSize: 12,
-          color: Color(0xFF6B7AEF),
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
+  void _shareArticle() {
+    final url = widget.article.url ?? 'https://newsapi.org';
+    Share.share('Check out this article: ${widget.article.title}\n$url');
+  }
+
+  void _openArticleUrl() async {
+    final url = widget.article.url;
+    if (url != null && url.isNotEmpty) {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        // Fallback: show snackbar or something
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open article link')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Article link not available')),
+      );
+    }
+  }
+
+  String _getDisplayContent() {
+    if (widget.article.content.isNotEmpty) {
+      // Remove the "[+X chars]" suffix and trailing "..." if present
+      String content = widget.article.content.replaceAll(RegExp(r'\s*\[\+\d+\s*chars\]$'), '');
+      content = content.replaceAll(RegExp(r'\.\.\.\s*$'), '');
+      return content.trim();
+    } else {
+      return 'Content not available. Please use the "Open" button to read the full article.';
+    }
   }
 
   void _changeSize() {

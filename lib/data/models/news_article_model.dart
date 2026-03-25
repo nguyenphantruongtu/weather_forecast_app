@@ -8,6 +8,7 @@ class NewsArticleModel {
   final String author;
   final String? authorAvatar;
   final String? imageUrl;
+  final String? url;
   final DateTime publishedAt;
   final int readTimeMinutes;
   final bool isFeatured;
@@ -23,6 +24,7 @@ class NewsArticleModel {
     required this.author,
     this.authorAvatar,
     this.imageUrl,
+    this.url,
     required this.publishedAt,
     required this.readTimeMinutes,
     this.isFeatured = false,
@@ -46,6 +48,7 @@ class NewsArticleModel {
       source: json['source']?['name'] ?? '',
       author: json['author'] ?? 'Unknown',
       imageUrl: json['urlToImage'],
+      url: json['url'],
       publishedAt: DateTime.tryParse(json['publishedAt'] ?? '') ?? DateTime.now(),
       readTimeMinutes: 4,
     );

@@ -64,7 +64,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: Color(0xFF1A1A2E)),
+          icon: const Icon(Icons.home, color: Color(0xFF1A1A2E)),
           onPressed: () {},
         ),
         title: const Text(
@@ -76,12 +76,6 @@ class _NewsListScreenState extends State<NewsListScreen> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Color(0xFF1A1A2E)),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: () => _loadNews(refresh: true),
@@ -168,6 +162,36 @@ class _NewsListScreenState extends State<NewsListScreen> {
         ),
         child: Stack(
           children: [
+            // Background image
+            if (article.imageUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  article.imageUrl!,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: 200,
+                  errorBuilder: (_, __, ___) => Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.grey[300],
+                    ),
+                    child: Center(
+                      child: Icon(Icons.image_outlined, size: 48, color: Colors.grey[400]),
+                    ),
+                  ),
+                ),
+              )
+            else
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.grey[300],
+                ),
+                child: Center(
+                  child: Icon(Icons.image_outlined, size: 48, color: Colors.grey[400]),
+                ),
+              ),
             // Background image hint
             Container(
               decoration: BoxDecoration(
