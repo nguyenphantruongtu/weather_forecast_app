@@ -128,14 +128,6 @@ class NewsCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        _buildActionIcon(Icons.bookmark_border, () {}),
-                        const SizedBox(width: 12),
-                        _buildActionIcon(Icons.share_outlined, () {}),
-                      ],
-                    ),
                   ],
                 ),
               ),

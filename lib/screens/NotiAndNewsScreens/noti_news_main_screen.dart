@@ -13,14 +13,14 @@ class NotiNewsMainScreen extends StatefulWidget {
 }
 
 class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
-    int _currentIndex = 1; // Default to News tab
- 
+  int _currentIndex = 1; // Default to News tab
+
   final List<Widget> _screens = const [
     AlertsScreen(),
     NewsListScreen(),
     NotificationSettingsScreen(),
   ];
- 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,7 +70,7 @@ class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
       ),
     );
   }
- 
+
   Widget _buildNavItem({
     required IconData icon,
     required IconData activeIcon,
@@ -105,7 +105,8 @@ class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
                 fontSize: 11,
                 fontWeight:
                     isActive ? FontWeight.w600 : FontWeight.normal,
-                color: isActive ? const Color(0xFF6B7AEF) : Colors.grey[500],
+                color:
+                    isActive ? const Color(0xFF6B7AEF) : Colors.grey[500],
               ),
             ),
           ],

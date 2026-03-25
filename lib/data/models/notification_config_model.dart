@@ -23,9 +23,12 @@ class NotificationConfigModel {
     this.weatherAdvisoriesEnabled = true,
     List<String>? subscribedLocations,
     this.useCurrentLocation = true,
-  })  : morningForecastTime = morningForecastTime ?? TimeOfDayModel(hour: 7, minute: 0),
-        eveningForecastTime = eveningForecastTime ?? TimeOfDayModel(hour: 19, minute: 0),
-        subscribedLocations = subscribedLocations ?? ['Hanoi', 'Da Nang'];
+  })  : morningForecastTime =
+            morningForecastTime ?? const TimeOfDayModel(hour: 7, minute: 0),
+        eveningForecastTime =
+            eveningForecastTime ?? const TimeOfDayModel(hour: 19, minute: 0),
+        subscribedLocations =
+            subscribedLocations ?? ['Hanoi', 'Da Nang'];
 
   Map<String, dynamic> toJson() => {
         'pushNotificationsEnabled': pushNotificationsEnabled,
@@ -58,15 +61,21 @@ class NotificationConfigModel {
       hourlyForecastEnabled: json['hourlyForecastEnabled'] ?? false,
       morningForecastEnabled: json['morningForecastEnabled'] ?? true,
       morningForecastTime: parseTimeOfDay(
-          json['morningForecastTime'], const TimeOfDayModel(hour: 7, minute: 0)),
+        json['morningForecastTime'],
+        const TimeOfDayModel(hour: 7, minute: 0),
+      ),
       eveningForecastEnabled: json['eveningForecastEnabled'] ?? true,
       eveningForecastTime: parseTimeOfDay(
-          json['eveningForecastTime'], const TimeOfDayModel(hour: 19, minute: 0)),
+        json['eveningForecastTime'],
+        const TimeOfDayModel(hour: 19, minute: 0),
+      ),
       weekendSummaryEnabled: json['weekendSummaryEnabled'] ?? true,
-      severeWeatherWarningsEnabled: json['severeWeatherWarningsEnabled'] ?? true,
+      severeWeatherWarningsEnabled:
+          json['severeWeatherWarningsEnabled'] ?? true,
       weatherAdvisoriesEnabled: json['weatherAdvisoriesEnabled'] ?? true,
-      subscribedLocations:
-          List<String>.from(json['subscribedLocations'] ?? ['Hanoi', 'Da Nang']),
+      subscribedLocations: List<String>.from(
+        json['subscribedLocations'] ?? ['Hanoi', 'Da Nang'],
+      ),
       useCurrentLocation: json['useCurrentLocation'] ?? true,
     );
   }

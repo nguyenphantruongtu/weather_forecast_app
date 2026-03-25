@@ -16,7 +16,11 @@ class _NotificationSettingsScreenState
     extends State<NotificationSettingsScreen> {
   bool _showTestNotif = false;
 
-  final List<String> _availableLocations = ['Hanoi', 'Ho Chi Minh City', 'Da Nang'];
+  final List<String> _availableLocations = [
+    'Hanoi',
+    'Ho Chi Minh City',
+    'Da Nang',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +28,7 @@ class _NotificationSettingsScreenState
     final config = provider.config;
 
     if (provider.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -35,8 +37,8 @@ class _NotificationSettingsScreenState
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.home, color: Color(0xFF1A1A2E)),
+          onPressed: () {},
         ),
         title: const Text(
           'Notification Settings',
@@ -85,8 +87,10 @@ class _NotificationSettingsScreenState
                       const SizedBox(height: 4),
                       TimePickerTile(
                         time: config.morningForecastTime,
-                        onTimeChanged: (t) =>
-                            provider.updateForecastTime(isMorning: true, newTime: t),
+                        onTimeChanged: (t) => provider.updateForecastTime(
+                          isMorning: true,
+                          newTime: t,
+                        ),
                       ),
                     ],
                     const Divider(height: 24),
@@ -100,8 +104,10 @@ class _NotificationSettingsScreenState
                       const SizedBox(height: 4),
                       TimePickerTile(
                         time: config.eveningForecastTime,
-                        onTimeChanged: (t) =>
-                            provider.updateForecastTime(isMorning: false, newTime: t),
+                        onTimeChanged: (t) => provider.updateForecastTime(
+                          isMorning: false,
+                          newTime: t,
+                        ),
                       ),
                     ],
                     const Divider(height: 24),
@@ -153,39 +159,55 @@ class _NotificationSettingsScreenState
                         decoration: BoxDecoration(
                           color: const Color(0xFFF5F6FF),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFF6B7AEF).withOpacity(0.3)),
+                          border: Border.all(
+                            color: const Color(0xFF6B7AEF).withOpacity(0.3),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.notifications_outlined,
-                                color: Color(0xFF6B7AEF), size: 24),
+                            const Icon(
+                              Icons.notifications_outlined,
+                              color: Color(0xFF6B7AEF),
+                              size: 24,
+                            ),
                             const SizedBox(width: 10),
                             const Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Test Notification',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13)),
                                   Text(
-                                      'This is how weather alerts will appear',
-                                      style: TextStyle(
-                                          fontSize: 12, color: Colors.grey)),
+                                    'Test Notification',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  Text(
+                                    'This is how weather alerts will appear',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                             GestureDetector(
                               onTap: () =>
                                   setState(() => _showTestNotif = false),
-                              child: const Icon(Icons.close,
-                                  size: 16, color: Colors.grey),
+                              child: const Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
                             ),
                           ],
                         ),
                       ),
                     // Location checkboxes
-                    ..._availableLocations.map((loc) => _buildLocationCheckbox(loc, provider)),
+                    ..._availableLocations.map(
+                      (loc) => _buildLocationCheckbox(loc, provider),
+                    ),
                     const Divider(height: 20),
                     // Current location toggle
                     NotificationToggle(
@@ -206,10 +228,47 @@ class _NotificationSettingsScreenState
                     provider.sendTestNotification();
                     setState(() => _showTestNotif = true);
                   },
-                  icon: const Icon(Icons.notifications_outlined,
-                      size: 18, color: Color(0xFF6B7AEF)),
+                  icon: const Icon(
+                    Icons.notifications_outlined,
+                    size: 18,
+                    color: Color(0xFF6B7AEF),
+                  ),
                   label: const Text(
                     'Send Test Notification',
+                    style: TextStyle(color: Color(0xFF6B7AEF)),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF6B7AEF)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await provider.scheduleTestNotification(seconds: 5);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Scheduled test notification in 5 seconds',
+                        ),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                    setState(() => _showTestNotif = true);
+                  },
+                  icon: const Icon(
+                    Icons.schedule,
+                    size: 18,
+                    color: Color(0xFF6B7AEF),
+                  ),
+                  label: const Text(
+                    'Schedule Test Notification (5s)',
                     style: TextStyle(color: Color(0xFF6B7AEF)),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -229,7 +288,10 @@ class _NotificationSettingsScreenState
     );
   }
 
-  Widget _buildLocationCheckbox(String location, NotificationProvider provider) {
+  Widget _buildLocationCheckbox(
+    String location,
+    NotificationProvider provider,
+  ) {
     final isSelected = provider.config.subscribedLocations.contains(location);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -244,7 +306,9 @@ class _NotificationSettingsScreenState
               width: 22,
               height: 22,
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF6B7AEF) : Colors.transparent,
+                color: isSelected
+                    ? const Color(0xFF6B7AEF)
+                    : Colors.transparent,
                 border: Border.all(
                   color: isSelected ? const Color(0xFF6B7AEF) : Colors.grey,
                   width: 2,

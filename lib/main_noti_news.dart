@@ -6,6 +6,8 @@ import 'providers/settings_provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/news_provider.dart';
 import 'providers/notification_provider.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'data/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +15,10 @@ void main() async {
 
   final settingsProvider = SettingsProvider();
   await settingsProvider.init();
+
+  tz.initializeTimeZones();
+  final notificationService = NotificationService();
+  await notificationService.initialize();
 
   runApp(
     MultiProvider(

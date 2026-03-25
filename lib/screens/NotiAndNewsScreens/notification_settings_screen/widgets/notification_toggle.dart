@@ -65,7 +65,8 @@ class NotificationToggle extends StatelessWidget {
           ),
           if (alwaysOn)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFFFEBE5),
                 borderRadius: BorderRadius.circular(12),
