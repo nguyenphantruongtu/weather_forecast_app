@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../providers/location_provider.dart';
 import 'package:maps_launcher/maps_launcher.dart';
-import 'package:geocoding/geocoding.dart';
+// Removed geocoding import as we use robust REST API now
 import '../../data/models/location_model.dart' as AppLocation;
 import 'google_maps_integration.dart';
 

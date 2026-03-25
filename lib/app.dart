@@ -7,7 +7,7 @@ import 'screens/OnboardingAndUserPreferencesScreens/onboarding_screen/onboarding
 import 'screens/OnboardingAndUserPreferencesScreens/location_setup_screen/location_setup_screen.dart';
 import 'screens/OnboardingAndUserPreferencesScreens/settings_screen/settings_screen.dart';
 import 'screens/OnboardingAndUserPreferencesScreens/info_screen/info_screen.dart';
-import 'screens/sv2_screens/home_screen/home_screen.dart';
+import 'screens/main_wrapper_screen.dart';
 import 'screens/sv2_screens/hourly_forecast_screen/hourly_forecast_screen.dart';
 import 'screens/sv2_screens/daily_forecast_screen/daily_forecast_screen.dart';
 import 'screens/sv2_screens/weather_details_screen/weather_details_screen.dart';
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/onboarding': (_) => const OnboardingScreen(),
         '/location_setup': (_) => const LocationSetupScreen(),
-        '/home': (_) => const HomeScreen(),
+        '/home': (_) => const MainWrapperScreen(),
         '/hourly-forecast': (_) => const HourlyForecastScreen(),
         '/daily-forecast': (_) => const DailyForecastScreen(),
         '/weather-details': (_) => const WeatherDetailsScreen(),

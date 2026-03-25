@@ -6,6 +6,7 @@ import 'providers/settings_provider.dart';
 import 'providers/news_provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/notification_provider.dart';
+import 'providers/location_provider.dart';
 import 'screens/OnboardingAndUserPreferencesScreens/splash_screen/splash_screen.dart';
 
 /// Entry point của ứng dụng
@@ -52,6 +53,9 @@ void main() async {
 
           // Cung cấp NotificationProvider cho toàn bộ app
           ChangeNotifierProvider(create: (_) => NotificationProvider()),
+
+          // Cung cấp LocationProvider cho tính năng Bản đồ và Quản lý vị trí
+          ChangeNotifierProvider(create: (_) => LocationProvider()),
         ],
         child: const MyApp(),
       ),

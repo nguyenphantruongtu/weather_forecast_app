@@ -5,7 +5,10 @@ import 'models/location_choice.dart';
 import 'services/location_api_service.dart';
 
 class SearchLocationScreen extends StatefulWidget {
-  const SearchLocationScreen({super.key});
+  final Function(LocationChoice)? onCitySelected;
+  final Function(LocationChoice)? onCompareCity;
+
+  const SearchLocationScreen({super.key, this.onCitySelected, this.onCompareCity});
 
   @override
   State<SearchLocationScreen> createState() => _SearchLocationScreenState();
@@ -154,9 +157,22 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                                     style: const TextStyle(fontWeight: FontWeight.w600),
                                   ),
                                   subtitle: Text(location.country),
-                                  trailing: Text(
-                                    location.emoji,
-                                    style: const TextStyle(fontSize: 18),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        location.emoji,
+                                        style: const TextStyle(fontSize: 18),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.compare_arrows, color: Colors.blue),
+                                        onPressed: () {
+                                          if (widget.onCompareCity != null) {
+                                            widget.onCompareCity!(location);
+                                          }
+                                        },
+                                      ),
+                                    ],
                                   ),
                                   onTap: () => _selectCity(location),
                                 );
@@ -234,7 +250,11 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
       (item) => item.city == city.city && item.country == city.country,
     );
     _recentSearches.insert(0, city);
-    Navigator.pop(context, city);
+    if (widget.onCitySelected != null) {
+      widget.onCitySelected!(city);
+    } else {
+      Navigator.pop(context, city);
+    }
   }
 
   Widget _recentItem(LocationChoice city) {
@@ -264,6 +284,12 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.compare_arrows, color: Color(0xFFA7ADBC)),
+                onPressed: () {
+                  if (widget.onCompareCity != null) widget.onCompareCity!(city);
+                },
               ),
             ],
           ),
