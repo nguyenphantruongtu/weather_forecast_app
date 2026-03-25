@@ -7,7 +7,6 @@ import 'providers/news_provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/location_provider.dart';
-import 'screens/OnboardingAndUserPreferencesScreens/splash_screen/splash_screen.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'data/services/notification_service.dart';
 
@@ -32,7 +31,7 @@ void main() async {
     final settingsProvider = SettingsProvider();
     await settingsProvider.init();
     // settingsProvider.init(): tải cấu hình đã lưu trước đó
-  
+
     // Khởi tạo timezone data cho tính năng thông báo theo múi giờ
     tz.initializeTimeZones();
     await NotificationService().initialize();
@@ -109,20 +108,6 @@ void main() async {
           ),
         ),
       ),
-    );
-  }
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Weather App Group 6',
-      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      home: const SplashScreen(), 
     );
   }
 }
