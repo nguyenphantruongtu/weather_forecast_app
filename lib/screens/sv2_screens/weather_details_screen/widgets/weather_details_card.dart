@@ -1,14 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:final_project/data/models/weather_model.dart';
+import 'package:final_project/data/models/settings_model.dart';
 import 'package:intl/intl.dart';
+import 'package:final_project/utils/app_strings.dart';
+import 'package:final_project/utils/unit_converter.dart';
 
 class WeatherDetailsCard extends StatelessWidget {
   final WeatherModel weather;
+  final TemperatureUnit temperatureUnit;
+  final TimeFormat timeFormat;
+  final String languageCode;
 
-  const WeatherDetailsCard({super.key, required this.weather});
+  const WeatherDetailsCard({
+    super.key,
+    required this.weather,
+    required this.temperatureUnit,
+    required this.timeFormat,
+    required this.languageCode,
+  });
+
+  double _displayTemperature(double celsiusValue) {
+    if (temperatureUnit == TemperatureUnit.fahrenheit) {
+      return UnitConverter.celsiusToFahrenheit(celsiusValue);
+    }
+    return celsiusValue;
+  }
+
+  String _datePattern() {
+    return timeFormat == TimeFormat.h24 ? 'EEEE, MMM d, y • HH:mm' : 'EEEE, MMM d, y • h:mm a';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final displayTemp = _displayTemperature(weather.temperature);
+    final displayFeelsLike = _displayTemperature(weather.feelsLike);
+
     return Card(
       margin: const EdgeInsets.all(16),
       elevation: 2,
@@ -42,7 +68,7 @@ class WeatherDetailsCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        DateFormat('EEEE, MMM d, y').format(DateTime.now()),
+                        DateFormat(_datePattern()).format(DateTime.now()),
                         style: const TextStyle(
                           fontSize: 13,
                           color: Colors.white70,
@@ -51,7 +77,7 @@ class WeatherDetailsCard extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    '${weather.temperature.toStringAsFixed(1)}°',
+                    '${displayTemp.toStringAsFixed(1)}°',
                     style: const TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
@@ -66,7 +92,7 @@ class WeatherDetailsCard extends StatelessWidget {
                 style: const TextStyle(fontSize: 16, color: Colors.white),
               ),
               Text(
-                'Feels like ${weather.feelsLike.toStringAsFixed(1)}°',
+                '${AppStrings.tr(languageCode, en: 'Feels like', vi: 'Cam giac nhu')} ${displayFeelsLike.toStringAsFixed(1)}°',
                 style: const TextStyle(fontSize: 13, color: Colors.white70),
               ),
             ],

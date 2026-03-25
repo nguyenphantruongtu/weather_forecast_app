@@ -1,10 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:final_project/data/models/weather_model.dart';
+import 'package:final_project/data/models/settings_model.dart';
+import 'package:final_project/utils/app_strings.dart';
+import 'package:final_project/utils/unit_converter.dart';
 
 class AtmosphericMetricsGrid extends StatelessWidget {
   final WeatherModel weather;
+  final TemperatureUnit temperatureUnit;
+  final String languageCode;
 
-  const AtmosphericMetricsGrid({super.key, required this.weather});
+  const AtmosphericMetricsGrid({
+    super.key,
+    required this.weather,
+    required this.temperatureUnit,
+    required this.languageCode,
+  });
+
+  double _displayTemperature(double celsiusValue) {
+    if (temperatureUnit == TemperatureUnit.fahrenheit) {
+      return UnitConverter.celsiusToFahrenheit(celsiusValue);
+    }
+    return celsiusValue;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +34,9 @@ class AtmosphericMetricsGrid extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Atmospheric Conditions',
-              style: TextStyle(
+            Text(
+              AppStrings.tr(languageCode, en: 'Atmospheric Conditions', vi: 'Dieu kien khi quyen'),
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
@@ -36,27 +53,29 @@ class AtmosphericMetricsGrid extends StatelessWidget {
               children: [
                 _MetricCard(
                   icon: Icons.compress,
-                  label: 'Pressure',
+                  label: AppStrings.tr(languageCode, en: 'Pressure', vi: 'Ap suat'),
                   value: '${weather.pressure} hPa',
-                  badge: 'Normal',
+                  badge: AppStrings.tr(languageCode, en: 'Normal', vi: 'Binh thuong'),
                 ),
                 _MetricCard(
                   icon: Icons.visibility,
-                  label: 'Visibility',
+                  label: AppStrings.tr(languageCode, en: 'Visibility', vi: 'Tam nhin'),
                   value: '${weather.visibility.toStringAsFixed(1)} km',
-                  badge: 'Excellent',
+                  badge: AppStrings.tr(languageCode, en: 'Excellent', vi: 'Rat tot'),
                 ),
                 _MetricCard(
                   icon: Icons.opacity,
-                  label: 'Dew Point',
-                  value: '${weather.dewPoint.toStringAsFixed(1)}°',
-                  badge: 'Comfortable',
+                  label: AppStrings.tr(languageCode, en: 'Dew Point', vi: 'Diem suong'),
+                  value: '${_displayTemperature(weather.dewPoint).toStringAsFixed(1)}°',
+                  badge: AppStrings.tr(languageCode, en: 'Comfortable', vi: 'De chiu'),
                 ),
                 _MetricCard(
                   icon: Icons.cloud_queue,
-                  label: 'Humidity',
+                  label: AppStrings.tr(languageCode, en: 'Humidity', vi: 'Do am'),
                   value: '${weather.humidity}%',
-                  badge: weather.humidity > 70 ? 'High' : 'Normal',
+                  badge: weather.humidity > 70
+                      ? AppStrings.tr(languageCode, en: 'High', vi: 'Cao')
+                      : AppStrings.tr(languageCode, en: 'Normal', vi: 'Binh thuong'),
                 ),
               ],
             ),

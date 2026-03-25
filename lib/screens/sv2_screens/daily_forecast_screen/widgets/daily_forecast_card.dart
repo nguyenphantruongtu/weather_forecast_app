@@ -1,22 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:final_project/data/models/forecast_model.dart';
+import 'package:final_project/data/models/settings_model.dart';
+import 'package:final_project/utils/app_strings.dart';
+import 'package:final_project/utils/unit_converter.dart';
 import 'package:final_project/utils/weather_icon_mapper.dart';
 
 class DailyForecastCard extends StatelessWidget {
   final ForecastModel forecast;
   final int dayNumber;
+  final TemperatureUnit temperatureUnit;
+  final WindSpeedUnit windSpeedUnit;
+  final String languageCode;
 
   const DailyForecastCard({
     super.key,
     required this.forecast,
     required this.dayNumber,
+    required this.temperatureUnit,
+    required this.windSpeedUnit,
+    required this.languageCode,
   });
+
+  double _displayTemperature(double celsiusValue) {
+    if (temperatureUnit == TemperatureUnit.fahrenheit) {
+      return UnitConverter.celsiusToFahrenheit(celsiusValue);
+    }
+    return celsiusValue;
+  }
+
+  String _windLabel(double kmhValue) {
+    if (windSpeedUnit == WindSpeedUnit.mph) {
+      return '${(kmhValue * 0.621371).toStringAsFixed(1)} mph';
+    }
+    return '${kmhValue.toStringAsFixed(1)} km/h';
+  }
 
   @override
   Widget build(BuildContext context) {
     final dateTime = DateTime.parse(forecast.dt);
     final dateFormatted = DateFormat('MMM d, EEE').format(dateTime);
+    final maxTemp = _displayTemperature(forecast.tempMax);
+    final minTemp = _displayTemperature(forecast.tempMin);
+    final feelsLike = _displayTemperature(forecast.feelsLike);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -43,7 +69,7 @@ class DailyForecastCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Day $dayNumber',
+                        '${AppStrings.tr(languageCode, en: 'Day', vi: 'Ngay')} $dayNumber',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -77,12 +103,12 @@ class DailyForecastCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Temperature',
-                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      Text(
+                        AppStrings.tr(languageCode, en: 'Temperature', vi: 'Nhiet do'),
+                        style: const TextStyle(fontSize: 12, color: Colors.black54),
                       ),
                       Text(
-                        '${forecast.tempMax.toStringAsFixed(1)}° / ${forecast.tempMin.toStringAsFixed(1)}°',
+                        '${maxTemp.toStringAsFixed(1)}° / ${minTemp.toStringAsFixed(1)}°',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -94,12 +120,12 @@ class DailyForecastCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text(
-                        'Feels Like',
-                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      Text(
+                        AppStrings.tr(languageCode, en: 'Feels Like', vi: 'Cam giac nhu'),
+                        style: const TextStyle(fontSize: 12, color: Colors.black54),
                       ),
                       Text(
-                        '${forecast.feelsLike.toStringAsFixed(1)}°',
+                        '${feelsLike.toStringAsFixed(1)}°',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -123,28 +149,28 @@ class DailyForecastCard extends StatelessWidget {
                 children: [
                   _MetricItem(
                     icon: Icons.cloud,
-                    label: 'Cloud',
+                    label: AppStrings.tr(languageCode, en: 'Cloud', vi: 'May'),
                     value: '${forecast.cloudiness}%',
                   ),
                   _MetricItem(
                     icon: Icons.opacity,
-                    label: 'Humidity',
+                    label: AppStrings.tr(languageCode, en: 'Humidity', vi: 'Do am'),
                     value: '${forecast.humidity}%',
                   ),
                   _MetricItem(
                     icon: Icons.water_drop,
-                    label: 'Precip',
+                    label: AppStrings.tr(languageCode, en: 'Precip', vi: 'Mua'),
                     value:
                         '${(forecast.precipitation * 100).toStringAsFixed(0)}%',
                   ),
                   _MetricItem(
                     icon: Icons.air,
-                    label: 'Wind',
-                    value: '${forecast.windSpeed.toStringAsFixed(1)} m/s',
+                    label: AppStrings.tr(languageCode, en: 'Wind', vi: 'Gio'),
+                    value: _windLabel(forecast.windSpeed),
                   ),
                   _MetricItem(
                     icon: Icons.cloud_queue,
-                    label: 'Desc',
+                    label: AppStrings.tr(languageCode, en: 'Desc', vi: 'Mo ta'),
                     value: forecast.description,
                   ),
                 ],
@@ -172,7 +198,7 @@ class _MetricItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(8),

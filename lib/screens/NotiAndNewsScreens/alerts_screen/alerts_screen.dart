@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../data/models/news_alert_model.dart';
+import '../../../../providers/settings_provider.dart';
+import '../../../../utils/app_strings.dart';
 import '../../../../providers/weather_provider.dart';
 import 'widgets/alert_card.dart';
-import 'widgets/alert_severity_badge.dart';
 import '../../../../screens/main_wrapper_screen.dart';
 
 class AlertsScreen extends StatefulWidget {
@@ -205,21 +206,25 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Consumer<WeatherProvider>(
       builder: (context, weatherProvider, child) {
         // Update alerts whenever weather changes
         _updateAlertsFromWeather(weatherProvider.currentWeather);
 
         final location =
-            weatherProvider.currentWeather?.location ?? 'Turn on GPS to get location';
+            weatherProvider.currentWeather?.location ?? AppStrings.tr(languageCode, en: 'Turn on GPS to get location', vi: 'Bat GPS de lay vi tri');
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF7F8FA),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.home, color: Color(0xFF1A1A2E)),
+              icon: Icon(Icons.home, color: colorScheme.onSurface),
               onPressed: () {
                 Navigator.pushAndRemoveUntil(
                   context,
@@ -230,17 +235,17 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 );
               },
             ),
-            title: const Text(
-              'Weather Alerts',
+            title: Text(
+              AppStrings.tr(languageCode, en: 'Weather Alerts', vi: 'Canh bao thoi tiet'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A2E),
+                color: colorScheme.onSurface,
               ),
             ),
             centerTitle: true,
           ),
-          body: _buildActiveAlertsTab(weatherProvider, location),
+          body: _buildActiveAlertsTab(weatherProvider, location, languageCode),
         );
       },
     );
@@ -249,6 +254,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
   Widget _buildActiveAlertsTab(
     WeatherProvider weatherProvider,
     String location,
+    String languageCode,
   ) {
     return RefreshIndicator(
       onRefresh: () async {
@@ -305,7 +311,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   Row(
                     children: [
                       Text(
-                        '${_activeAlerts.length} Active Alerts',
+                        '${_activeAlerts.length} ${AppStrings.tr(languageCode, en: 'Active Alerts', vi: 'Canh bao dang hoat dong')}',
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -316,8 +322,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   ),
                   Text(
                     weatherProvider.currentWeather != null
-                        ? 'Updated just now'
-                        : 'Loading weather data...',
+                        ? AppStrings.tr(languageCode, en: 'Updated just now', vi: 'Vua cap nhat xong')
+                        : AppStrings.tr(languageCode, en: 'Loading weather data...', vi: 'Dang tai du lieu thoi tiet...'),
                     style: TextStyle(fontSize: 13, color: Colors.grey[500]),
                   ),
                   const SizedBox(height: 16),
@@ -326,22 +332,25 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildFilterChip('All (${_activeAlerts.length})', null),
+                        _buildFilterChip(
+                          '${AppStrings.tr(languageCode, en: 'All', vi: 'Tat ca')} (${_activeAlerts.length})',
+                          null,
+                        ),
                         const SizedBox(width: 8),
                         _buildFilterChip(
-                          'Extreme',
+                          AppStrings.tr(languageCode, en: 'Extreme', vi: 'Cuc doan'),
                           AlertSeverity.extreme,
                           dotColor: const Color(0xFFD32F2F),
                         ),
                         const SizedBox(width: 8),
                         _buildFilterChip(
-                          'Severe',
+                          AppStrings.tr(languageCode, en: 'Severe', vi: 'Nghiem trong'),
                           AlertSeverity.severe,
                           dotColor: const Color(0xFFE65100),
                         ),
                         const SizedBox(width: 8),
                         _buildFilterChip(
-                          'Moderate',
+                          AppStrings.tr(languageCode, en: 'Moderate', vi: 'Trung binh'),
                           AlertSeverity.moderate,
                           dotColor: const Color(0xFFF57C00),
                         ),
@@ -368,7 +377,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'No active alerts ',
+                            AppStrings.tr(languageCode, en: 'No active alerts', vi: 'Khong co canh bao dang hoat dong'),
                             style: TextStyle(
                               color: Colors.grey[500],
                               fontSize: 16,
@@ -376,7 +385,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'All conditions are normal',
+                            AppStrings.tr(languageCode, en: 'All conditions are normal', vi: 'Moi dieu kien deu binh thuong'),
                             style: TextStyle(
                               color: Colors.grey[400],
                               fontSize: 14,

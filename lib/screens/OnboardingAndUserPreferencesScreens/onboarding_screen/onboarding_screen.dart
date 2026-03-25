@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/settings_provider.dart';
+import '../../../../utils/app_strings.dart';
 import '../location_setup_screen/location_setup_screen.dart';
 import 'widgets/onboarding_page.dart';
 import 'widgets/page_indicator.dart';
@@ -53,10 +56,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     final isLastPage = _currentPage == pages.length - 1;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           SafeArea(
@@ -68,13 +76,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: TextButton(
                   onPressed: _skipToNextScreen,
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFB5B8C6),
+                    foregroundColor: colorScheme.onSurface.withValues(alpha: 0.65),
                     textStyle: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: const Text('Skip'),
+                  child: Text(AppStrings.tr(languageCode, en: 'Skip', vi: 'Bo qua')),
                 ),
               ),
             ),
@@ -97,8 +105,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: PageIndicator(
               totalPages: pages.length,
               currentPage: _currentPage,
-              activeColor: const Color(0xFF4C9BF0),
-              inactiveColor: const Color(0xFFC9CEDC),
+              activeColor: colorScheme.primary,
+              inactiveColor: colorScheme.onSurface.withValues(alpha: isDark ? 0.35 : 0.2),
             ),
           ),
           Padding(
@@ -113,15 +121,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onPressed: _nextPage,
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(isLastPage ? double.infinity : 94, 40),
-                  backgroundColor: const Color(0xFF4C9BF0),
-                  foregroundColor: Colors.white,
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(22),
                   ),
                 ),
                 child: Text(
-                  isLastPage ? 'Get Started' : 'Next',
+                  isLastPage
+                      ? AppStrings.tr(languageCode, en: 'Get Started', vi: 'Bat dau')
+                      : AppStrings.tr(languageCode, en: 'Next', vi: 'Tiep theo'),
                   style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                 ),
               ),

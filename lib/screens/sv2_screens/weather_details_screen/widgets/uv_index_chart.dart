@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:final_project/data/models/weather_model.dart';
+import 'package:final_project/utils/app_strings.dart';
 
 class UVIndexChart extends StatelessWidget {
   final WeatherModel weather;
+  final String languageCode;
 
-  const UVIndexChart({super.key, required this.weather});
+  const UVIndexChart({
+    super.key,
+    required this.weather,
+    required this.languageCode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +28,9 @@ class UVIndexChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'UV Index',
-              style: TextStyle(
+            Text(
+              AppStrings.tr(languageCode, en: 'UV Index', vi: 'Chi so UV'),
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
@@ -66,16 +72,16 @@ class UVIndexChart extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                '${weather.uvIndex.toStringAsFixed(1)}',
+                                weather.uvIndex.toStringAsFixed(1),
                                 style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                   color: uvColor,
                                 ),
                               ),
-                              const Text(
-                                'UV Index',
-                                style: TextStyle(
+                              Text(
+                                AppStrings.tr(languageCode, en: 'UV Index', vi: 'Chi so UV'),
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.black54,
                                 ),
@@ -93,7 +99,7 @@ class UVIndexChart extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: uvColor.withOpacity(0.1),
+                      color: uvColor.withValues(alpha: 0.1),
                       border: Border.all(color: uvColor),
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -127,9 +133,9 @@ class UVIndexChart extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'UV Index Scale',
-          style: TextStyle(
+        Text(
+          AppStrings.tr(languageCode, en: 'UV Index Scale', vi: 'Thang do UV'),
+          style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: Colors.black54,
@@ -138,11 +144,11 @@ class UVIndexChart extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: [
-            _UVScaleItem(color: Colors.green, label: 'Low', range: '0-2'),
-            _UVScaleItem(color: Colors.yellow, label: 'Moderate', range: '3-5'),
-            _UVScaleItem(color: Colors.orange, label: 'High', range: '6-7'),
-            _UVScaleItem(color: Colors.red, label: 'V. High', range: '8-10'),
-            _UVScaleItem(color: Colors.purple, label: 'Extreme', range: '11+'),
+            _UVScaleItem(color: Colors.green, label: AppStrings.tr(languageCode, en: 'Low', vi: 'Thap'), range: '0-2'),
+            _UVScaleItem(color: Colors.yellow, label: AppStrings.tr(languageCode, en: 'Moderate', vi: 'Vua'), range: '3-5'),
+            _UVScaleItem(color: Colors.orange, label: AppStrings.tr(languageCode, en: 'High', vi: 'Cao'), range: '6-7'),
+            _UVScaleItem(color: Colors.red, label: AppStrings.tr(languageCode, en: 'V. High', vi: 'Rat cao'), range: '8-10'),
+            _UVScaleItem(color: Colors.purple, label: AppStrings.tr(languageCode, en: 'Extreme', vi: 'Cuc cao'), range: '11+'),
           ],
         ),
       ],
@@ -150,11 +156,11 @@ class UVIndexChart extends StatelessWidget {
   }
 
   String _getUVLevel(int index) {
-    if (index < 3) return 'Low';
-    if (index < 6) return 'Moderate';
-    if (index < 8) return 'High';
-    if (index < 11) return 'Very High';
-    return 'Extreme';
+    if (index < 3) return AppStrings.tr(languageCode, en: 'Low', vi: 'Thap');
+    if (index < 6) return AppStrings.tr(languageCode, en: 'Moderate', vi: 'Vua');
+    if (index < 8) return AppStrings.tr(languageCode, en: 'High', vi: 'Cao');
+    if (index < 11) return AppStrings.tr(languageCode, en: 'Very High', vi: 'Rat cao');
+    return AppStrings.tr(languageCode, en: 'Extreme', vi: 'Cuc cao');
   }
 
   Color _getUVColor(int index) {
@@ -166,11 +172,19 @@ class UVIndexChart extends StatelessWidget {
   }
 
   String _getUVAdvice(int index) {
-    if (index < 3) return 'No protection required';
-    if (index < 6) return 'Wear sunscreen and a hat';
-    if (index < 8) return 'Extra protection needed';
-    if (index < 11) return 'Minimize time in sun';
-    return 'Avoid sun exposure';
+    if (index < 3) {
+      return AppStrings.tr(languageCode, en: 'No protection required', vi: 'Khong can bao ve');
+    }
+    if (index < 6) {
+      return AppStrings.tr(languageCode, en: 'Wear sunscreen and a hat', vi: 'Nen boi kem chong nang va doi mu');
+    }
+    if (index < 8) {
+      return AppStrings.tr(languageCode, en: 'Extra protection needed', vi: 'Can bao ve ky hon');
+    }
+    if (index < 11) {
+      return AppStrings.tr(languageCode, en: 'Minimize time in sun', vi: 'Han che thoi gian duoi nang');
+    }
+    return AppStrings.tr(languageCode, en: 'Avoid sun exposure', vi: 'Nen tranh tiep xuc nang');
   }
 }
 

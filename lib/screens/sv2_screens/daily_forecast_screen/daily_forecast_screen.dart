@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../data/models/settings_model.dart';
+import '../../../providers/settings_provider.dart';
+import '../../../utils/app_strings.dart';
+import '../../../utils/unit_converter.dart';
 import '../../../providers/weather_provider.dart';
 import 'widgets/daily_forecast_card.dart';
 import 'widgets/daily_forecast_chart.dart';
@@ -33,16 +37,24 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        title: const Text(
-          'Daily Forecast (7-10 days)',
+        iconTheme: IconThemeData(color: onSurface),
+        title: Text(
+          AppStrings.tr(
+            languageCode,
+            en: 'Daily Forecast (7-10 days)',
+            vi: 'Du bao hang ngay (7-10 ngay)',
+          ),
           style: TextStyle(
-            color: Colors.black87,
+            color: onSurface,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -50,18 +62,18 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
         actions: [
           IconButton(
             onPressed: _loadData,
-            icon: const Icon(Icons.refresh, color: Colors.black87),
+            icon: Icon(Icons.refresh, color: onSurface),
           ),
         ],
       ),
       body: Consumer<WeatherProvider>(
         builder: (context, weatherProvider, _) {
           if (weatherProvider.isLoading) {
-            return _buildLoadingState();
+            return _buildLoadingState(context);
           }
 
           if (weatherProvider.error != null) {
-            return _buildErrorState(weatherProvider.error!);
+            return _buildErrorState(context, weatherProvider.error!, languageCode);
           }
 
           final forecasts = weatherProvider.dailyForecast;
@@ -73,7 +85,11 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
                   Icon(Icons.cloud_off, size: 64, color: Colors.grey.shade400),
                   const SizedBox(height: 16),
                   Text(
-                    'No forecast data available',
+                    AppStrings.tr(
+                      languageCode,
+                      en: 'No forecast data available',
+                      vi: 'Khong co du lieu du bao',
+                    ),
                     style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                   ),
                 ],
@@ -94,7 +110,7 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Forecast for $_currentCity',
+                        '${AppStrings.tr(languageCode, en: 'Forecast for', vi: 'Du bao cho')} $_currentCity',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -107,21 +123,21 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
                         child: Row(
                           children: [
                             _ViewModeButton(
-                              label: 'Chart',
+                              label: AppStrings.tr(languageCode, en: 'Chart', vi: 'Bieu do'),
                               isSelected: _selectedViewIndex == 0,
                               onPressed: () =>
                                   setState(() => _selectedViewIndex = 0),
                             ),
                             const SizedBox(width: 8),
                             _ViewModeButton(
-                              label: 'Cards',
+                              label: AppStrings.tr(languageCode, en: 'Cards', vi: 'The'),
                               isSelected: _selectedViewIndex == 1,
                               onPressed: () =>
                                   setState(() => _selectedViewIndex = 1),
                             ),
                             const SizedBox(width: 8),
                             _ViewModeButton(
-                              label: 'List',
+                              label: AppStrings.tr(languageCode, en: 'List', vi: 'Danh sach'),
                               isSelected: _selectedViewIndex == 2,
                               onPressed: () =>
                                   setState(() => _selectedViewIndex = 2),
@@ -137,7 +153,11 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
               // Content based on selected view
               if (_selectedViewIndex == 0)
                 SliverToBoxAdapter(
-                  child: DailyForecastChart(forecasts: forecasts),
+                  child: DailyForecastChart(
+                    forecasts: forecasts,
+                    temperatureUnit: settings.temperatureUnit,
+                    languageCode: languageCode,
+                  ),
                 )
               else if (_selectedViewIndex == 1)
                 SliverList(
@@ -145,6 +165,9 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
                     (context, index) => DailyForecastCard(
                       forecast: forecasts[index],
                       dayNumber: index + 1,
+                      temperatureUnit: settings.temperatureUnit,
+                      windSpeedUnit: settings.windSpeedUnit,
+                      languageCode: languageCode,
                     ),
                     childCount: forecasts.length,
                   ),
@@ -155,13 +178,22 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
                     (context, index) => DailyForecastItem(
                       forecast: forecasts[index],
                       dayNumber: index + 1,
+                      temperatureUnit: settings.temperatureUnit,
+                      windSpeedUnit: settings.windSpeedUnit,
+                      languageCode: languageCode,
                     ),
                     childCount: forecasts.length,
                   ),
                 ),
 
               // Summary statistics
-              SliverToBoxAdapter(child: _buildSummarySection(forecasts)),
+              SliverToBoxAdapter(
+                child: _buildSummarySection(
+                  forecasts,
+                  settings.temperatureUnit,
+                  languageCode,
+                ),
+              ),
             ],
           );
         },
@@ -169,7 +201,8 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListView.builder(
       itemCount: 5,
       itemBuilder: (context, index) {
@@ -180,7 +213,7 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             height: 120,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF1E2431) : Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
           ),
@@ -189,7 +222,7 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
     );
   }
 
-  Widget _buildErrorState(String error) {
+  Widget _buildErrorState(BuildContext context, String error, String languageCode) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -197,7 +230,7 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
           Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
           const SizedBox(height: 16),
           Text(
-            'Error loading forecast',
+            AppStrings.tr(languageCode, en: 'Error loading forecast', vi: 'Loi tai du bao'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -217,14 +250,18 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
           ElevatedButton.icon(
             onPressed: _loadData,
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            label: Text(AppStrings.tr(languageCode, en: 'Retry', vi: 'Thu lai')),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSummarySection(List<dynamic> forecasts) {
+  Widget _buildSummarySection(
+    List<dynamic> forecasts,
+    TemperatureUnit temperatureUnit,
+    String languageCode,
+  ) {
     if (forecasts.isEmpty) return const SizedBox.shrink();
 
     double avgTemp = 0;
@@ -242,6 +279,10 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
     avgTemp /= forecasts.length;
     avgHumidity /= forecasts.length;
 
+    final displayAvg = _displayTemperature(avgTemp, temperatureUnit);
+    final displayMax = _displayTemperature(maxTemp, temperatureUnit);
+    final displayMin = _displayTemperature(minTemp, temperatureUnit);
+
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -257,9 +298,9 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '10-Day Summary',
-              style: TextStyle(
+            Text(
+              AppStrings.tr(languageCode, en: '10-Day Summary', vi: 'Tong ket 10 ngay'),
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -270,19 +311,19 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _SummaryItem(
-                  label: 'Avg Temp',
-                  value: '${avgTemp.toStringAsFixed(1)}°',
+                  label: AppStrings.tr(languageCode, en: 'Avg Temp', vi: 'Nhiet do TB'),
+                  value: '${displayAvg.toStringAsFixed(1)}°',
                 ),
                 _SummaryItem(
-                  label: 'High',
-                  value: '${maxTemp.toStringAsFixed(1)}°',
+                  label: AppStrings.tr(languageCode, en: 'High', vi: 'Cao nhat'),
+                  value: '${displayMax.toStringAsFixed(1)}°',
                 ),
                 _SummaryItem(
-                  label: 'Low',
-                  value: '${minTemp.toStringAsFixed(1)}°',
+                  label: AppStrings.tr(languageCode, en: 'Low', vi: 'Thap nhat'),
+                  value: '${displayMin.toStringAsFixed(1)}°',
                 ),
                 _SummaryItem(
-                  label: 'Humidity',
+                  label: AppStrings.tr(languageCode, en: 'Humidity', vi: 'Do am'),
                   value: '${avgHumidity.toStringAsFixed(0)}%',
                 ),
               ],
@@ -291,6 +332,13 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
         ),
       ),
     );
+  }
+
+  double _displayTemperature(double celsiusValue, TemperatureUnit unit) {
+    if (unit == TemperatureUnit.fahrenheit) {
+      return UnitConverter.celsiusToFahrenheit(celsiusValue);
+    }
+    return celsiusValue;
   }
 }
 

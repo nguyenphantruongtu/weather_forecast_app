@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/settings_provider.dart';
+import '../../../../utils/app_strings.dart';
 import '../../main_wrapper_screen.dart';
 import 'models/location_choice.dart';
 
@@ -9,8 +12,12 @@ class LocationSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -37,21 +44,25 @@ class LocationSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Location Set!',
+              Text(
+                AppStrings.tr(languageCode, en: 'Location Set!', vi: 'Da cai dat vi tri!'),
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1B2232),
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'You\'re all set to receive accurate weather\nupdates for your location',
+              Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: 'You\'re all set to receive accurate weather\nupdates for your location',
+                  vi: 'Moi thu da san sang de nhan du bao\nthoi tiet chinh xac cho vi tri cua ban',
+                ),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF8A93A8),
+                  color: colorScheme.onSurface.withValues(alpha: 0.62),
                   height: 1.45,
                 ),
               ),
@@ -69,15 +80,15 @@ class LocationSuccessScreen extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
-                    backgroundColor: const Color(0xFF4C9BF0),
-                    foregroundColor: Colors.white,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text(
-                    'Continue to Home',
+                  child: Text(
+                    AppStrings.tr(languageCode, en: 'Continue to Home', vi: 'Tiep tuc den trang chu'),
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -85,10 +96,10 @@ class LocationSuccessScreen extends StatelessWidget {
               const SizedBox(height: 10),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text(
-                  'Change Location',
+                child: Text(
+                  AppStrings.tr(languageCode, en: 'Change Location', vi: 'Doi vi tri'),
                   style: TextStyle(
-                    color: Color(0xFF4C9BF0),
+                    color: colorScheme.primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

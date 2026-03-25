@@ -31,15 +31,19 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0E6FA1), Color(0xFF11B4E6)],
+            colors: isDark
+                ? const [Color(0xFF0A3552), Color(0xFF0B5976)]
+                : const [Color(0xFF0E6FA1), Color(0xFF11B4E6)],
           ),
         ),
         child: const SafeArea(child: SplashAnimation()),

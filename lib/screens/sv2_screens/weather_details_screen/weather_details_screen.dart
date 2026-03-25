@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../data/models/weather_model.dart';
+import '../../../data/models/settings_model.dart';
+import '../../../providers/settings_provider.dart';
+import '../../../utils/app_strings.dart';
+import '../../../utils/unit_converter.dart';
 import '../../../providers/weather_provider.dart';
 import 'widgets/weather_details_card.dart';
 import 'widgets/atmospheric_metrics_grid.dart';
@@ -34,16 +39,20 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        title: const Text(
-          'Weather Details',
+        iconTheme: IconThemeData(color: onSurface),
+        title: Text(
+          AppStrings.tr(languageCode, en: 'Weather Details', vi: 'Chi tiet thoi tiet'),
           style: TextStyle(
-            color: Colors.black87,
+            color: onSurface,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -51,18 +60,18 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
         actions: [
           IconButton(
             onPressed: _loadData,
-            icon: const Icon(Icons.refresh, color: Colors.black87),
+            icon: Icon(Icons.refresh, color: onSurface),
           ),
         ],
       ),
       body: Consumer<WeatherProvider>(
         builder: (context, weatherProvider, _) {
           if (weatherProvider.isLoading) {
-            return _buildLoadingState();
+            return _buildLoadingState(context);
           }
 
           if (weatherProvider.error != null) {
-            return _buildErrorState(weatherProvider.error!);
+            return _buildErrorState(weatherProvider.error!, languageCode);
           }
 
           final weather = weatherProvider.currentWeather;
@@ -74,7 +83,11 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
                   Icon(Icons.cloud_off, size: 64, color: Colors.grey.shade400),
                   const SizedBox(height: 16),
                   Text(
-                    'No weather data available',
+                    AppStrings.tr(
+                      languageCode,
+                      en: 'No weather data available',
+                      vi: 'Khong co du lieu thoi tiet',
+                    ),
                     style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                   ),
                 ],
@@ -85,24 +98,56 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
           return CustomScrollView(
             slivers: [
               // Current weather card
-              SliverToBoxAdapter(child: WeatherDetailsCard(weather: weather)),
+              SliverToBoxAdapter(
+                child: WeatherDetailsCard(
+                  weather: weather,
+                  temperatureUnit: settings.temperatureUnit,
+                  timeFormat: settings.timeFormat,
+                  languageCode: languageCode,
+                ),
+              ),
 
               // Atmospheric metrics
               SliverToBoxAdapter(
-                child: AtmosphericMetricsGrid(weather: weather),
+                child: AtmosphericMetricsGrid(
+                  weather: weather,
+                  temperatureUnit: settings.temperatureUnit,
+                  languageCode: languageCode,
+                ),
               ),
 
               // Wind details
-              SliverToBoxAdapter(child: WindDetailsCard(weather: weather)),
+              SliverToBoxAdapter(
+                child: WindDetailsCard(
+                  weather: weather,
+                  windSpeedUnit: settings.windSpeedUnit,
+                  languageCode: languageCode,
+                ),
+              ),
 
               // UV Index
-              SliverToBoxAdapter(child: UVIndexChart(weather: weather)),
+              SliverToBoxAdapter(
+                child: UVIndexChart(weather: weather, languageCode: languageCode),
+              ),
 
               // Sun & Moon
-              SliverToBoxAdapter(child: SunMoonDetailsCard(weather: weather)),
+              SliverToBoxAdapter(
+                child: SunMoonDetailsCard(
+                  weather: weather,
+                  timeFormat: settings.timeFormat,
+                  languageCode: languageCode,
+                ),
+              ),
 
               // Additional info
-              SliverToBoxAdapter(child: _buildAdditionalInfo(weather)),
+              SliverToBoxAdapter(
+                child: _buildAdditionalInfo(
+                  weather,
+                  settings.temperatureUnit,
+                  settings.timeFormat,
+                  languageCode,
+                ),
+              ),
             ],
           );
         },
@@ -110,7 +155,8 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListView.builder(
       itemCount: 5,
       itemBuilder: (context, index) {
@@ -121,7 +167,7 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             height: 150,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF1E2431) : Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
           ),
@@ -130,7 +176,7 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
     );
   }
 
-  Widget _buildErrorState(String error) {
+  Widget _buildErrorState(String error, String languageCode) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -138,7 +184,11 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
           Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
           const SizedBox(height: 16),
           Text(
-            'Error loading weather details',
+            AppStrings.tr(
+              languageCode,
+              en: 'Error loading weather details',
+              vi: 'Loi tai chi tiet thoi tiet',
+            ),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -158,14 +208,22 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
           ElevatedButton.icon(
             onPressed: _loadData,
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            label: Text(AppStrings.tr(languageCode, en: 'Retry', vi: 'Thu lai')),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAdditionalInfo(weather) {
+  Widget _buildAdditionalInfo(
+    WeatherModel weather,
+    TemperatureUnit temperatureUnit,
+    TimeFormat timeFormat,
+    String languageCode,
+  ) {
+    final displayTemp = _displayTemperature(weather.temperature, temperatureUnit);
+    final displayFeelsLike = _displayTemperature(weather.feelsLike, temperatureUnit);
+    final timePattern = timeFormat == TimeFormat.h24 ? 'yyyy-MM-dd HH:mm:ss' : 'yyyy-MM-dd h:mm:ss a';
     return Card(
       margin: const EdgeInsets.all(16),
       elevation: 2,
@@ -175,9 +233,13 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Additional Information',
-              style: TextStyle(
+            Text(
+              AppStrings.tr(
+                languageCode,
+                en: 'Additional Information',
+                vi: 'Thong tin bo sung',
+              ),
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
@@ -185,27 +247,38 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
             ),
             const SizedBox(height: 16),
             _InfoRow(
-              label: 'Last Updated',
-              value: weather.lastUpdated.toString().split('.')[0],
+              label: AppStrings.tr(languageCode, en: 'Last Updated', vi: 'Cap nhat luc'),
+              value: _formatDateTime(weather.lastUpdated, timePattern),
             ),
             const SizedBox(height: 12),
-            _InfoRow(label: 'Location', value: weather.location),
+            _InfoRow(label: AppStrings.tr(languageCode, en: 'Location', vi: 'Vi tri'), value: weather.location),
             const SizedBox(height: 12),
-            _InfoRow(label: 'Description', value: weather.description),
+            _InfoRow(label: AppStrings.tr(languageCode, en: 'Description', vi: 'Mo ta'), value: weather.description),
             const SizedBox(height: 12),
             _InfoRow(
-              label: 'Temperature',
-              value: '${weather.temperature.toStringAsFixed(1)}° C',
+              label: AppStrings.tr(languageCode, en: 'Temperature', vi: 'Nhiet do'),
+              value: '${displayTemp.toStringAsFixed(1)}°',
             ),
             const SizedBox(height: 12),
             _InfoRow(
-              label: 'Feels Like',
-              value: '${weather.feelsLike.toStringAsFixed(1)}° C',
+              label: AppStrings.tr(languageCode, en: 'Feels Like', vi: 'Cam giac nhu'),
+              value: '${displayFeelsLike.toStringAsFixed(1)}°',
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatDateTime(DateTime value, String pattern) {
+    return value.toString().split('.')[0];
+  }
+
+  double _displayTemperature(double celsiusValue, TemperatureUnit unit) {
+    if (unit == TemperatureUnit.fahrenheit) {
+      return UnitConverter.celsiusToFahrenheit(celsiusValue);
+    }
+    return celsiusValue;
   }
 }
 

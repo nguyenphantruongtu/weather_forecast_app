@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/settings_provider.dart';
+import '../../../../utils/app_strings.dart';
 import 'location_permission_screen.dart';
 import 'location_success_screen.dart';
 import 'models/location_choice.dart';
@@ -20,8 +23,13 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -33,29 +41,33 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
                 child: TextButton(
                   onPressed: _handleSkip,
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFB6BCCB),
+                    foregroundColor: colorScheme.onSurface.withValues(alpha: 0.65),
                     textStyle: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: const Text('Skip'),
+                  child: Text(AppStrings.tr(languageCode, en: 'Skip', vi: 'Bo qua')),
                 ),
               ),
-              const Text(
-                'Welcome! 🌤️',
+              Text(
+                AppStrings.tr(languageCode, en: 'Welcome! 🌤️', vi: 'Chao mung! 🌤️'),
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1C2232),
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Let\'s set up your location to get accurate\nweather updates',
+              Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: 'Let\'s set up your location to get accurate\nweather updates',
+                  vi: 'Hay cai dat vi tri de nhan\nthong tin thoi tiet chinh xac',
+                ),
                 style: TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF8A93A8),
+                  color: colorScheme.onSurface.withValues(alpha: 0.65),
                   fontWeight: FontWeight.w500,
                   height: 1.45,
                 ),
@@ -66,30 +78,30 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFE8ECF5)),
-                  boxShadow: const [
+                  border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+                  boxShadow: [
                     BoxShadow(
-                      color: Color(0x12000000),
+                      color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.07),
                       blurRadius: 18,
-                      offset: Offset(0, 8),
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
                     LocationOptionCard(
-                      title: 'Use Current\nLocation',
-                      description: 'GPS-based location',
+                      title: AppStrings.tr(languageCode, en: 'Use Current\nLocation', vi: 'Dung vi tri\nhien tai'),
+                      description: AppStrings.tr(languageCode, en: 'GPS-based location', vi: 'Vi tri theo GPS'),
                       icon: Icons.my_location,
                       trailingIcon: Icons.push_pin,
                       onTap: _openPermissionFlow,
                     ),
                     const SizedBox(height: 10),
                     LocationOptionCard(
-                      title: 'Search Location',
-                      description: 'Enter city manually',
+                      title: AppStrings.tr(languageCode, en: 'Search Location', vi: 'Tim vi tri'),
+                      description: AppStrings.tr(languageCode, en: 'Enter city manually', vi: 'Nhap thanh pho thu cong'),
                       icon: Icons.search,
                       trailingIcon: Icons.travel_explore,
                       iconColor: const Color(0xFF78A7EF),
@@ -97,8 +109,8 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
                     ),
                     const SizedBox(height: 10),
                     LocationOptionCard(
-                      title: 'Popular Cities',
-                      description: 'Browse worldwide',
+                      title: AppStrings.tr(languageCode, en: 'Popular Cities', vi: 'Thanh pho pho bien'),
+                      description: AppStrings.tr(languageCode, en: 'Browse worldwide', vi: 'Duyet toan cau'),
                       icon: Icons.public,
                       trailingIcon: Icons.public,
                       iconColor: const Color(0xFF6BC89C),
@@ -116,10 +128,10 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
                       : () => _goToSuccess(_selectedLocation!),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(46),
-                    backgroundColor: const Color(0xFF4C9BF0),
-                    disabledBackgroundColor: const Color(0xFFE5E7EF),
-                    foregroundColor: Colors.white,
-                    disabledForegroundColor: const Color(0xFFADB2C2),
+                    backgroundColor: colorScheme.primary,
+                    disabledBackgroundColor: colorScheme.onSurface.withValues(alpha: 0.12),
+                    foregroundColor: colorScheme.onPrimary,
+                    disabledForegroundColor: colorScheme.onSurface.withValues(alpha: 0.45),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -127,8 +139,8 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
                   ),
                   child: Text(
                     _selectedLocation == null
-                        ? 'Continue'
-                        : 'Continue (${_selectedLocation!.city})',
+                        ? AppStrings.tr(languageCode, en: 'Continue', vi: 'Tiep tuc')
+                        : '${AppStrings.tr(languageCode, en: 'Continue', vi: 'Tiep tuc')} (${_selectedLocation!.city})',
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),

@@ -1,22 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:final_project/data/models/forecast_model.dart';
+import 'package:final_project/data/models/settings_model.dart';
+import 'package:final_project/utils/app_strings.dart';
+import 'package:final_project/utils/unit_converter.dart';
 
 class DailyForecastChart extends StatelessWidget {
   final List<ForecastModel> forecasts;
+  final TemperatureUnit temperatureUnit;
+  final String languageCode;
 
-  const DailyForecastChart({super.key, required this.forecasts});
+  const DailyForecastChart({
+    super.key,
+    required this.forecasts,
+    required this.temperatureUnit,
+    required this.languageCode,
+  });
+
+  double _displayTemperature(double celsiusValue) {
+    if (temperatureUnit == TemperatureUnit.fahrenheit) {
+      return UnitConverter.celsiusToFahrenheit(celsiusValue);
+    }
+    return celsiusValue;
+  }
 
   @override
   Widget build(BuildContext context) {
     if (forecasts.isEmpty) {
-      return const Center(child: Text('No data available'));
+      return Center(
+        child: Text(
+          AppStrings.tr(languageCode, en: 'No data available', vi: 'Khong co du lieu'),
+        ),
+      );
     }
 
     // Prepare data for chart
     final spots = <FlSpot>[];
     for (int i = 0; i < forecasts.length && i < 10; i++) {
-      spots.add(FlSpot(i.toDouble(), forecasts[i].tempMax));
+      spots.add(FlSpot(i.toDouble(), _displayTemperature(forecasts[i].tempMax)));
     }
 
     return Card(
@@ -28,9 +49,9 @@ class DailyForecastChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Temperature Trend',
-              style: TextStyle(
+            Text(
+              AppStrings.tr(languageCode, en: 'Temperature Trend', vi: 'Xu huong nhiet do'),
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
@@ -59,7 +80,7 @@ class DailyForecastChart extends StatelessWidget {
                         getTitlesWidget: (value, meta) {
                           if (value.toInt() < forecasts.length) {
                             return Text(
-                              'Day ${value.toInt() + 1}',
+                              '${AppStrings.tr(languageCode, en: 'Day', vi: 'Ngay')} ${value.toInt() + 1}',
                               style: const TextStyle(fontSize: 10),
                             );
                           }
@@ -105,7 +126,7 @@ class DailyForecastChart extends StatelessWidget {
                       ),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: Colors.blue.withOpacity(0.1),
+                        color: Colors.blue.withValues(alpha: 0.1),
                       ),
                     ),
                   ],

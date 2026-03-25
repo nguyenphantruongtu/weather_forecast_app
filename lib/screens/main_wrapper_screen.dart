@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/weather_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../utils/app_strings.dart';
 import 'sv2_screens/home_screen/home_screen.dart';
 import 'OnboardingAndUserPreferencesScreens/location_setup_screen/search_location_screen.dart';
 import '../features/map_view_screen/map_view_screen.dart';
@@ -18,6 +20,9 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final colorScheme = Theme.of(context).colorScheme;
     final List<Widget> screens = [
       HomeScreen(
         onNavigateToCompare: () {
@@ -43,7 +48,11 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
           });
           
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Đã chuyển đến ${city.city}')),
+            SnackBar(
+              content: Text(
+                '${AppStrings.tr(languageCode, en: 'Switched to', vi: 'Da chuyen den')} ${city.city}',
+              ),
+            ),
           );
         },
         onCompareCity: (city) {
@@ -65,6 +74,7 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
         children: screens,
       ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -72,24 +82,24 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
           });
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-        items: const [
+        selectedItemColor: colorScheme.primary,
+        unselectedItemColor: colorScheme.onSurface.withValues(alpha: 0.6),
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Trang chủ',
+            icon: const Icon(Icons.home),
+            label: AppStrings.tr(languageCode, en: 'Home', vi: 'Trang chu'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Tìm kiếm',
+            icon: const Icon(Icons.search),
+            label: AppStrings.tr(languageCode, en: 'Search', vi: 'Tim kiem'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.map),
-            label: 'Bản đồ',
+            icon: const Icon(Icons.map),
+            label: AppStrings.tr(languageCode, en: 'Map', vi: 'Ban do'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.compare_arrows),
-            label: 'So sánh',
+            icon: const Icon(Icons.compare_arrows),
+            label: AppStrings.tr(languageCode, en: 'Compare', vi: 'So sanh'),
           ),
         ],
       ),

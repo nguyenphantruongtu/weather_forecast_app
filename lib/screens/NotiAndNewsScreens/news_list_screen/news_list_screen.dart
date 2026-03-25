@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../data/models/news_article_model.dart';
 import '../../../../data/services/news_api_service.dart';
+import '../../../../providers/settings_provider.dart';
+import '../../../../utils/app_strings.dart';
 import '../news_detail_screen/news_detail_screen.dart';
 import 'widgets/category_chips.dart';
 import 'widgets/news_card.dart';
@@ -59,13 +62,17 @@ class _NewsListScreenState extends State<NewsListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.home, color: Color(0xFF1A1A2E)),
+          icon: Icon(Icons.home, color: colorScheme.onSurface),
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context,
@@ -76,19 +83,19 @@ class _NewsListScreenState extends State<NewsListScreen> {
             );
           },
         ),
-        title: const Text(
-          'Top News',
+        title: Text(
+          AppStrings.tr(languageCode, en: 'Top News', vi: 'Tin tuc noi bat'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A2E),
+            color: colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
       ),
       body: RefreshIndicator(
         onRefresh: () => _loadNews(refresh: true),
-        color: const Color(0xFF6B7AEF),
+        color: colorScheme.primary,
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
@@ -97,10 +104,10 @@ class _NewsListScreenState extends State<NewsListScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: CategoryChips(
-                  categories: _categories,
-                  selectedCategory: _selectedCategory,
+                  categories: _categories.map((c) => _localizedCategory(c, languageCode)).toList(),
+                  selectedCategory: _localizedCategory(_selectedCategory, languageCode),
                   onSelected: (cat) {
-                    setState(() => _selectedCategory = cat);
+                    setState(() => _selectedCategory = _categoryFromLocalized(cat, languageCode));
                     _loadNews();
                   },
                   badgeCounts: _badgeCounts,
@@ -110,7 +117,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
             if (_isLoading)
               const SliverFillRemaining(
                 child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFF6B7AEF)),
+                  child: CircularProgressIndicator(),
                 ),
               )
             else ...[
@@ -119,7 +126,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildFeaturedCard(_articles.first),
+                    child: _buildFeaturedCard(_articles.first, languageCode),
                   ),
                 ),
               // Regular articles
@@ -146,7 +153,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
     );
   }
 
-  Widget _buildFeaturedCard(NewsArticleModel article) {
+  Widget _buildFeaturedCard(NewsArticleModel article, String languageCode) {
     return GestureDetector(
       onTap: () => _navigateToDetail(article),
       child: Container(
@@ -223,10 +230,10 @@ class _NewsListScreenState extends State<NewsListScreen> {
                 children: [
                   Row(
                     children: [
-                      _buildBadge('FEATURED', const Color(0xFF6B7AEF)),
+                      _buildBadge(AppStrings.tr(languageCode, en: 'FEATURED', vi: 'NOI BAT'), const Color(0xFF6B7AEF)),
                       const SizedBox(width: 8),
                       if (article.isBreaking)
-                        _buildBadge('BREAKING', const Color(0xFFD32F2F)),
+                        _buildBadge(AppStrings.tr(languageCode, en: 'BREAKING', vi: 'KHAN'), const Color(0xFFD32F2F)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -242,7 +249,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'By ${article.source} • ${article.timeAgo}',
+                    '${AppStrings.tr(languageCode, en: 'By', vi: 'Boi')} ${article.source} • ${article.timeAgo}',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.7),
                       fontSize: 12,
@@ -255,6 +262,38 @@ class _NewsListScreenState extends State<NewsListScreen> {
         ),
       ),
     );
+  }
+
+  String _localizedCategory(String category, String languageCode) {
+    switch (category) {
+      case 'All':
+        return AppStrings.tr(languageCode, en: 'All', vi: 'Tat ca');
+      case 'Business':
+        return AppStrings.tr(languageCode, en: 'Business', vi: 'Kinh doanh');
+      case 'Entertainment':
+        return AppStrings.tr(languageCode, en: 'Entertainment', vi: 'Giai tri');
+      case 'General':
+        return AppStrings.tr(languageCode, en: 'General', vi: 'Tong hop');
+      case 'Health':
+        return AppStrings.tr(languageCode, en: 'Health', vi: 'Suc khoe');
+      case 'Science':
+        return AppStrings.tr(languageCode, en: 'Science', vi: 'Khoa hoc');
+      case 'Sports':
+        return AppStrings.tr(languageCode, en: 'Sports', vi: 'The thao');
+      case 'Technology':
+        return AppStrings.tr(languageCode, en: 'Technology', vi: 'Cong nghe');
+      default:
+        return category;
+    }
+  }
+
+  String _categoryFromLocalized(String localized, String languageCode) {
+    for (final category in _categories) {
+      if (_localizedCategory(category, languageCode) == localized) {
+        return category;
+      }
+    }
+    return 'All';
   }
 
   Widget _buildBadge(String label, Color color) {

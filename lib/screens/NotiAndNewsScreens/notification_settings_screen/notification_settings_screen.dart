@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/notification_provider.dart';
+import '../../../../providers/settings_provider.dart';
+import '../../../../utils/app_strings.dart';
 import 'widgets/notification_toggle.dart';
 import 'widgets/time_picker_tile.dart';
 import '../../../../screens/main_wrapper_screen.dart';
@@ -25,6 +27,9 @@ class _NotificationSettingsScreenState
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<NotificationProvider>();
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final colorScheme = Theme.of(context).colorScheme;
     final config = provider.config;
 
     if (provider.isLoading) {
@@ -32,12 +37,12 @@ class _NotificationSettingsScreenState
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.home, color: Color(0xFF1A1A2E)),
+          icon: Icon(Icons.home, color: colorScheme.onSurface),
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context,
@@ -48,12 +53,12 @@ class _NotificationSettingsScreenState
             );
           },
         ),
-        title: const Text(
-          'Notification Settings',
+        title: Text(
+          AppStrings.tr(languageCode, en: 'Notification Settings', vi: 'Cai dat thong bao'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A2E),
+            color: colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -66,28 +71,28 @@ class _NotificationSettingsScreenState
               // Master toggle card
               _buildCard(
                 child: NotificationToggle(
-                  title: 'Push Notifications',
-                  subtitle: 'Enable to receive weather updates',
+                  title: AppStrings.tr(languageCode, en: 'Push Notifications', vi: 'Thong bao day'),
+                  subtitle: AppStrings.tr(languageCode, en: 'Enable to receive weather updates', vi: 'Bat de nhan cap nhat thoi tiet'),
                   value: config.pushNotificationsEnabled,
                   onChanged: (v) => provider.togglePushNotifications(v),
                 ),
               ),
               const SizedBox(height: 20),
               // Daily Forecasts
-              _buildSectionTitle('DAILY & HOURLY FORECASTS'),
+              _buildSectionTitle(AppStrings.tr(languageCode, en: 'DAILY & HOURLY FORECASTS', vi: 'DU BAO HANG NGAY & THEO GIO')),
               _buildCard(
                 child: Column(
                   children: [
                     NotificationToggle(
-                      title: 'Hourly Forecast',
-                      subtitle: 'Receive weather updates each hour',
+                      title: AppStrings.tr(languageCode, en: 'Hourly Forecast', vi: 'Du bao theo gio'),
+                      subtitle: AppStrings.tr(languageCode, en: 'Receive weather updates each hour', vi: 'Nhan cap nhat moi gio'),
                       value: config.hourlyForecastEnabled,
                       onChanged: (v) => provider.toggleHourlyForecast(v),
                     ),
                     const Divider(height: 24),
                     NotificationToggle(
-                      title: 'Morning Forecast',
-                      subtitle: 'Daily weather at selected time',
+                      title: AppStrings.tr(languageCode, en: 'Morning Forecast', vi: 'Du bao buoi sang'),
+                      subtitle: AppStrings.tr(languageCode, en: 'Daily weather at selected time', vi: 'Du bao hang ngay theo gio da chon'),
                       value: config.morningForecastEnabled,
                       onChanged: (v) => provider.toggleMorningForecast(v),
                     ),
@@ -103,8 +108,8 @@ class _NotificationSettingsScreenState
                     ],
                     const Divider(height: 24),
                     NotificationToggle(
-                      title: 'Evening Forecast',
-                      subtitle: 'Daily weather at selected time',
+                      title: AppStrings.tr(languageCode, en: 'Evening Forecast', vi: 'Du bao buoi toi'),
+                      subtitle: AppStrings.tr(languageCode, en: 'Daily weather at selected time', vi: 'Du bao hang ngay theo gio da chon'),
                       value: config.eveningForecastEnabled,
                       onChanged: (v) => provider.toggleEveningForecast(v),
                     ),
@@ -120,8 +125,8 @@ class _NotificationSettingsScreenState
                     ],
                     const Divider(height: 24),
                     NotificationToggle(
-                      title: 'Weekend Summary',
-                      subtitle: 'Friday evening summary for the next days',
+                      title: AppStrings.tr(languageCode, en: 'Weekend Summary', vi: 'Tong ket cuoi tuan'),
+                      subtitle: AppStrings.tr(languageCode, en: 'Friday evening summary for the next days', vi: 'Tong ket toi thu Sau cho nhung ngay toi'),
                       value: config.weekendSummaryEnabled,
                       onChanged: (v) => provider.toggleWeekendSummary(v),
                     ),
@@ -130,22 +135,22 @@ class _NotificationSettingsScreenState
               ),
               const SizedBox(height: 20),
               // Weather Alerts
-              _buildSectionTitle('WEATHER ALERTS'),
+              _buildSectionTitle(AppStrings.tr(languageCode, en: 'WEATHER ALERTS', vi: 'CANH BAO THOI TIET')),
               _buildCard(
                 child: Column(
                   children: [
                     NotificationToggle(
-                      title: 'Severe Weather Warnings ⚠️',
-                      subtitle: 'Storm, flood, extreme weather',
-                      warningText: 'Always recommended ON',
+                      title: AppStrings.tr(languageCode, en: 'Severe Weather Warnings ⚠️', vi: 'Canh bao thoi tiet khac nghiet ⚠️'),
+                      subtitle: AppStrings.tr(languageCode, en: 'Storm, flood, extreme weather', vi: 'Bao, ngap, thoi tiet cuc doan'),
+                      warningText: AppStrings.tr(languageCode, en: 'Always recommended ON', vi: 'Khuyen nghi luon bat'),
                       value: config.severeWeatherWarningsEnabled,
                       onChanged: (v) => provider.toggleSevereWeatherWarnings(v),
                       alwaysOn: true,
                     ),
                     const Divider(height: 24),
                     NotificationToggle(
-                      title: 'Weather Advisories 🔔',
-                      subtitle: 'Wind, fog, heat advisories',
+                      title: AppStrings.tr(languageCode, en: 'Weather Advisories 🔔', vi: 'Khuyen cao thoi tiet 🔔'),
+                      subtitle: AppStrings.tr(languageCode, en: 'Wind, fog, heat advisories', vi: 'Khuyen cao gio, suong mu, nang nong'),
                       value: config.weatherAdvisoriesEnabled,
                       onChanged: (v) => provider.toggleWeatherAdvisories(v),
                     ),
@@ -154,7 +159,7 @@ class _NotificationSettingsScreenState
               ),
               const SizedBox(height: 20),
               // Location-based alerts
-              _buildSectionTitle('LOCATION BASED ALERTS'),
+              _buildSectionTitle(AppStrings.tr(languageCode, en: 'LOCATION BASED ALERTS', vi: 'CANH BAO THEO VI TRI')),
               _buildCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,20 +184,20 @@ class _NotificationSettingsScreenState
                               size: 24,
                             ),
                             const SizedBox(width: 10),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Test Notification',
-                                    style: TextStyle(
+                                    AppStrings.tr(languageCode, en: 'Test Notification', vi: 'Thong bao thu'),
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
                                     ),
                                   ),
                                   Text(
-                                    'This is how weather alerts will appear',
-                                    style: TextStyle(
+                                    AppStrings.tr(languageCode, en: 'This is how weather alerts will appear', vi: 'Canh bao se hien thi nhu vay'),
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey,
                                     ),
@@ -219,8 +224,8 @@ class _NotificationSettingsScreenState
                     const Divider(height: 20),
                     // Current location toggle
                     NotificationToggle(
-                      title: 'Current Location',
-                      subtitle: 'Uses GPS when app is open',
+                      title: AppStrings.tr(languageCode, en: 'Current Location', vi: 'Vi tri hien tai'),
+                      subtitle: AppStrings.tr(languageCode, en: 'Uses GPS when app is open', vi: 'Dung GPS khi ung dung duoc mo'),
                       value: config.useCurrentLocation,
                       onChanged: (v) => provider.toggleCurrentLocation(v),
                     ),
@@ -241,9 +246,9 @@ class _NotificationSettingsScreenState
                     size: 18,
                     color: Color(0xFF6B7AEF),
                   ),
-                  label: const Text(
-                    'Send Test Notification',
-                    style: TextStyle(color: Color(0xFF6B7AEF)),
+                  label: Text(
+                    AppStrings.tr(languageCode, en: 'Send Test Notification', vi: 'Gui thong bao thu'),
+                    style: const TextStyle(color: Color(0xFF6B7AEF)),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF6B7AEF)),
@@ -261,9 +266,9 @@ class _NotificationSettingsScreenState
                   onPressed: () async {
                     await provider.scheduleTestNotification(seconds: 5);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text(
-                          'Scheduled test notification in 5 seconds',
+                          AppStrings.tr(languageCode, en: 'Scheduled test notification in 5 seconds', vi: 'Da hen gio thong bao thu sau 5 giay'),
                         ),
                         duration: Duration(seconds: 2),
                       ),
@@ -275,9 +280,9 @@ class _NotificationSettingsScreenState
                     size: 18,
                     color: Color(0xFF6B7AEF),
                   ),
-                  label: const Text(
-                    'Schedule Test Notification (5s)',
-                    style: TextStyle(color: Color(0xFF6B7AEF)),
+                  label: Text(
+                    AppStrings.tr(languageCode, en: 'Schedule Test Notification (5s)', vi: 'Hen gio thong bao thu (5s)'),
+                    style: const TextStyle(color: Color(0xFF6B7AEF)),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF6B7AEF)),

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../utils/app_strings.dart';
 import 'news_list_screen/news_list_screen.dart';
 import 'alerts_screen/alerts_screen.dart';
 import 'notification_settings_screen/notification_settings_screen.dart';
@@ -23,6 +26,11 @@ class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -30,10 +38,10 @@ class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
               blurRadius: 16,
               offset: const Offset(0, -4),
             ),
@@ -48,19 +56,25 @@ class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
                 _buildNavItem(
                   icon: Icons.notifications_outlined,
                   activeIcon: Icons.notifications,
-                  label: 'Alerts',
+                  label: AppStrings.tr(languageCode, en: 'Alerts', vi: 'Canh bao'),
+                  activeColor: colorScheme.primary,
+                  inactiveColor: colorScheme.onSurface.withValues(alpha: 0.6),
                   index: 0,
                 ),
                 _buildNavItem(
                   icon: Icons.article_outlined,
                   activeIcon: Icons.article,
-                  label: 'News',
+                  label: AppStrings.tr(languageCode, en: 'News', vi: 'Tin tuc'),
+                  activeColor: colorScheme.primary,
+                  inactiveColor: colorScheme.onSurface.withValues(alpha: 0.6),
                   index: 1,
                 ),
                 _buildNavItem(
                   icon: Icons.settings_outlined,
                   activeIcon: Icons.settings,
-                  label: 'Settings',
+                  label: AppStrings.tr(languageCode, en: 'Settings', vi: 'Cai dat'),
+                  activeColor: colorScheme.primary,
+                  inactiveColor: colorScheme.onSurface.withValues(alpha: 0.6),
                   index: 2,
                 ),
               ],
@@ -75,6 +89,8 @@ class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
     required IconData icon,
     required IconData activeIcon,
     required String label,
+    required Color activeColor,
+    required Color inactiveColor,
     required int index,
   }) {
     final isActive = _currentIndex == index;
@@ -86,7 +102,7 @@ class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
           color: isActive
-              ? const Color(0xFF6B7AEF).withOpacity(0.1)
+              ? activeColor.withValues(alpha: 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -95,7 +111,7 @@ class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
           children: [
             Icon(
               isActive ? activeIcon : icon,
-              color: isActive ? const Color(0xFF6B7AEF) : Colors.grey[500],
+              color: isActive ? activeColor : inactiveColor,
               size: 24,
             ),
             const SizedBox(height: 2),
@@ -105,8 +121,7 @@ class _NotiNewsMainScreenState extends State<NotiNewsMainScreen> {
                 fontSize: 11,
                 fontWeight:
                     isActive ? FontWeight.w600 : FontWeight.normal,
-                color:
-                    isActive ? const Color(0xFF6B7AEF) : Colors.grey[500],
+                color: isActive ? activeColor : inactiveColor,
               ),
             ),
           ],

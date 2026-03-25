@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/settings_provider.dart';
+import '../../../../utils/app_strings.dart';
 import 'services/location_api_service.dart';
 
 class LocationPermissionScreen extends StatefulWidget {
@@ -15,8 +18,12 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -25,20 +32,20 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
               const SizedBox(height: 44),
               _permissionVisual(),
               const SizedBox(height: 34),
-              const Text(
-                'Enable Location Access',
+              Text(
+                AppStrings.tr(languageCode, en: 'Enable Location Access', vi: 'Bat quyen truy cap vi tri'),
                 style: TextStyle(
                   fontSize: 27,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1B2232),
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 20),
-              _bullet('Accurate local forecasts'),
+              _bullet(AppStrings.tr(languageCode, en: 'Accurate local forecasts', vi: 'Du bao dia phuong chinh xac')),
               const SizedBox(height: 8),
-              _bullet('Severe weather alerts'),
+              _bullet(AppStrings.tr(languageCode, en: 'Severe weather alerts', vi: 'Canh bao thoi tiet khac nghiet')),
               const SizedBox(height: 8),
-              _bullet('No location data sharing without your consent'),
+              _bullet(AppStrings.tr(languageCode, en: 'No location data sharing without your consent', vi: 'Khong chia se du lieu vi tri khi chua co su dong y')),
               const Spacer(),
               SizedBox(
                 width: double.infinity,
@@ -46,8 +53,8 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                   onPressed: _isLoading ? null : _requestAccess,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
-                    backgroundColor: const Color(0xFF4C9BF0),
-                    foregroundColor: Colors.white,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -62,8 +69,8 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Allow Location Access',
+                      : Text(
+                          AppStrings.tr(languageCode, en: 'Allow Location Access', vi: 'Cho phep truy cap vi tri'),
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                 ),
@@ -71,10 +78,10 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
               const SizedBox(height: 14),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Enter Manually',
+                child: Text(
+                  AppStrings.tr(languageCode, en: 'Enter Manually', vi: 'Nhap thu cong'),
                   style: TextStyle(
-                    color: Color(0xFF4C9BF0),
+                    color: colorScheme.primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -140,6 +147,7 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
   }
 
   Future<void> _requestAccess() async {
+    final languageCode = context.read<SettingsProvider>().settings.language;
     setState(() => _isLoading = true);
 
     try {
@@ -147,7 +155,7 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
       if (!serviceEnabled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please enable location services first.')),
+            SnackBar(content: Text(AppStrings.tr(languageCode, en: 'Please enable location services first.', vi: 'Vui long bat dich vu vi tri truoc.'))),
           );
         }
         return;
@@ -162,7 +170,7 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
         await Geolocator.openAppSettings();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location is permanently denied. Opened app settings.')),
+            SnackBar(content: Text(AppStrings.tr(languageCode, en: 'Location is permanently denied. Opened app settings.', vi: 'Quyen vi tri bi tu choi vinh vien. Da mo cai dat ung dung.'))),
           );
         }
         return;
@@ -171,7 +179,7 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
       if (permission == LocationPermission.denied) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permission was denied.')),
+            SnackBar(content: Text(AppStrings.tr(languageCode, en: 'Location permission was denied.', vi: 'Quyen vi tri da bi tu choi.'))),
           );
         }
         return;
@@ -195,7 +203,7 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not access your location. Try search manually.')),
+          SnackBar(content: Text(AppStrings.tr(languageCode, en: 'Could not access your location. Try search manually.', vi: 'Khong the truy cap vi tri. Hay thu tim thu cong.'))),
         );
       }
     } finally {

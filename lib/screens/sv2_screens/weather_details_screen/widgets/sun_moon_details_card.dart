@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:final_project/data/models/weather_model.dart';
+import 'package:final_project/data/models/settings_model.dart';
 import 'package:intl/intl.dart';
+import 'package:final_project/utils/app_strings.dart';
 
 class SunMoonDetailsCard extends StatelessWidget {
   final WeatherModel weather;
+  final TimeFormat timeFormat;
+  final String languageCode;
 
-  const SunMoonDetailsCard({super.key, required this.weather});
+  const SunMoonDetailsCard({
+    super.key,
+    required this.weather,
+    required this.timeFormat,
+    required this.languageCode,
+  });
 
   @override
   Widget build(BuildContext context) {
     final sunDuration = weather.sunset.difference(weather.sunrise);
-    final sunsetTime = DateFormat('hh:mm a').format(weather.sunset);
-    final sunriseTime = DateFormat('hh:mm a').format(weather.sunrise);
+    final format = timeFormat == TimeFormat.h24 ? 'HH:mm' : 'hh:mm a';
+    final sunsetTime = DateFormat(format).format(weather.sunset);
+    final sunriseTime = DateFormat(format).format(weather.sunrise);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -22,9 +32,9 @@ class SunMoonDetailsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Sun & Moon',
-              style: TextStyle(
+            Text(
+              AppStrings.tr(languageCode, en: 'Sun & Moon', vi: 'Mat troi & Mat trang'),
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
@@ -36,7 +46,7 @@ class SunMoonDetailsCard extends StatelessWidget {
                 Expanded(
                   child: _SunMoonItem(
                     icon: Icons.wb_sunny,
-                    label: 'Sunrise',
+                    label: AppStrings.tr(languageCode, en: 'Sunrise', vi: 'Binh minh'),
                     time: sunriseTime,
                     color: Colors.orange,
                   ),
@@ -45,7 +55,7 @@ class SunMoonDetailsCard extends StatelessWidget {
                 Expanded(
                   child: _SunMoonItem(
                     icon: Icons.nights_stay,
-                    label: 'Sunset',
+                    label: AppStrings.tr(languageCode, en: 'Sunset', vi: 'Hoang hon'),
                     time: sunsetTime,
                     color: Colors.indigo,
                   ),
@@ -73,7 +83,7 @@ class SunMoonDetailsCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Daylight Duration',
+                            AppStrings.tr(languageCode, en: 'Daylight Duration', vi: 'Thoi gian ban ngay'),
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.black54,
@@ -127,10 +137,10 @@ class _SunMoonItem extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
+          colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.05)],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       padding: const EdgeInsets.all(12),
       child: Column(

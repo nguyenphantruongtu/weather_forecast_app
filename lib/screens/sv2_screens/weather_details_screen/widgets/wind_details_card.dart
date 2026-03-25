@@ -1,10 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:final_project/data/models/weather_model.dart';
+import 'package:final_project/data/models/settings_model.dart';
+import 'package:final_project/utils/app_strings.dart';
 
 class WindDetailsCard extends StatelessWidget {
   final WeatherModel weather;
+  final WindSpeedUnit windSpeedUnit;
+  final String languageCode;
 
-  const WindDetailsCard({super.key, required this.weather});
+  const WindDetailsCard({
+    super.key,
+    required this.weather,
+    required this.windSpeedUnit,
+    required this.languageCode,
+  });
+
+  String _displayWind(double kmhValue) {
+    if (windSpeedUnit == WindSpeedUnit.mph) {
+      return (kmhValue * 0.621371).toStringAsFixed(1);
+    }
+    return kmhValue.toStringAsFixed(1);
+  }
+
+  String _unitLabel() {
+    if (windSpeedUnit == WindSpeedUnit.mph) return 'mph';
+    return 'km/h';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +38,9 @@ class WindDetailsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Wind Details',
-              style: TextStyle(
+            Text(
+              AppStrings.tr(languageCode, en: 'Wind Details', vi: 'Chi tiet gio'),
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
@@ -51,15 +72,15 @@ class WindDetailsCard extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                '${weather.windSpeed.toStringAsFixed(1)}',
+                                _displayWind(weather.windSpeed),
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                               ),
-                              const Text(
-                                'm/s',
+                              Text(
+                                _unitLabel(),
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: Colors.white70,
@@ -85,23 +106,24 @@ class WindDetailsCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _DetailRow(
-                        label: 'Speed',
-                        value: '${weather.windSpeed.toStringAsFixed(1)} m/s',
+                        label: AppStrings.tr(languageCode, en: 'Speed', vi: 'Toc do'),
+                        value: '${_displayWind(weather.windSpeed)} ${_unitLabel()}',
                       ),
                       const SizedBox(height: 12),
                       _DetailRow(
-                        label: 'Speed (km/h)',
-                        value:
-                            '${(weather.windSpeed * 3.6).toStringAsFixed(1)} km/h',
+                        label: AppStrings.tr(languageCode, en: 'Speed (km/h)', vi: 'Toc do (km/h)'),
+                        value: '${weather.windSpeed.toStringAsFixed(1)} km/h',
                       ),
                       const SizedBox(height: 12),
                       _DetailRow(
-                        label: 'Speed (mph)',
-                        value:
-                            '${(weather.windSpeed * 2.237).toStringAsFixed(1)} mph',
+                        label: AppStrings.tr(languageCode, en: 'Speed (mph)', vi: 'Toc do (mph)'),
+                        value: '${(weather.windSpeed * 0.621371).toStringAsFixed(1)} mph',
                       ),
                       const SizedBox(height: 12),
-                      _DetailRow(label: 'Direction', value: 'Variable'),
+                      _DetailRow(
+                        label: AppStrings.tr(languageCode, en: 'Direction', vi: 'Huong gio'),
+                        value: AppStrings.tr(languageCode, en: 'Variable', vi: 'Thay doi'),
+                      ),
                     ],
                   ),
                 ),
@@ -114,13 +136,13 @@ class WindDetailsCard extends StatelessWidget {
   }
 
   String _getWindSpeed(double speed) {
-    if (speed < 1) return 'Calm';
-    if (speed < 3) return 'Light';
-    if (speed < 5) return 'Light Breeze';
-    if (speed < 8) return 'Moderate';
-    if (speed < 11) return 'Fresh Breeze';
-    if (speed < 14) return 'Strong Breeze';
-    return 'Very Strong';
+    if (speed < 1) return AppStrings.tr(languageCode, en: 'Calm', vi: 'Lang gio');
+    if (speed < 3) return AppStrings.tr(languageCode, en: 'Light', vi: 'Nhe');
+    if (speed < 5) return AppStrings.tr(languageCode, en: 'Light Breeze', vi: 'Gio nhe');
+    if (speed < 8) return AppStrings.tr(languageCode, en: 'Moderate', vi: 'Trung binh');
+    if (speed < 11) return AppStrings.tr(languageCode, en: 'Fresh Breeze', vi: 'Gio kha manh');
+    if (speed < 14) return AppStrings.tr(languageCode, en: 'Strong Breeze', vi: 'Gio manh');
+    return AppStrings.tr(languageCode, en: 'Very Strong', vi: 'Rat manh');
   }
 }
 

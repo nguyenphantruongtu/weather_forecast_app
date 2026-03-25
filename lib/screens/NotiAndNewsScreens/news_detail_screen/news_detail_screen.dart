@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../data/models/news_article_model.dart';
+import '../../../../providers/settings_provider.dart';
+import '../../../../utils/app_strings.dart';
 import 'widgets/news_header.dart';
 import 'widgets/share_button.dart';
 
@@ -15,26 +18,22 @@ class NewsDetailScreen extends StatefulWidget {
 }
 
 class _NewsDetailScreenState extends State<NewsDetailScreen> {
-  bool _isDarkMode = false;
   double _fontSize = 15.0;
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: _isDarkMode
-          ? ThemeData.dark().copyWith(
-              scaffoldBackgroundColor: const Color(0xFF1A1A2E),
-            )
-          : ThemeData.light(),
-      child: Scaffold(
-        backgroundColor:
-            _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF7F8FA),
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: CustomScrollView(
           slivers: [
             // App bar with image
             SliverAppBar(
               backgroundColor:
-                  _isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+                  Theme.of(context).scaffoldBackgroundColor,
               expandedHeight: 220,
               pinned: true,
               leading: GestureDetector(
@@ -142,7 +141,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: _isDarkMode ? const Color(0xFF16213E) : Colors.white,
+                  color: isDarkMode ? const Color(0xFF16213E) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -169,15 +168,16 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildAction(Icons.share_outlined, 'Share', () => _shareArticle()),
-                          _buildAction(Icons.open_in_browser, 'Open', _openArticleUrl),
-                          _buildAction(Icons.text_fields, 'Size', _changeSize),
+                          _buildAction(Icons.share_outlined, AppStrings.tr(languageCode, en: 'Share', vi: 'Chia se'), isDarkMode, () => _shareArticle()),
+                          _buildAction(Icons.open_in_browser, AppStrings.tr(languageCode, en: 'Open', vi: 'Mo'), isDarkMode, _openArticleUrl),
+                          _buildAction(Icons.text_fields, AppStrings.tr(languageCode, en: 'Size', vi: 'Co chu'), isDarkMode, _changeSize),
                           _buildAction(
-                            _isDarkMode
+                            isDarkMode
                                 ? Icons.light_mode_outlined
                                 : Icons.dark_mode_outlined,
-                            'Dark',
-                            () => setState(() => _isDarkMode = !_isDarkMode),
+                            AppStrings.tr(languageCode, en: 'Theme', vi: 'Giao dien'),
+                            isDarkMode,
+                            () {},
                           ),
                         ],
                       ),
@@ -189,7 +189,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                       style: TextStyle(
                         fontSize: _fontSize,
                         height: 1.7,
-                        color: _isDarkMode
+                        color: isDarkMode
                             ? Colors.grey[300]
                             : const Color(0xFF444444),
                       ),
@@ -201,11 +201,10 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
           ],
         ),
-      ),
-    );
+      );
   }
 
-  Widget _buildAction(IconData icon, String label, VoidCallback onTap) {
+  Widget _buildAction(IconData icon, String label, bool isDarkMode, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -214,14 +213,14 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
           Icon(
             icon,
             size: 22,
-            color: _isDarkMode ? Colors.grey[300] : Colors.grey[600],
+            color: isDarkMode ? Colors.grey[300] : Colors.grey[600],
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: 11,
-              color: _isDarkMode ? Colors.grey[400] : Colors.grey[500],
+              color: isDarkMode ? Colors.grey[400] : Colors.grey[500],
             ),
           ),
         ],
@@ -243,12 +242,12 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       } else {
         // Fallback: show snackbar or something
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to open article link')),
+          SnackBar(content: Text(AppStrings.tr(context.read<SettingsProvider>().settings.language, en: 'Unable to open article link', vi: 'Khong the mo lien ket bai viet'))),
         );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Article link not available')),
+        SnackBar(content: Text(AppStrings.tr(context.read<SettingsProvider>().settings.language, en: 'Article link not available', vi: 'Lien ket bai viet khong kha dung'))),
       );
     }
   }
@@ -260,7 +259,12 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       content = content.replaceAll(RegExp(r'\.\.\.\s*$'), '');
       return content.trim();
     } else {
-      return 'Content not available. Please use the "Open" button to read the full article.';
+      final languageCode = context.read<SettingsProvider>().settings.language;
+      return AppStrings.tr(
+        languageCode,
+        en: 'Content not available. Please use the "Open" button to read the full article.',
+        vi: 'Noi dung khong kha dung. Vui long dung nut "Mo" de doc day du bai viet.',
+      );
     }
   }
 

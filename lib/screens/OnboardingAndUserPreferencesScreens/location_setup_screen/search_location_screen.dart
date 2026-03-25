@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/settings_provider.dart';
+import '../../../../utils/app_strings.dart';
 import 'models/location_choice.dart';
 import 'services/location_api_service.dart';
 
@@ -40,19 +43,22 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final colorScheme = Theme.of(context).colorScheme;
     final hasQuery = _controller.text.trim().isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF6F7FB),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         titleSpacing: 0,
-        title: const Text(
-          'Search Location',
+        title: Text(
+          AppStrings.tr(languageCode, en: 'Search Location', vi: 'Tim vi tri'),
           style: TextStyle(
             fontSize: 19,
-            color: Color(0xFF1C2232),
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -66,11 +72,11 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
               controller: _controller,
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: 'Enter city name',
-                hintStyle: const TextStyle(color: Color(0xFFA6ABBA)),
-                prefixIcon: const Icon(Icons.search, color: Color(0xFFA6ABBA)),
+                hintText: AppStrings.tr(languageCode, en: 'Enter city name', vi: 'Nhap ten thanh pho'),
+                hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
+                prefixIcon: Icon(Icons.search, color: colorScheme.onSurface.withValues(alpha: 0.5)),
                 filled: true,
-                fillColor: const Color(0xFFF0F2F7),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -80,22 +86,22 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
             ),
             const SizedBox(height: 20),
             if (!hasQuery) ...[
-              const Text(
-                'RECENT SEARCHES',
+              Text(
+                AppStrings.tr(languageCode, en: 'RECENT SEARCHES', vi: 'TIM KIEM GAN DAY'),
                 style: TextStyle(
                   fontSize: 11,
                   letterSpacing: 0.6,
-                  color: Color(0xFFADB3C2),
+                  color: colorScheme.onSurface.withValues(alpha: 0.55),
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 10),
               if (_recentSearches.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(bottom: 10),
                   child: Text(
-                    'No recent searches yet.',
-                    style: TextStyle(color: Color(0xFFB3B9C8), fontSize: 12),
+                    AppStrings.tr(languageCode, en: 'No recent searches yet.', vi: 'Chua co tim kiem gan day.'),
+                    style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12),
                   ),
                 )
               else
@@ -106,12 +112,12 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                   );
                 }),
               const SizedBox(height: 20),
-              const Text(
-                'POPULAR CITIES',
+              Text(
+                AppStrings.tr(languageCode, en: 'POPULAR CITIES', vi: 'THANH PHO PHO BIEN'),
                 style: TextStyle(
                   fontSize: 11,
                   letterSpacing: 0.6,
-                  color: Color(0xFFADB3C2),
+                  color: colorScheme.onSurface.withValues(alpha: 0.55),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -131,17 +137,17 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE6EAF2)),
+                    border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
                   ),
                   child: _isSearching
                       ? const Center(child: CircularProgressIndicator())
                       : _searchResults.isEmpty
-                          ? const Center(
+                          ? Center(
                               child: Text(
-                                'No cities found',
-                                style: TextStyle(color: Color(0xFFAAB1C2)),
+                                AppStrings.tr(languageCode, en: 'No cities found', vi: 'Khong tim thay thanh pho'),
+                                style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
                               ),
                             )
                           : ListView.separated(
@@ -165,7 +171,7 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                                         style: const TextStyle(fontSize: 18),
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.compare_arrows, color: Colors.blue),
+                                        icon: Icon(Icons.compare_arrows, color: colorScheme.primary),
                                         onPressed: () {
                                           if (widget.onCompareCity != null) {
                                             widget.onCompareCity!(location);
@@ -195,8 +201,9 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
       });
     } catch (_) {
       if (!mounted) return;
+      final languageCode = context.read<SettingsProvider>().settings.language;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load popular cities.')),
+        SnackBar(content: Text(AppStrings.tr(languageCode, en: 'Could not load popular cities.', vi: 'Khong the tai danh sach thanh pho pho bien.'))),
       );
     } finally {
       if (mounted) {

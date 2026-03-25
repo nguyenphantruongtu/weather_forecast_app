@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/settings_provider.dart';
+import '../../../../utils/app_strings.dart';
 import 'models/location_choice.dart';
 import 'services/location_api_service.dart';
 
@@ -25,15 +28,19 @@ class _PopularCitiesScreenState extends State<PopularCitiesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>().settings;
+    final languageCode = settings.language;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF6F7FB),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        title: const Text(
-          'Popular Cities',
+        title: Text(
+          AppStrings.tr(languageCode, en: 'Popular Cities', vi: 'Thanh pho pho bien'),
           style: TextStyle(
-            color: Color(0xFF1C2232),
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.w700,
             fontSize: 20,
           ),
@@ -46,14 +53,14 @@ class _PopularCitiesScreenState extends State<PopularCitiesScreen> {
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(left: 2),
                     child: Text(
-                      'FEATURED',
+                      AppStrings.tr(languageCode, en: 'FEATURED', vi: 'NOI BAT'),
                       style: TextStyle(
                         fontSize: 10,
                         letterSpacing: 0.8,
-                        color: Color(0xFFB0B7C7),
+                        color: colorScheme.onSurface.withValues(alpha: 0.55),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -97,7 +104,7 @@ class _PopularCitiesScreenState extends State<PopularCitiesScreen> {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              _tabs[index],
+                              _localizedTab(_tabs[index], languageCode),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: active
@@ -131,6 +138,21 @@ class _PopularCitiesScreenState extends State<PopularCitiesScreen> {
     final tabName = _tabs[_tab];
     if (tabName == 'All') return _cities;
     return _cities.where((item) => item.region == tabName).toList();
+  }
+
+  String _localizedTab(String tab, String languageCode) {
+    switch (tab) {
+      case 'All':
+        return AppStrings.tr(languageCode, en: 'All', vi: 'Tat ca');
+      case 'Asia':
+        return AppStrings.tr(languageCode, en: 'Asia', vi: 'Chau A');
+      case 'Europe':
+        return AppStrings.tr(languageCode, en: 'Europe', vi: 'Chau Au');
+      case 'America':
+        return AppStrings.tr(languageCode, en: 'America', vi: 'Chau My');
+      default:
+        return tab;
+    }
   }
 
   Future<void> _loadCities() async {
