@@ -8,6 +8,7 @@ import '../../OnboardingAndUserPreferencesScreens/settings_screen/settings_scree
 import 'widgets/current_weather_card.dart';
 import 'widgets/weather_metrics_grid.dart';
 import 'widgets/forecast_preview.dart';
+import '../../NotiAndNewsScreens/noti_news_main_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToCompare;
@@ -46,6 +47,15 @@ class _HomeScreenState extends State<HomeScreen> {
     weatherProvider.fetchHourlyForecast(city);
   }
 
+    // THÊM: Hàm điều hướng sang NotiNewsMainScreen
+  void _navigateToNotiNews() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const NotiNewsMainScreen(),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -77,6 +87,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             actions: [
+              // THÊM: Nút điều hướng sang Alerts & News
+              IconButton(
+                onPressed: _navigateToNotiNews,
+                icon: Icon(Icons.notifications_outlined, color: surfaceTextColor),
+                tooltip: 'Alerts & News',
+              ),
               IconButton(
                 onPressed: _loadWeatherData,
                 icon: Icon(Icons.refresh, color: surfaceTextColor),
@@ -192,6 +208,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 24),
 
+                        // THÊM: Banner điều hướng nhanh sang News & Alerts
+                        _buildNotiNewsBanner(),
+                        const SizedBox(height: 24),
+
                         // Hourly Forecast Preview
                         ForecastPreview(
                           hourlyForecast: weatherProvider.hourlyForecast,
@@ -217,6 +237,63 @@ class _HomeScreenState extends State<HomeScreen> {
         tooltip: 'More options',
         backgroundColor: Colors.blue.shade500,
         child: const Icon(Icons.cloud),
+      ),
+    );
+  }
+
+    // THÊM: Banner gọn điều hướng sang News & Alerts
+  Widget _buildNotiNewsBanner() {
+    return GestureDetector(
+      onTap: _navigateToNotiNews,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF6B7AEF), Color(0xFF8E9BF5)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6B7AEF).withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.notifications_active_outlined,
+                color: Colors.white, size: 28),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Weather Alerts & News',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Check active alerts and latest weather news',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios,
+                color: Colors.white70, size: 16),
+          ],
+        ),
       ),
     );
   }
@@ -278,6 +355,17 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/weather-details');
+              },
+            ),
+            // THÊM: Menu item điều hướng sang Alerts & News
+            ListTile(
+              leading: Icon(Icons.notifications_outlined,
+                  color: const Color(0xFF6B7AEF)),
+              title: const Text('Alerts & News'),
+              subtitle: const Text('Weather alerts and latest news'),
+              onTap: () {
+                Navigator.pop(context);
+                _navigateToNotiNews();
               },
             ),
             const SizedBox(height: 8),

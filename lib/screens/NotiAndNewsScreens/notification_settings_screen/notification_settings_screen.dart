@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../providers/notification_provider.dart';
 import 'widgets/notification_toggle.dart';
 import 'widgets/time_picker_tile.dart';
-
+import '../../../../screens/main_wrapper_screen.dart';
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
 
@@ -38,7 +38,15 @@ class _NotificationSettingsScreenState
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.home, color: Color(0xFF1A1A2E)),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MainWrapperScreen(),
+              ),
+              (route) => false,
+            );
+          },
         ),
         title: const Text(
           'Notification Settings',

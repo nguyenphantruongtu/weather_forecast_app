@@ -4,6 +4,7 @@ import '../../../../data/models/news_alert_model.dart';
 import '../../../../providers/weather_provider.dart';
 import 'widgets/alert_card.dart';
 import 'widgets/alert_severity_badge.dart';
+import '../../../../screens/main_wrapper_screen.dart';
 
 class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});
@@ -219,7 +220,15 @@ class _AlertsScreenState extends State<AlertsScreen> {
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.home, color: Color(0xFF1A1A2E)),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MainWrapperScreen(),
+                  ),
+                  (route) => false,
+                );
+              },
             ),
             title: const Text(
               'Weather Alerts',
