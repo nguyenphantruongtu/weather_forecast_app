@@ -65,7 +65,13 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
         },
       ),
       const MapViewScreen(),
-      const CompareLocationsScreen(),
+      CompareLocationsScreen(
+        onNavigateToSearch: () {
+          setState(() {
+            _currentIndex = 1; // Switch to Search tab
+          });
+        },
+      ),
     ];
 
     return Scaffold(
