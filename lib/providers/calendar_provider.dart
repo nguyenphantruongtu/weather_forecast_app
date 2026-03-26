@@ -15,7 +15,6 @@ class _MonthCacheEntry {
       DateTime.now().difference(fetchedAt) < const Duration(minutes: 30);
 }
 
-/// In-memory cache only (no SharedPreferences / cross-team storage).
 class CalendarProvider extends ChangeNotifier {
   CalendarProvider({required WeatherApiService apiService})
     : _apiService = apiService;

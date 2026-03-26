@@ -162,12 +162,12 @@ class TemperatureChart extends StatelessWidget {
                   LineChartBarData(
                     spots: _spots(trend, 'min'),
                     isCurved: true,
-                    color: const Color(0xFF007AFF),
+                    color: Theme.of(context).colorScheme.primary,
                     barWidth: 2,
                     dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: const Color(0xFF007AFF).withOpacity(0.1),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     ),
                   ),
                 ],
@@ -193,7 +193,7 @@ class TemperatureChart extends StatelessWidget {
                 label: 'Lowest',
                 value: '${stats.minTemp.round()}°C',
                 sublabel: AppDateFormatter.shortMonthDay(stats.minTempDate),
-                color: const Color(0xFF007AFF),
+                color: Theme.of(context).colorScheme.primary,
               ),
             ],
           ),

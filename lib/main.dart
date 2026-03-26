@@ -31,44 +31,51 @@ class WeatherApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider<WeatherApiService>(
-          create: (_) => WeatherApiService(
-            dio: Dio(),
-            apiKey: EnvConfig.openWeatherApiKey,
-            baseUrl: EnvConfig.openWeatherBaseUrl,
-          ),
-        ),
-        ChangeNotifierProvider<CalendarProvider>(
-          create: (context) => CalendarProvider(
-            apiService: context.read<WeatherApiService>(),
-          ),
-        ),
-        ChangeNotifierProxyProvider<CalendarProvider, StatisticsProvider>(
-          create: (context) => StatisticsProvider(
-            calendarProvider: context.read<CalendarProvider>(),
-          ),
-          update: (_, calendar, previous) =>
-              previous ?? StatisticsProvider(calendarProvider: calendar),
-        ),
-        ChangeNotifierProvider<WidgetConfigProvider>(
-          create: (_) => WidgetConfigProvider(),
-        ),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Weather App',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF007AFF)),
-          scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-        ),
-        home: const WeatherHomeShell(),
-        routes: {
-          '/calendar': (_) => const WeatherHomeShell(),
-          '/statistics': (_) => const WeatherHomeShell(),
-          '/widgets': (_) => const WeatherHomeShell(),
+    // WidgetConfigProvider is placed above MaterialApp so the theme
+    // can reactively update whenever the user picks a new theme.
+    return ChangeNotifierProvider<WidgetConfigProvider>(
+      create: (_) => WidgetConfigProvider(),
+      child: Consumer<WidgetConfigProvider>(
+        builder: (context, themeProvider, _) {
+          final seedColor = themeProvider.selectedTheme.color;
+          return MultiProvider(
+            providers: [
+              Provider<WeatherApiService>(
+                create: (_) => WeatherApiService(
+                  dio: Dio(),
+                  apiKey: EnvConfig.openWeatherApiKey,
+                  baseUrl: EnvConfig.openWeatherBaseUrl,
+                ),
+              ),
+              ChangeNotifierProvider<CalendarProvider>(
+                create: (ctx) => CalendarProvider(
+                  apiService: ctx.read<WeatherApiService>(),
+                ),
+              ),
+              ChangeNotifierProxyProvider<CalendarProvider, StatisticsProvider>(
+                create: (ctx) => StatisticsProvider(
+                  calendarProvider: ctx.read<CalendarProvider>(),
+                ),
+                update: (_, calendar, previous) =>
+                    previous ?? StatisticsProvider(calendarProvider: calendar),
+              ),
+            ],
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              title: 'Weather App',
+              theme: ThemeData(
+                useMaterial3: true,
+                colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
+                scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+              ),
+              home: const WeatherHomeShell(),
+              routes: {
+                '/calendar': (_) => const WeatherHomeShell(),
+                '/statistics': (_) => const WeatherHomeShell(),
+                '/widgets': (_) => const WeatherHomeShell(),
+              },
+            ),
+          );
         },
       ),
     );

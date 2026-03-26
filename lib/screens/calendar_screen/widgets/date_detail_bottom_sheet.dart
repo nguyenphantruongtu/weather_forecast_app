@@ -119,40 +119,46 @@ class DateDetailBottomSheet extends StatelessWidget {
                   crossAxisSpacing: 12,
                   children: [
                     _buildMetricCard(
+                      context: context,
                       icon: Icons.water_drop_outlined,
                       label: 'Precipitation',
                       value: '${weather.precipitation.round()} mm',
-                      color: const Color(0xFF007AFF),
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     _buildMetricCard(
+                      context: context,
                       icon: Icons.water_outlined,
                       label: 'Humidity',
                       value: '${weather.humidity}%',
-                      color: const Color(0xFF007AFF),
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     _buildMetricCard(
+                      context: context,
                       icon: Icons.air,
                       label: 'Wind',
                       value: '${windKmh.round()} km/h',
                       color: const Color(0xFF34C759),
                     ),
                     _buildMetricCard(
+                      context: context,
                       icon: Icons.wb_sunny_outlined,
                       label: 'UV Index',
                       value: '${weather.uvIndex}',
                       color: const Color(0xFFFF9500),
                     ),
                     _buildMetricCard(
+                      context: context,
                       icon: Icons.wb_twilight,
                       label: 'Sunrise',
                       value: DateFormat('h:mm a').format(weather.sunrise),
                       color: const Color(0xFFFF9500),
                     ),
                     _buildMetricCard(
+                      context: context,
                       icon: Icons.nights_stay_outlined,
                       label: 'Sunset',
                       value: DateFormat('h:mm a').format(weather.sunset),
-                      color: const Color(0xFF007AFF),
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ],
                 ),
@@ -188,7 +194,7 @@ class DateDetailBottomSheet extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF007AFF),
+                          backgroundColor: Theme.of(context).colorScheme.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -203,9 +209,9 @@ class DateDetailBottomSheet extends StatelessWidget {
                       child: OutlinedButton(
                         onPressed: () {},
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF007AFF),
+                          foregroundColor: Theme.of(context).colorScheme.primary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: Color(0xFF007AFF)),
+                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -224,6 +230,7 @@ class DateDetailBottomSheet extends StatelessWidget {
   }
 
   Widget _buildMetricCard({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String value,

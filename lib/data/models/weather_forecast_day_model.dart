@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+/// Rich daily forecast/history row built from OpenWeather / Open-Meteo responses.
 class WeatherDayModel {
   const WeatherDayModel({
     required this.date,
@@ -162,26 +162,4 @@ class WeatherDayModel {
       hourlyTemperatures: hourly.isEmpty ? <double>[0, 0, 0] : hourly,
     );
   }
-}
-
-class WeatherUiPalette {
-  const WeatherUiPalette._();
-
-  static const hotGradient = LinearGradient(
-    colors: [Color(0xFFFF6B6B), Color(0xFFFFE66D)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  static const coldGradient = LinearGradient(
-    colors: [Color(0xFF4FACFE), Color(0xFF00F2FE)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  static const normalGradient = LinearGradient(
-    colors: [Color(0xFF43E97B), Color(0xFF38F9D7)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
 }

@@ -32,13 +32,14 @@ class DateCellWidget extends StatelessWidget {
     }
 
     final w = weather!;
+    final primary = Theme.of(context).colorScheme.primary;
     return Container(
       margin: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: isSelected
-            ? const Color(0xFF007AFF)
+            ? primary
             : isToday
-            ? const Color(0xFF007AFF).withOpacity(0.1)
+            ? primary.withOpacity(0.1)
             : Colors.transparent,
         shape: BoxShape.circle,
       ),
@@ -53,7 +54,7 @@ class DateCellWidget extends StatelessWidget {
               color: isSelected
                   ? Colors.white
                   : isToday
-                  ? const Color(0xFF007AFF)
+                  ? primary
                   : Colors.black87,
             ),
           ),
@@ -64,7 +65,7 @@ class DateCellWidget extends StatelessWidget {
             '${w.tempMax.round()}°/${w.tempMin.round()}°',
             style: GoogleFonts.inter(
               fontSize: 9,
-              color: isSelected ? Colors.white : Colors.black54,
+              color: isSelected ? Colors.white70 : Colors.black54,
             ),
           ),
         ],

@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 
 import '../models/weather_day_model.dart' as app_weather;
+import '../models/weather_forecast_day_model.dart';
 import '../models/weather_history_model.dart';
-import '../../screens/sv5_screens/calendar_screen/models/weather_day_model.dart';
-import '../../screens/sv5_screens/calendar_screen/utils/date_utils.dart';
+import '../../utils/calendar_date_utils.dart';
 
 class WeatherApiService {
   WeatherApiService({

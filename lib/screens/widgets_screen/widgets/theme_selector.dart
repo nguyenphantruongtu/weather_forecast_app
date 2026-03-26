@@ -36,7 +36,7 @@ class ThemeSelector extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
-                            ? const Color(0xFF007AFF)
+                            ? Theme.of(context).colorScheme.primary
                             : Colors.transparent,
                         width: 3,
                       ),
@@ -49,7 +49,7 @@ class ThemeSelector extends StatelessWidget {
                       fontSize: 11,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? const Color(0xFF007AFF) : Colors.black87,
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Colors.black87,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,

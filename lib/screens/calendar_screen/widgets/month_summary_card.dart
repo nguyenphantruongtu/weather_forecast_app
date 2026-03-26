@@ -53,7 +53,7 @@ class MonthSummaryCard extends StatelessWidget {
                   label: 'Total Rainfall',
                   value: '${summary.totalRainfall.round()} mm',
                   icon: Icons.water_drop,
-                  color: const Color(0xFF007AFF),
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],

@@ -31,18 +31,21 @@ class WeatherBottomNavBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _item(
+                context: context,
                 index: 0,
                 icon: Icons.calendar_month_outlined,
                 activeIcon: Icons.calendar_month,
                 label: 'Calendar',
               ),
               _item(
+                context: context,
                 index: 1,
                 icon: Icons.bar_chart_outlined,
                 activeIcon: Icons.bar_chart,
                 label: 'Statistics',
               ),
               _item(
+                context: context,
                 index: 2,
                 icon: Icons.widgets_outlined,
                 activeIcon: Icons.widgets,
@@ -56,13 +59,14 @@ class WeatherBottomNavBar extends StatelessWidget {
   }
 
   Widget _item({
+    required BuildContext context,
     required int index,
     required IconData icon,
     required IconData activeIcon,
     required String label,
   }) {
     final selected = currentIndex == index;
-    final color = selected ? const Color(0xFF007AFF) : Colors.grey.shade600;
+    final color = selected ? Theme.of(context).colorScheme.primary : Colors.grey.shade600;
     return InkWell(
       onTap: () => onTap(index),
       borderRadius: BorderRadius.circular(12),

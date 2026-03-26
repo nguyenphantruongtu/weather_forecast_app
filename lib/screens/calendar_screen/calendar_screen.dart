@@ -121,22 +121,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
-                      leftChevronIcon: const Icon(
+                      leftChevronIcon: Icon(
                         Icons.chevron_left,
-                        color: Color(0xFF007AFF),
+                        color: Theme.of(context).colorScheme.primary,
                       ),
-                      rightChevronIcon: const Icon(
+                      rightChevronIcon: Icon(
                         Icons.chevron_right,
-                        color: Color(0xFF007AFF),
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                     calendarStyle: CalendarStyle(
                       todayDecoration: BoxDecoration(
-                        color: const Color(0xFF007AFF).withOpacity(0.2),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                         shape: BoxShape.circle,
                       ),
-                      selectedDecoration: const BoxDecoration(
-                        color: Color(0xFF007AFF),
+                      selectedDecoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
                         shape: BoxShape.circle,
                       ),
                       weekendTextStyle: const TextStyle(color: Colors.red),

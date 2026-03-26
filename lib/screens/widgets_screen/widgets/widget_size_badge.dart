@@ -11,7 +11,7 @@ class WidgetSizeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFF007AFF),
+        color: Theme.of(context).colorScheme.primary,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

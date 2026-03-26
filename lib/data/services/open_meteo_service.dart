@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
-import '../../screens/sv5_screens/calendar_screen/models/weather_day_model.dart';
-import '../../screens/sv5_screens/calendar_screen/utils/date_utils.dart';
+import '../models/weather_forecast_day_model.dart';
+import '../../utils/calendar_date_utils.dart';
 
 /// Open-Meteo Historical Weather API (free, no API key).
 /// https://open-meteo.com/en/docs/historical-weather-api

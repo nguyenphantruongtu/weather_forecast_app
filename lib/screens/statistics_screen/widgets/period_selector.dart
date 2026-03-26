@@ -30,7 +30,7 @@ class PeriodSelector extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF007AFF) : Colors.transparent,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

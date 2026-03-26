@@ -85,10 +85,10 @@ class WidgetPreviewCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today,
                       size: 12,
-                      color: Color(0xFF007AFF),
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -99,10 +99,10 @@ class WidgetPreviewCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    const Icon(
+                    Icon(
                       Icons.bar_chart,
                       size: 12,
-                      color: Color(0xFF007AFF),
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 4),
                     Text(
