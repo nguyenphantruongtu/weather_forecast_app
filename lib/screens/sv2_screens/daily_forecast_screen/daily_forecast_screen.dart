@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../data/models/settings_model.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../providers/location_provider.dart';
 import '../../../utils/app_strings.dart';
 import '../../../utils/unit_converter.dart';
 import '../../../providers/weather_provider.dart';
@@ -26,7 +27,13 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
   @override
   void initState() {
     super.initState();
-    _currentCity = widget.city ?? 'Hanoi';
+    if (widget.city != null) {
+      _currentCity = widget.city!;
+    } else {
+      // Get current selected city from LocationProvider
+      final locationProv = context.read<LocationProvider>();
+      _currentCity = locationProv.selectedCity?.name ?? 'Hanoi';
+    }
     _loadData();
   }
 
@@ -73,7 +80,11 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
           }
 
           if (weatherProvider.error != null) {
-            return _buildErrorState(context, weatherProvider.error!, languageCode);
+            return _buildErrorState(
+              context,
+              weatherProvider.error!,
+              languageCode,
+            );
           }
 
           final forecasts = weatherProvider.dailyForecast;
@@ -123,21 +134,33 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
                         child: Row(
                           children: [
                             _ViewModeButton(
-                              label: AppStrings.tr(languageCode, en: 'Chart', vi: 'Bieu do'),
+                              label: AppStrings.tr(
+                                languageCode,
+                                en: 'Chart',
+                                vi: 'Bieu do',
+                              ),
                               isSelected: _selectedViewIndex == 0,
                               onPressed: () =>
                                   setState(() => _selectedViewIndex = 0),
                             ),
                             const SizedBox(width: 8),
                             _ViewModeButton(
-                              label: AppStrings.tr(languageCode, en: 'Cards', vi: 'The'),
+                              label: AppStrings.tr(
+                                languageCode,
+                                en: 'Cards',
+                                vi: 'The',
+                              ),
                               isSelected: _selectedViewIndex == 1,
                               onPressed: () =>
                                   setState(() => _selectedViewIndex = 1),
                             ),
                             const SizedBox(width: 8),
                             _ViewModeButton(
-                              label: AppStrings.tr(languageCode, en: 'List', vi: 'Danh sach'),
+                              label: AppStrings.tr(
+                                languageCode,
+                                en: 'List',
+                                vi: 'Danh sach',
+                              ),
                               isSelected: _selectedViewIndex == 2,
                               onPressed: () =>
                                   setState(() => _selectedViewIndex = 2),
@@ -222,7 +245,11 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
     );
   }
 
-  Widget _buildErrorState(BuildContext context, String error, String languageCode) {
+  Widget _buildErrorState(
+    BuildContext context,
+    String error,
+    String languageCode,
+  ) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -230,7 +257,11 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
           Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
           const SizedBox(height: 16),
           Text(
-            AppStrings.tr(languageCode, en: 'Error loading forecast', vi: 'Loi tai du bao'),
+            AppStrings.tr(
+              languageCode,
+              en: 'Error loading forecast',
+              vi: 'Loi tai du bao',
+            ),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -250,7 +281,9 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
           ElevatedButton.icon(
             onPressed: _loadData,
             icon: const Icon(Icons.refresh),
-            label: Text(AppStrings.tr(languageCode, en: 'Retry', vi: 'Thu lai')),
+            label: Text(
+              AppStrings.tr(languageCode, en: 'Retry', vi: 'Thu lai'),
+            ),
           ),
         ],
       ),
@@ -299,7 +332,11 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppStrings.tr(languageCode, en: '10-Day Summary', vi: 'Tong ket 10 ngay'),
+              AppStrings.tr(
+                languageCode,
+                en: '10-Day Summary',
+                vi: 'Tong ket 10 ngay',
+              ),
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -311,19 +348,35 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _SummaryItem(
-                  label: AppStrings.tr(languageCode, en: 'Avg Temp', vi: 'Nhiet do TB'),
+                  label: AppStrings.tr(
+                    languageCode,
+                    en: 'Avg Temp',
+                    vi: 'Nhiet do TB',
+                  ),
                   value: '${displayAvg.toStringAsFixed(1)}°',
                 ),
                 _SummaryItem(
-                  label: AppStrings.tr(languageCode, en: 'High', vi: 'Cao nhat'),
+                  label: AppStrings.tr(
+                    languageCode,
+                    en: 'High',
+                    vi: 'Cao nhat',
+                  ),
                   value: '${displayMax.toStringAsFixed(1)}°',
                 ),
                 _SummaryItem(
-                  label: AppStrings.tr(languageCode, en: 'Low', vi: 'Thap nhat'),
+                  label: AppStrings.tr(
+                    languageCode,
+                    en: 'Low',
+                    vi: 'Thap nhat',
+                  ),
                   value: '${displayMin.toStringAsFixed(1)}°',
                 ),
                 _SummaryItem(
-                  label: AppStrings.tr(languageCode, en: 'Humidity', vi: 'Do am'),
+                  label: AppStrings.tr(
+                    languageCode,
+                    en: 'Humidity',
+                    vi: 'Do am',
+                  ),
                   value: '${avgHumidity.toStringAsFixed(0)}%',
                 ),
               ],

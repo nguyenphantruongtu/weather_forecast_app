@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../data/models/settings_model.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../providers/location_provider.dart';
 import '../../../utils/app_strings.dart';
 import '../../../providers/weather_provider.dart';
 import '../../../data/models/forecast_model.dart';
@@ -27,7 +28,13 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
   @override
   void initState() {
     super.initState();
-    _currentCity = widget.city ?? 'Hanoi';
+    if (widget.city != null) {
+      _currentCity = widget.city!;
+    } else {
+      // Get current selected city from LocationProvider
+      final locationProv = context.read<LocationProvider>();
+      _currentCity = locationProv.selectedCity?.name ?? 'Hanoi';
+    }
     _loadData();
   }
 
@@ -48,7 +55,11 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
         backgroundColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Colors.black87),
         title: Text(
-          AppStrings.tr(languageCode, en: 'Hourly Forecast', vi: 'Dự báo theo giờ'),
+          AppStrings.tr(
+            languageCode,
+            en: 'Hourly Forecast',
+            vi: 'Dự báo theo giờ',
+          ),
           style: TextStyle(
             color: Colors.black87,
             fontSize: 18,
@@ -87,7 +98,9 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadData,
-                    child: Text(AppStrings.tr(languageCode, en: 'Retry', vi: 'Thử lại')),
+                    child: Text(
+                      AppStrings.tr(languageCode, en: 'Retry', vi: 'Thử lại'),
+                    ),
                   ),
                 ],
               ),
@@ -96,7 +109,13 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
 
           if (weatherProvider.hourlyForecast.isEmpty) {
             return Center(
-              child: Text(AppStrings.tr(languageCode, en: 'No data available', vi: 'Không có dữ liệu')),
+              child: Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: 'No data available',
+                  vi: 'Không có dữ liệu',
+                ),
+              ),
             );
           }
 
@@ -138,7 +157,11 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                           ),
                         ),
                         Text(
-                          AppStrings.tr(languageCode, en: 'Next 48 hours', vi: '48 giờ tới'),
+                          AppStrings.tr(
+                            languageCode,
+                            en: 'Next 48 hours',
+                            vi: '48 giờ tới',
+                          ),
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade600,
@@ -236,8 +259,15 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
 
                   // Hourly List
                   Text(
-                    AppStrings.tr(languageCode, en: 'Hourly Details', vi: 'Chi tiết theo giờ'),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    AppStrings.tr(
+                      languageCode,
+                      en: 'Hourly Details',
+                      vi: 'Chi tiết theo giờ',
+                    ),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   SizedBox(

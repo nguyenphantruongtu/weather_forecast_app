@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../providers/calendar_provider.dart';
+import '../../providers/location_provider.dart';
 import 'widgets/date_cell_widget.dart';
 import 'widgets/date_detail_bottom_sheet.dart';
 import 'widgets/month_summary_card.dart';
@@ -23,7 +24,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CalendarProvider>().initialize();
+      final locationProv = context.read<LocationProvider>();
+      final calendarProv = context.read<CalendarProvider>();
+
+      // Update calendar provider with current location if available
+      if (locationProv.selectedCity != null) {
+        calendarProv.updateLocation(
+          locationProv.selectedCity!.latitude,
+          locationProv.selectedCity!.longitude,
+        );
+      }
+
+      calendarProv.initialize();
     });
   }
 
@@ -70,7 +82,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       provider.errorMessage!,
@@ -132,7 +148,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                     calendarStyle: CalendarStyle(
                       todayDecoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.2),
                         shape: BoxShape.circle,
                       ),
                       selectedDecoration: BoxDecoration(
