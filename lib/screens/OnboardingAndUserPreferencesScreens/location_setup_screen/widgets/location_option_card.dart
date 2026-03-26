@@ -38,7 +38,7 @@ class LocationOptionCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.16),
+                  color: iconColor.withValues(alpha: 0.16),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: iconColor, size: 18),

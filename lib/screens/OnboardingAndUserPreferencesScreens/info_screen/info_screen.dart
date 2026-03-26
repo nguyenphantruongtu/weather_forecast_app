@@ -156,7 +156,7 @@ class InfoScreen extends StatelessWidget {
         // launchUrl: mở URL trong browser hoặc app store
       }
     } catch (e) {
-      print('Error launching URL: $e');
+      debugPrint('Error launching URL: $e');
     }
   }
 

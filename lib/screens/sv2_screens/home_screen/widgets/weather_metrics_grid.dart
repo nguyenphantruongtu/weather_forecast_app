@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/weather_model.dart';
 import '../../../../data/models/settings_model.dart';
+import '../../../../utils/app_strings.dart';
 import '../../../../utils/unit_converter.dart';
 
 class WeatherMetricsGrid extends StatelessWidget {
   final WeatherModel weather;
   final TemperatureUnit temperatureUnit;
   final WindSpeedUnit windSpeedUnit;
+  final String languageCode;
 
   const WeatherMetricsGrid({
     super.key,
     required this.weather,
     required this.temperatureUnit,
     required this.windSpeedUnit,
+    required this.languageCode,
   });
 
   double _displayTemperature(double celsiusValue) {
@@ -41,37 +44,37 @@ class WeatherMetricsGrid extends StatelessWidget {
       children: [
         _MetricCard(
           icon: Icons.opacity,
-          label: 'Humidity',
+          label: AppStrings.tr(languageCode, en: 'Humidity', vi: 'Độ ẩm'),
           value: '${weather.humidity}%',
           color: Colors.blue,
         ),
         _MetricCard(
           icon: Icons.air,
-          label: 'Wind',
+          label: AppStrings.tr(languageCode, en: 'Wind', vi: 'Gió'),
           value: _windLabel(),
           color: Colors.cyan,
         ),
         _MetricCard(
           icon: Icons.speed,
-          label: 'Pressure',
+          label: AppStrings.tr(languageCode, en: 'Pressure', vi: 'Áp suất'),
           value: '${weather.pressure} hPa',
           color: Colors.indigo,
         ),
         _MetricCard(
           icon: Icons.visibility,
-          label: 'Visibility',
+          label: AppStrings.tr(languageCode, en: 'Visibility', vi: 'Tầm nhìn'),
           value: '${weather.visibility.toStringAsFixed(1)} km',
           color: Colors.orange,
         ),
         _MetricCard(
           icon: Icons.wb_sunny,
-          label: 'UV Index',
+          label: AppStrings.tr(languageCode, en: 'UV Index', vi: 'Chỉ số UV'),
           value: weather.uvIndex.toStringAsFixed(1),
           color: Colors.amber,
         ),
         _MetricCard(
           icon: Icons.thermostat,
-          label: 'Dew Point',
+          label: AppStrings.tr(languageCode, en: 'Dew Point', vi: 'Điểm sương'),
           value: '${_displayTemperature(weather.dewPoint).toStringAsFixed(0)}°',
           color: Colors.purple,
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'screens/NotiAndNewsScreens/noti_news_main_screen.dart';
 import 'providers/settings_provider.dart';
 import 'providers/weather_provider.dart';
@@ -11,6 +12,7 @@ import 'data/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting();
   await dotenv.load();
 
   final settingsProvider = SettingsProvider();

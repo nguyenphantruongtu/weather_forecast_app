@@ -76,7 +76,7 @@ class _SplashAnimationState extends State<SplashAnimation>
                     width: 66,
                     height: 66,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Stack(
@@ -127,7 +127,7 @@ class _SplashAnimationState extends State<SplashAnimation>
               Text(
                 'Your Personal Weather Companion',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.72),
+                  color: Colors.white.withValues(alpha: 0.72),
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -136,13 +136,13 @@ class _SplashAnimationState extends State<SplashAnimation>
               Container(
                 width: 196,
                 height: 1,
-                color: Colors.white.withOpacity(0.32),
+                color: Colors.white.withValues(alpha: 0.32),
               ),
               const SizedBox(height: 12),
               Text(
                 'Loading weather data...',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.50),
+                  color: Colors.white.withValues(alpha: 0.50),
                   fontSize: 9,
                   letterSpacing: 0.2,
                 ),
