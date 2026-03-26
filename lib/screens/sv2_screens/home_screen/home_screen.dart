@@ -13,8 +13,13 @@ import 'widgets/forecast_preview.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToCompare;
+  final bool skipDefaultLoad;
 
-  const HomeScreen({super.key, this.onNavigateToCompare});
+  const HomeScreen({
+    super.key,
+    this.onNavigateToCompare,
+    this.skipDefaultLoad = false,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -27,15 +32,32 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadWeatherData();
+      _ensureWeatherDataLoaded();
     });
   }
 
-  void _loadWeatherData() {
+  void _ensureWeatherDataLoaded() {
+    // If skipDefaultLoad is true, it means MainWrapperScreen is already loading
+    // weather data from initialLocation, so don't override it
+    if (widget.skipDefaultLoad) {
+      return;
+    }
+
     final weatherProvider = context.read<WeatherProvider>();
+    // Only load default weather if no weather data is available yet
     if (weatherProvider.currentWeather == null) {
       weatherProvider.fetchCurrentWeather('Hanoi');
       weatherProvider.fetchHourlyForecast('Hanoi');
+    }
+  }
+
+  void _loadWeatherData() {
+    // Refresh current weather if available
+    final weatherProvider = context.read<WeatherProvider>();
+    if (weatherProvider.currentWeather != null) {
+      final location = weatherProvider.currentWeather!.location;
+      weatherProvider.fetchCurrentWeather(location);
+      weatherProvider.fetchHourlyForecast(location);
     }
   }
 
@@ -51,6 +73,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // Fetch weather using city name - WeatherApiService will handle geocoding
     // and return proper location name
     await weatherProvider.fetchCurrentWeather(city);
+    // Also fetch hourly forecast
+    weatherProvider.fetchHourlyForecast(city);
   }
 
   void _navigateToNotiNews() {
@@ -60,11 +84,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToCalendarWeather() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const WeatherHomeShell(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const WeatherHomeShell()));
   }
 
   @override
@@ -355,7 +377,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppStrings.tr(languageCode, en: 'Calendar Weather', vi: 'Lịch thời tiết'),
+                    AppStrings.tr(
+                      languageCode,
+                      en: 'Calendar Weather',
+                      vi: 'Lịch thời tiết',
+                    ),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -374,7 +400,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white70,
+              size: 16,
+            ),
           ],
         ),
       ),

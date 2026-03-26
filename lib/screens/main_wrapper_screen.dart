@@ -33,6 +33,8 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
           widget.initialLocation!.longitude,
           locationName: widget.initialLocation!.fullName,
         );
+        // Also fetch hourly forecast for the initial location
+        weatherProvider.fetchHourlyForecast(widget.initialLocation!.city);
       });
     }
   }
@@ -55,6 +57,7 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
             _currentIndex = 3;
           });
         },
+        skipDefaultLoad: widget.initialLocation != null,
       ),
       SearchLocationScreen(
         onCitySelected: (city) {
@@ -65,6 +68,8 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
             city.longitude,
             locationName: city.fullName,
           );
+          // Also fetch hourly forecast for the selected location
+          weatherProvider.fetchHourlyForecast(city.city);
 
           setState(() {
             _currentIndex = 0; // Switch back to Home tab
