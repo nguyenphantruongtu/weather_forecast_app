@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -149,7 +150,7 @@ class NotificationService {
           'Hourly weather details are ready. Tap to view.',
           RepeatInterval.hourly,
           _notificationDetails(),
-          androidAllowWhileIdle: true,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
       }
 
@@ -164,7 +165,6 @@ class NotificationService {
             config.morningForecastTime.minute,
           ),
           _notificationDetails(),
-          androidAllowWhileIdle: true,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.wallClockTime,
@@ -183,7 +183,6 @@ class NotificationService {
             config.eveningForecastTime.minute,
           ),
           _notificationDetails(),
-          androidAllowWhileIdle: true,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.wallClockTime,
@@ -200,7 +199,6 @@ class NotificationService {
           body,
           _nextInstanceOfWeekday(DateTime.friday, 18, 0),
           _notificationDetails(),
-          androidAllowWhileIdle: true,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.wallClockTime,
@@ -216,14 +214,15 @@ class NotificationService {
           'Check for severe weather alerts and advisories in your area.',
           _nextInstanceOfTime(8, 0),
           _notificationDetails(),
-          androidAllowWhileIdle: true,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.wallClockTime,
           matchDateTimeComponents: DateTimeComponents.time,
         );
       }
-    } catch (e, st) {}
+    } catch (e) {
+      debugPrint('Failed to schedule notifications: $e');
+    }
   }
 
   NotificationDetails _notificationDetails() {
@@ -264,7 +263,6 @@ class NotificationService {
       'Notification will appear after $seconds seconds.',
       scheduledTime,
       _notificationDetails(),
-      androidAllowWhileIdle: true,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.wallClockTime,

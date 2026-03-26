@@ -151,7 +151,12 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      var serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await Geolocator.openLocationSettings();
+        serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      }
+
       if (!serviceEnabled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -185,9 +190,24 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
         return;
       }
 
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 12),
+        );
+      } catch (_) {
+        position = await Geolocator.getLastKnownPosition();
+      }
+
+      if (position == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.tr(languageCode, en: 'Could not determine your current location. Please try again.', vi: 'Khong xac dinh duoc vi tri hien tai. Vui long thu lai.'))),
+          );
+        }
+        return;
+      }
 
       final locationChoice = await _locationApiService.resolveCurrentLocation(
         position.latitude,

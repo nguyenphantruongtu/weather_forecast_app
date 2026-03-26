@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'app.dart';
 import 'providers/settings_provider.dart';
 import 'providers/news_provider.dart';
@@ -23,10 +24,13 @@ void main() async {
     await dotenv.load();
   } catch (e) {
     // Nếu .env không tồn tại, in warning nhưng không dừng app
-    print('⚠️ Warning: Không thể tải file .env: $e');
+    debugPrint('Warning: Khong the tai file .env: $e');
   }
 
   try {
+    // Khởi tạo dữ liệu locale cho DateFormat (vd: vi_VN)
+    await initializeDateFormatting();
+
     // Khởi tạo SettingsProvider và tải cài đặt từ SharedPreferences
     final settingsProvider = SettingsProvider();
     await settingsProvider.init();

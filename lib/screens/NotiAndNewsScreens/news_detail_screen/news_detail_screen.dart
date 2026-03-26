@@ -240,12 +240,14 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
+        if (!mounted) return;
         // Fallback: show snackbar or something
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppStrings.tr(context.read<SettingsProvider>().settings.language, en: 'Unable to open article link', vi: 'Khong the mo lien ket bai viet'))),
         );
       }
     } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.tr(context.read<SettingsProvider>().settings.language, en: 'Article link not available', vi: 'Lien ket bai viet khong kha dung'))),
       );
@@ -276,21 +278,5 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
         _fontSize += 2;
       }
     });
-  }
-
-  String _generateLoremContent() {
-    return '''A record-breaking heat wave is sweeping across Southeast Asia, with temperatures exceeding 45°C in multiple countries. Meteorologists warn this could be the worst heat event in decades, affecting millions of people across the region.
-
-The heat wave, which began last week, has already broken temperature records in Thailand, Vietnam, Cambodia, and Myanmar. Weather experts attribute this extreme event to a combination of climate change and a particularly strong El Niño pattern this year.
-
-In Vietnam, the Central Highlands region recorded its highest-ever temperature of 44.2°C, while Hanoi experienced three consecutive days above 41°C. The Vietnamese Meteorological and Hydrological Administration has issued emergency warnings for 15 provinces.
-
-Health authorities across the region have reported a significant increase in heat-related illnesses, with hospitals seeing a 40% surge in emergency admissions. Vulnerable populations, including the elderly and outdoor workers, are at the greatest risk.
-
-"This is unprecedented in our recorded history," said Dr. Nguyen Minh Tuan, a climate scientist at Vietnam National University. "The combination of high temperatures and humidity is creating conditions that are genuinely dangerous for human health."
-
-Governments are responding with emergency measures, including the opening of cooling centers in urban areas, restrictions on outdoor work during peak heat hours (10 AM to 4 PM), and increased distribution of water to vulnerable communities.
-
-The heat wave is expected to continue for at least another week before monsoon moisture begins to provide relief. Climate scientists warn that such extreme events are likely to become more frequent and intense as global temperatures continue to rise.''';
   }
 }

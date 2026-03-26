@@ -268,7 +268,7 @@ class _LocationIllustration extends StatelessWidget {
     return Container(
       width: 30,
       height: 30,
-      decoration: BoxDecoration(color: color.withOpacity(0.25), shape: BoxShape.circle),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.25), shape: BoxShape.circle),
       child: Icon(icon, size: 14, color: color),
     );
   }

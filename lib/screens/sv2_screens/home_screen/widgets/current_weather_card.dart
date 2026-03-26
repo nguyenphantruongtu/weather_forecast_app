@@ -36,6 +36,18 @@ class CurrentWeatherCard extends StatelessWidget {
         : 'EEE, MMM d • h:mm a';
   }
 
+  String _formatLastUpdated(DateTime value) {
+    try {
+      return DateFormat(
+        _timePattern(),
+        AppStrings.intlLocale(languageCode),
+      ).format(value);
+    } catch (_) {
+      // Fallback to default locale to keep UI stable even if locale data fails.
+      return DateFormat(_timePattern()).format(value);
+    }
+  }
+
   String _getWeatherIcon(String description) {
     switch (description.toLowerCase()) {
       case 'clear':
@@ -68,6 +80,10 @@ class CurrentWeatherCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayTemp = _displayTemperature(weather.temperature);
     final displayFeelsLike = _displayTemperature(weather.feelsLike);
+    final localizedDescription = AppStrings.weatherDescription(
+      languageCode,
+      weather.description,
+    );
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -97,7 +113,7 @@ class CurrentWeatherCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    DateFormat(_timePattern()).format(weather.lastUpdated),
+                    _formatLastUpdated(weather.lastUpdated),
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
@@ -135,7 +151,7 @@ class CurrentWeatherCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    weather.description,
+                    localizedDescription,
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                   Text(

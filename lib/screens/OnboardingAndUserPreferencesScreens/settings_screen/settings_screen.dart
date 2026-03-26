@@ -218,6 +218,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          _sectionLabel(AppStrings.tr(languageCode, en: 'APP INFO', vi: 'THONG TIN UNG DUNG')),
+          _card(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () {
+                Navigator.pushNamed(context, '/info');
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    const _IconBadge(
+                      icon: Icons.info_outline,
+                      color: Color(0xFF76ACE8),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      AppStrings.tr(languageCode, en: 'About & Help', vi: 'Thong tin & Tro giup'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF1F2637),
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: Color(0xFFC3C8D7),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

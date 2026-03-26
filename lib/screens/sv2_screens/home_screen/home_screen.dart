@@ -5,13 +5,14 @@ import '../../../providers/settings_provider.dart';
 import '../../../providers/weather_provider.dart';
 import '../../../utils/app_strings.dart';
 import '../../OnboardingAndUserPreferencesScreens/settings_screen/settings_screen.dart';
+import '../../NotiAndNewsScreens/noti_news_main_screen.dart';
 import 'widgets/current_weather_card.dart';
 import 'widgets/weather_metrics_grid.dart';
 import 'widgets/forecast_preview.dart';
-import '../../NotiAndNewsScreens/noti_news_main_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToCompare;
+
   const HomeScreen({super.key, this.onNavigateToCompare});
 
   @override
@@ -24,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Defer loading data after frame is built to avoid "setState during build" error
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadWeatherData();
     });
@@ -42,12 +42,12 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _searchController.clear();
     });
+
     final weatherProvider = context.read<WeatherProvider>();
     weatherProvider.fetchCurrentWeather(city);
     weatherProvider.fetchHourlyForecast(city);
   }
 
-    // THÊM: Hàm điều hướng sang NotiNewsMainScreen
   void _navigateToNotiNews() {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -73,13 +73,12 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
-          // App Bar
           SliverAppBar(
             elevation: 0,
             backgroundColor: Colors.transparent,
             pinned: true,
             title: Text(
-              AppStrings.tr(languageCode, en: 'Weather Now', vi: 'Thời tiết hôm nay'),
+              AppStrings.tr(languageCode, en: 'Weather Now', vi: 'Th\u1eddi ti\u1ebft h\u00f4m nay'),
               style: TextStyle(
                 color: surfaceTextColor,
                 fontSize: 18,
@@ -87,11 +86,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             actions: [
-              // THÊM: Nút điều hướng sang Alerts & News
               IconButton(
                 onPressed: _navigateToNotiNews,
                 icon: Icon(Icons.notifications_outlined, color: surfaceTextColor),
-                tooltip: 'Alerts & News',
+                tooltip: AppStrings.tr(languageCode, en: 'Alerts & News', vi: 'C\u1ea3nh b\u00e1o & Tin t\u1ee9c'),
               ),
               IconButton(
                 onPressed: _loadWeatherData,
@@ -99,7 +97,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          // Search Bar
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -109,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   hintText: AppStrings.tr(
                     languageCode,
                     en: 'Search city...',
-                    vi: 'Tìm thành phố...',
+                    vi: 'T\u00ecm th\u00e0nh ph\u1ed1...',
                   ),
                   prefixIcon: const Icon(Icons.location_on),
                   suffixIcon: _searchController.text.isNotEmpty
@@ -127,14 +124,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   filled: true,
                   fillColor: isDark ? const Color(0xFF1E2533) : Colors.white,
                 ),
-                onChanged: (value) {
-                  setState(() {});
-                },
+                onChanged: (_) => setState(() {}),
                 onSubmitted: _handleSearch,
               ),
             ),
           ),
-          // Content
           SliverPadding(
             padding: const EdgeInsets.all(16),
             sliver: SliverToBoxAdapter(
@@ -155,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            '${AppStrings.tr(languageCode, en: 'Error', vi: 'Lỗi')}: ${weatherProvider.error}',
+                            '${AppStrings.tr(languageCode, en: 'Error', vi: 'L\u1ed7i')}: ${weatherProvider.error}',
                             textAlign: TextAlign.center,
                             style: TextStyle(color: Colors.red.shade300),
                           ),
@@ -175,7 +169,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Current Weather Card
                         CurrentWeatherCard(
                           weather: currentWeather,
                           onCompareTap: widget.onNavigateToCompare,
@@ -191,10 +184,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           languageCode: languageCode,
                         ),
                         const SizedBox(height: 24),
-
-                        // Weather Metrics Grid
                         Text(
-                          AppStrings.tr(languageCode, en: 'Details', vi: 'Chi tiết'),
+                          AppStrings.tr(languageCode, en: 'Details', vi: 'Chi ti\u1ebft'),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -205,14 +196,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           weather: currentWeather,
                           temperatureUnit: settings.temperatureUnit,
                           windSpeedUnit: settings.windSpeedUnit,
+                          languageCode: languageCode,
                         ),
                         const SizedBox(height: 24),
-
-                        // THÊM: Banner điều hướng nhanh sang News & Alerts
-                        _buildNotiNewsBanner(),
+                        _buildNotiNewsBanner(languageCode),
                         const SizedBox(height: 24),
-
-                        // Hourly Forecast Preview
                         ForecastPreview(
                           hourlyForecast: weatherProvider.hourlyForecast,
                           city: currentWeather.location.split(',').first.trim(),
@@ -231,18 +219,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showWeatherMenu();
-        },
-        tooltip: 'More options',
+        onPressed: _showWeatherMenu,
+        tooltip: AppStrings.tr(languageCode, en: 'More options', vi: 'Th\u00eam t\u00f9y ch\u1ecdn'),
         backgroundColor: Colors.blue.shade500,
         child: const Icon(Icons.cloud),
       ),
     );
   }
 
-    // THÊM: Banner gọn điều hướng sang News & Alerts
-  Widget _buildNotiNewsBanner() {
+  Widget _buildNotiNewsBanner(String languageCode) {
     return GestureDetector(
       onTap: _navigateToNotiNews,
       child: Container(
@@ -256,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF6B7AEF).withOpacity(0.3),
+              color: const Color(0xFF6B7AEF).withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -264,34 +249,33 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.notifications_active_outlined,
-                color: Colors.white, size: 28),
+            const Icon(Icons.notifications_active_outlined, color: Colors.white, size: 28),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Weather Alerts & News',
-                    style: TextStyle(
+                    AppStrings.tr(languageCode, en: 'Weather Alerts & News', vi: 'C\u1ea3nh b\u00e1o & Tin t\u1ee9c'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'Check active alerts and latest weather news',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
+                    AppStrings.tr(
+                      languageCode,
+                      en: 'Check active alerts and latest weather news',
+                      vi: 'Xem c\u1ea3nh b\u00e1o \u0111ang ho\u1ea1t \u0111\u1ed9ng v\u00e0 tin th\u1eddi ti\u1ebft m\u1edbi nh\u1ea5t',
                     ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios,
-                color: Colors.white70, size: 16),
+            const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
           ],
         ),
       ),
@@ -299,6 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showWeatherMenu() {
+    final languageCode = context.read<SettingsProvider>().settings.language;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -309,7 +294,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Container(
               width: 40,
               height: 4,
@@ -324,16 +308,15 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'More Weather Options',
+                  AppStrings.tr(languageCode, en: 'More Weather Options', vi: 'T\u00f9y ch\u1ecdn th\u1eddi ti\u1ebft'),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
             ),
-            // Menu Items
             ListTile(
               leading: Icon(Icons.schedule, color: Colors.teal.shade500),
-              title: const Text('Hourly Forecast'),
-              subtitle: const Text('Next 24 hours'),
+              title: Text(AppStrings.tr(languageCode, en: 'Hourly Forecast', vi: 'D\u1ef1 b\u00e1o theo gi\u1edd')),
+              subtitle: Text(AppStrings.tr(languageCode, en: 'Next 24 hours', vi: '24 gi\u1edd t\u1edbi')),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/hourly-forecast');
@@ -341,8 +324,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: Icon(Icons.calendar_month, color: Colors.blue.shade500),
-              title: const Text('Daily Forecast'),
-              subtitle: const Text('7-10 days ahead'),
+              title: Text(AppStrings.tr(languageCode, en: 'Daily Forecast', vi: 'D\u1ef1 b\u00e1o h\u1eb1ng ng\u00e0y')),
+              subtitle: Text(AppStrings.tr(languageCode, en: '7-10 days ahead', vi: '7-10 ng\u00e0y t\u1edbi')),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/daily-forecast');
@@ -350,19 +333,23 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: Icon(Icons.info_outline, color: Colors.indigo.shade500),
-              title: const Text('Weather Details'),
-              subtitle: const Text('Detailed weather info'),
+              title: Text(AppStrings.tr(languageCode, en: 'Weather Details', vi: 'Chi ti\u1ebft th\u1eddi ti\u1ebft')),
+              subtitle: Text(AppStrings.tr(languageCode, en: 'Detailed weather info', vi: 'Th\u00f4ng tin th\u1eddi ti\u1ebft chi ti\u1ebft')),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/weather-details');
               },
             ),
-            // THÊM: Menu item điều hướng sang Alerts & News
             ListTile(
-              leading: Icon(Icons.notifications_outlined,
-                  color: const Color(0xFF6B7AEF)),
-              title: const Text('Alerts & News'),
-              subtitle: const Text('Weather alerts and latest news'),
+              leading: const Icon(Icons.notifications_outlined, color: Color(0xFF6B7AEF)),
+              title: Text(AppStrings.tr(languageCode, en: 'Alerts & News', vi: 'C\u1ea3nh b\u00e1o & Tin t\u1ee9c')),
+              subtitle: Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: 'Weather alerts and latest news',
+                  vi: 'C\u1ea3nh b\u00e1o th\u1eddi ti\u1ebft v\u00e0 tin t\u1ee9c m\u1edbi nh\u1ea5t',
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _navigateToNotiNews();
@@ -382,7 +369,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Weather Card Shimmer
           Container(
             height: 250,
             decoration: BoxDecoration(
@@ -391,8 +377,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 24),
-
-          // Metrics Grid Shimmer
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,

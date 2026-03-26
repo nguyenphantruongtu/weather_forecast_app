@@ -50,7 +50,7 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${AppStrings.tr(languageCode, en: 'Switched to', vi: 'Da chuyen den')} ${city.city}',
+                '${AppStrings.tr(languageCode, en: 'Switched to', vi: 'Đã chuyển đến')} ${city.city}',
               ),
             ),
           );
@@ -93,19 +93,19 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
         items: [
           BottomNavigationBarItem(
             icon: const Icon(Icons.home),
-            label: AppStrings.tr(languageCode, en: 'Home', vi: 'Trang chu'),
+            label: AppStrings.tr(languageCode, en: 'Home', vi: 'Trang chủ'),
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.search),
-            label: AppStrings.tr(languageCode, en: 'Search', vi: 'Tim kiem'),
+            label: AppStrings.tr(languageCode, en: 'Search', vi: 'Tìm kiếm'),
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.map),
-            label: AppStrings.tr(languageCode, en: 'Map', vi: 'Ban do'),
+            label: AppStrings.tr(languageCode, en: 'Map', vi: 'Bản đồ'),
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.compare_arrows),
-            label: AppStrings.tr(languageCode, en: 'Compare', vi: 'So sanh'),
+            label: AppStrings.tr(languageCode, en: 'Compare', vi: 'So sánh'),
           ),
         ],
       ),
