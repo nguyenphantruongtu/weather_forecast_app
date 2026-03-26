@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/statistics_provider.dart';
-import '../../data/models/statistics_model.dart';
+import '../../providers/weather_provider.dart';
 import 'widgets/comparison_indicator.dart';
 import 'widgets/period_selector.dart';
 import 'widgets/temperature_chart.dart';
@@ -27,8 +27,10 @@ class StatisticsScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: Consumer<StatisticsProvider>(
-        builder: (context, statsProv, child) {
+      body: Consumer2<StatisticsProvider, WeatherProvider>(
+        builder: (context, statsProv, weatherProv, child) {
+          final locationName =
+              weatherProv.currentWeather?.location ?? 'Hanoi, Vietnam';
           return SingleChildScrollView(
             child: Column(
               children: [
@@ -46,7 +48,7 @@ class StatisticsScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Hanoi, Vietnam',
+                        locationName,
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           color: Colors.grey[700],

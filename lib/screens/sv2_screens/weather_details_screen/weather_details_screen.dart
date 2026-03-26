@@ -23,18 +23,22 @@ class WeatherDetailsScreen extends StatefulWidget {
 }
 
 class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
-  late String _currentCity;
+  String? _lastLoadedCity;
 
   @override
   void initState() {
     super.initState();
-    _currentCity = widget.city ?? 'Hanoi';
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   void _loadData() {
-    final weatherProvider = context.read<WeatherProvider>();
-    weatherProvider.fetchCurrentWeather(_currentCity);
+    final city = widget.city ?? 'Hanoi';
+    if (_lastLoadedCity != city) {
+      _lastLoadedCity = city;
+      context.read<WeatherProvider>().fetchCurrentWeather(city);
+    }
   }
 
   @override
@@ -50,7 +54,11 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
         backgroundColor: Colors.transparent,
         iconTheme: IconThemeData(color: onSurface),
         title: Text(
-          AppStrings.tr(languageCode, en: 'Weather Details', vi: 'Chi tiet thoi tiet'),
+          AppStrings.tr(
+            languageCode,
+            en: 'Weather Details',
+            vi: 'Chi tiet thoi tiet',
+          ),
           style: TextStyle(
             color: onSurface,
             fontSize: 18,
@@ -66,6 +74,7 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
       ),
       body: Consumer<WeatherProvider>(
         builder: (context, weatherProvider, _) {
+          final currentCity = widget.city ?? 'Hanoi';
           if (weatherProvider.isLoading) {
             return _buildLoadingState(context);
           }
@@ -127,7 +136,10 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
 
               // UV Index
               SliverToBoxAdapter(
-                child: UVIndexChart(weather: weather, languageCode: languageCode),
+                child: UVIndexChart(
+                  weather: weather,
+                  languageCode: languageCode,
+                ),
               ),
 
               // Sun & Moon
@@ -208,7 +220,9 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
           ElevatedButton.icon(
             onPressed: _loadData,
             icon: const Icon(Icons.refresh),
-            label: Text(AppStrings.tr(languageCode, en: 'Retry', vi: 'Thu lai')),
+            label: Text(
+              AppStrings.tr(languageCode, en: 'Retry', vi: 'Thu lai'),
+            ),
           ),
         ],
       ),
@@ -221,9 +235,17 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
     TimeFormat timeFormat,
     String languageCode,
   ) {
-    final displayTemp = _displayTemperature(weather.temperature, temperatureUnit);
-    final displayFeelsLike = _displayTemperature(weather.feelsLike, temperatureUnit);
-    final timePattern = timeFormat == TimeFormat.h24 ? 'yyyy-MM-dd HH:mm:ss' : 'yyyy-MM-dd h:mm:ss a';
+    final displayTemp = _displayTemperature(
+      weather.temperature,
+      temperatureUnit,
+    );
+    final displayFeelsLike = _displayTemperature(
+      weather.feelsLike,
+      temperatureUnit,
+    );
+    final timePattern = timeFormat == TimeFormat.h24
+        ? 'yyyy-MM-dd HH:mm:ss'
+        : 'yyyy-MM-dd h:mm:ss a';
     return Card(
       margin: const EdgeInsets.all(16),
       elevation: 2,
@@ -247,21 +269,43 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
             ),
             const SizedBox(height: 16),
             _InfoRow(
-              label: AppStrings.tr(languageCode, en: 'Last Updated', vi: 'Cap nhat luc'),
+              label: AppStrings.tr(
+                languageCode,
+                en: 'Last Updated',
+                vi: 'Cap nhat luc',
+              ),
               value: _formatDateTime(weather.lastUpdated, timePattern),
             ),
             const SizedBox(height: 12),
-            _InfoRow(label: AppStrings.tr(languageCode, en: 'Location', vi: 'Vi tri'), value: weather.location),
-            const SizedBox(height: 12),
-            _InfoRow(label: AppStrings.tr(languageCode, en: 'Description', vi: 'Mo ta'), value: weather.description),
+            _InfoRow(
+              label: AppStrings.tr(languageCode, en: 'Location', vi: 'Vi tri'),
+              value: weather.location,
+            ),
             const SizedBox(height: 12),
             _InfoRow(
-              label: AppStrings.tr(languageCode, en: 'Temperature', vi: 'Nhiet do'),
+              label: AppStrings.tr(
+                languageCode,
+                en: 'Description',
+                vi: 'Mo ta',
+              ),
+              value: weather.description,
+            ),
+            const SizedBox(height: 12),
+            _InfoRow(
+              label: AppStrings.tr(
+                languageCode,
+                en: 'Temperature',
+                vi: 'Nhiet do',
+              ),
               value: '${displayTemp.toStringAsFixed(1)}°',
             ),
             const SizedBox(height: 12),
             _InfoRow(
-              label: AppStrings.tr(languageCode, en: 'Feels Like', vi: 'Cam giac nhu'),
+              label: AppStrings.tr(
+                languageCode,
+                en: 'Feels Like',
+                vi: 'Cam giac nhu',
+              ),
               value: '${displayFeelsLike.toStringAsFixed(1)}°',
             ),
           ],

@@ -22,18 +22,22 @@ class HourlyForecastScreen extends StatefulWidget {
 
 class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
   int _selectedIndex = 0;
-  late String _currentCity;
+  String? _lastLoadedCity;
 
   @override
   void initState() {
     super.initState();
-    _currentCity = widget.city ?? 'Hanoi';
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   void _loadData() {
-    final weatherProvider = context.read<WeatherProvider>();
-    weatherProvider.fetchHourlyForecast(_currentCity);
+    final city = widget.city ?? 'Hanoi';
+    if (_lastLoadedCity != city) {
+      _lastLoadedCity = city;
+      context.read<WeatherProvider>().fetchHourlyForecast(city);
+    }
   }
 
   @override
@@ -48,7 +52,11 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
         backgroundColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Colors.black87),
         title: Text(
-          AppStrings.tr(languageCode, en: 'Hourly Forecast', vi: 'Dự báo theo giờ'),
+          AppStrings.tr(
+            languageCode,
+            en: 'Hourly Forecast',
+            vi: 'Dự báo theo giờ',
+          ),
           style: TextStyle(
             color: Colors.black87,
             fontSize: 18,
@@ -64,6 +72,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
       ),
       body: Consumer<WeatherProvider>(
         builder: (context, weatherProvider, _) {
+          final currentCity = widget.city ?? 'Hanoi';
           if (weatherProvider.isLoading) {
             return _buildLoadingShimmer();
           }
@@ -87,7 +96,9 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadData,
-                    child: Text(AppStrings.tr(languageCode, en: 'Retry', vi: 'Thử lại')),
+                    child: Text(
+                      AppStrings.tr(languageCode, en: 'Retry', vi: 'Thử lại'),
+                    ),
                   ),
                 ],
               ),
@@ -96,7 +107,13 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
 
           if (weatherProvider.hourlyForecast.isEmpty) {
             return Center(
-              child: Text(AppStrings.tr(languageCode, en: 'No data available', vi: 'Không có dữ liệu')),
+              child: Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: 'No data available',
+                  vi: 'Không có dữ liệu',
+                ),
+              ),
             );
           }
 
@@ -131,14 +148,18 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _currentCity,
+                          currentCity,
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          AppStrings.tr(languageCode, en: 'Next 48 hours', vi: '48 giờ tới'),
+                          AppStrings.tr(
+                            languageCode,
+                            en: 'Next 48 hours',
+                            vi: '48 giờ tới',
+                          ),
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade600,
@@ -236,8 +257,15 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
 
                   // Hourly List
                   Text(
-                    AppStrings.tr(languageCode, en: 'Hourly Details', vi: 'Chi tiết theo giờ'),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    AppStrings.tr(
+                      languageCode,
+                      en: 'Hourly Details',
+                      vi: 'Chi tiết theo giờ',
+                    ),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   SizedBox(

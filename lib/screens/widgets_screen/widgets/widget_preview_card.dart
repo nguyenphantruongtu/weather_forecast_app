@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../../../data/models/widget_config_model.dart';
+import '../../../providers/weather_provider.dart';
 import 'widget_size_badge.dart';
 
 class WidgetPreviewCard extends StatelessWidget {
@@ -21,24 +23,25 @@ class WidgetPreviewCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Container(
-              width: double.infinity,
-              margin: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.color,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: _buildWidgetPreview(),
+            child: Builder(
+              builder: (context) {
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.color,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: _buildWidgetPreview(context),
+                );
+              },
             ),
           ),
           Padding(
@@ -122,7 +125,9 @@ class WidgetPreviewCard extends StatelessWidget {
     );
   }
 
-  Widget _buildWidgetPreview() {
+  Widget _buildWidgetPreview(BuildContext context) {
+    final location =
+        context.watch<WeatherProvider>().currentWeather?.location ?? 'Hanoi';
     if (widgetSize.name.contains('Calendar')) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -142,7 +147,7 @@ class WidgetPreviewCard extends StatelessWidget {
             ),
           ),
           Text(
-            'Hanoi',
+            location,
             style: GoogleFonts.inter(
               fontSize: 11,
               color: theme.textColor.withOpacity(0.7),
