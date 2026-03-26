@@ -28,7 +28,7 @@ import 'providers/statistics_provider.dart';
 import 'providers/widget_config_provider.dart';
 
 // Screens
-import 'screens/weather_home_shell.dart';
+// Removed unused imports
 
 /// Entry point của ứng dụng
 void main() async {
@@ -65,7 +65,7 @@ void main() async {
           // ============================================================
           // ORIGINAL PROVIDERS (HEAD - Team khác)
           // ============================================================
-          
+
           // Settings Provider
           ChangeNotifierProvider.value(value: settingsProvider),
 
@@ -101,9 +101,8 @@ void main() async {
 
           // Calendar Provider
           ChangeNotifierProvider<CalendarProvider>(
-            create: (ctx) => CalendarProvider(
-              apiService: ctx.read<WeatherApiService>(),
-            ),
+            create: (ctx) =>
+                CalendarProvider(apiService: ctx.read<WeatherApiService>()),
           ),
 
           // Statistics Provider (depends on CalendarProvider)
@@ -122,7 +121,7 @@ void main() async {
     // Nếu có lỗi khởi tạo, hiển thị error screen
     debugPrint('❌ Initialization Error: $e');
     debugPrint('Stack trace: $stackTrace');
-    
+
     runApp(
       MaterialApp(
         debugShowCheckedModeBanner: false,

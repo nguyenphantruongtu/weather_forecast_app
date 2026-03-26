@@ -39,13 +39,21 @@ class LocationSuccessScreen extends StatelessWidget {
                       color: const Color(0xFF63C877),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.check, color: Colors.white, size: 38),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 38,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
               Text(
-                AppStrings.tr(languageCode, en: 'Location Set!', vi: 'Da cai dat vi tri!'),
+                AppStrings.tr(
+                  languageCode,
+                  en: 'Location Set!',
+                  vi: 'Da cai dat vi tri!',
+                ),
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
@@ -74,7 +82,10 @@ class LocationSuccessScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const MainWrapperScreen()),
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            MainWrapperScreen(initialLocation: location),
+                      ),
                       (route) => false,
                     );
                   },
@@ -88,7 +99,11 @@ class LocationSuccessScreen extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    AppStrings.tr(languageCode, en: 'Continue to Home', vi: 'Tiep tuc den trang chu'),
+                    AppStrings.tr(
+                      languageCode,
+                      en: 'Continue to Home',
+                      vi: 'Tiep tuc den trang chu',
+                    ),
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -97,7 +112,11 @@ class LocationSuccessScreen extends StatelessWidget {
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(
-                  AppStrings.tr(languageCode, en: 'Change Location', vi: 'Doi vi tri'),
+                  AppStrings.tr(
+                    languageCode,
+                    en: 'Change Location',
+                    vi: 'Doi vi tri',
+                  ),
                   style: TextStyle(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w700,

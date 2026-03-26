@@ -38,22 +38,24 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _handleSearch(String city) {
+  Future<void> _handleSearch(String city) async {
     setState(() {
       _searchController.clear();
     });
 
+    if (city.trim().isEmpty) return;
+
     final weatherProvider = context.read<WeatherProvider>();
-    weatherProvider.fetchCurrentWeather(city);
-    weatherProvider.fetchHourlyForecast(city);
+
+    // Fetch weather using city name - WeatherApiService will handle geocoding
+    // and return proper location name
+    await weatherProvider.fetchCurrentWeather(city);
   }
 
   void _navigateToNotiNews() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const NotiNewsMainScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const NotiNewsMainScreen()));
   }
 
   @override
@@ -78,7 +80,11 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: Colors.transparent,
             pinned: true,
             title: Text(
-              AppStrings.tr(languageCode, en: 'Weather Now', vi: 'Th\u1eddi ti\u1ebft h\u00f4m nay'),
+              AppStrings.tr(
+                languageCode,
+                en: 'Weather Now',
+                vi: 'Th\u1eddi ti\u1ebft h\u00f4m nay',
+              ),
               style: TextStyle(
                 color: surfaceTextColor,
                 fontSize: 18,
@@ -88,8 +94,15 @@ class _HomeScreenState extends State<HomeScreen> {
             actions: [
               IconButton(
                 onPressed: _navigateToNotiNews,
-                icon: Icon(Icons.notifications_outlined, color: surfaceTextColor),
-                tooltip: AppStrings.tr(languageCode, en: 'Alerts & News', vi: 'C\u1ea3nh b\u00e1o & Tin t\u1ee9c'),
+                icon: Icon(
+                  Icons.notifications_outlined,
+                  color: surfaceTextColor,
+                ),
+                tooltip: AppStrings.tr(
+                  languageCode,
+                  en: 'Alerts & News',
+                  vi: 'C\u1ea3nh b\u00e1o & Tin t\u1ee9c',
+                ),
               ),
               IconButton(
                 onPressed: _loadWeatherData,
@@ -185,7 +198,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          AppStrings.tr(languageCode, en: 'Details', vi: 'Chi ti\u1ebft'),
+                          AppStrings.tr(
+                            languageCode,
+                            en: 'Details',
+                            vi: 'Chi ti\u1ebft',
+                          ),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -220,7 +237,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showWeatherMenu,
-        tooltip: AppStrings.tr(languageCode, en: 'More options', vi: 'Th\u00eam t\u00f9y ch\u1ecdn'),
+        tooltip: AppStrings.tr(
+          languageCode,
+          en: 'More options',
+          vi: 'Th\u00eam t\u00f9y ch\u1ecdn',
+        ),
         backgroundColor: Colors.blue.shade500,
         child: const Icon(Icons.cloud),
       ),
@@ -249,14 +270,22 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.notifications_active_outlined, color: Colors.white, size: 28),
+            const Icon(
+              Icons.notifications_active_outlined,
+              color: Colors.white,
+              size: 28,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppStrings.tr(languageCode, en: 'Weather Alerts & News', vi: 'C\u1ea3nh b\u00e1o & Tin t\u1ee9c'),
+                    AppStrings.tr(
+                      languageCode,
+                      en: 'Weather Alerts & News',
+                      vi: 'C\u1ea3nh b\u00e1o & Tin t\u1ee9c',
+                    ),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -275,7 +304,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white70,
+              size: 16,
+            ),
           ],
         ),
       ),
@@ -308,15 +341,31 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  AppStrings.tr(languageCode, en: 'More Weather Options', vi: 'T\u00f9y ch\u1ecdn th\u1eddi ti\u1ebft'),
+                  AppStrings.tr(
+                    languageCode,
+                    en: 'More Weather Options',
+                    vi: 'T\u00f9y ch\u1ecdn th\u1eddi ti\u1ebft',
+                  ),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
             ),
             ListTile(
               leading: Icon(Icons.schedule, color: Colors.teal.shade500),
-              title: Text(AppStrings.tr(languageCode, en: 'Hourly Forecast', vi: 'D\u1ef1 b\u00e1o theo gi\u1edd')),
-              subtitle: Text(AppStrings.tr(languageCode, en: 'Next 24 hours', vi: '24 gi\u1edd t\u1edbi')),
+              title: Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: 'Hourly Forecast',
+                  vi: 'D\u1ef1 b\u00e1o theo gi\u1edd',
+                ),
+              ),
+              subtitle: Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: 'Next 24 hours',
+                  vi: '24 gi\u1edd t\u1edbi',
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/hourly-forecast');
@@ -324,8 +373,20 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: Icon(Icons.calendar_month, color: Colors.blue.shade500),
-              title: Text(AppStrings.tr(languageCode, en: 'Daily Forecast', vi: 'D\u1ef1 b\u00e1o h\u1eb1ng ng\u00e0y')),
-              subtitle: Text(AppStrings.tr(languageCode, en: '7-10 days ahead', vi: '7-10 ng\u00e0y t\u1edbi')),
+              title: Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: 'Daily Forecast',
+                  vi: 'D\u1ef1 b\u00e1o h\u1eb1ng ng\u00e0y',
+                ),
+              ),
+              subtitle: Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: '7-10 days ahead',
+                  vi: '7-10 ng\u00e0y t\u1edbi',
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/daily-forecast');
@@ -333,16 +394,37 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: Icon(Icons.info_outline, color: Colors.indigo.shade500),
-              title: Text(AppStrings.tr(languageCode, en: 'Weather Details', vi: 'Chi ti\u1ebft th\u1eddi ti\u1ebft')),
-              subtitle: Text(AppStrings.tr(languageCode, en: 'Detailed weather info', vi: 'Th\u00f4ng tin th\u1eddi ti\u1ebft chi ti\u1ebft')),
+              title: Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: 'Weather Details',
+                  vi: 'Chi ti\u1ebft th\u1eddi ti\u1ebft',
+                ),
+              ),
+              subtitle: Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: 'Detailed weather info',
+                  vi: 'Th\u00f4ng tin th\u1eddi ti\u1ebft chi ti\u1ebft',
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/weather-details');
               },
             ),
             ListTile(
-              leading: const Icon(Icons.notifications_outlined, color: Color(0xFF6B7AEF)),
-              title: Text(AppStrings.tr(languageCode, en: 'Alerts & News', vi: 'C\u1ea3nh b\u00e1o & Tin t\u1ee9c')),
+              leading: const Icon(
+                Icons.notifications_outlined,
+                color: Color(0xFF6B7AEF),
+              ),
+              title: Text(
+                AppStrings.tr(
+                  languageCode,
+                  en: 'Alerts & News',
+                  vi: 'C\u1ea3nh b\u00e1o & Tin t\u1ee9c',
+                ),
+              ),
               subtitle: Text(
                 AppStrings.tr(
                   languageCode,

@@ -5,11 +5,14 @@ import '../../providers/settings_provider.dart';
 import '../../utils/app_strings.dart';
 import 'sv2_screens/home_screen/home_screen.dart';
 import 'OnboardingAndUserPreferencesScreens/location_setup_screen/search_location_screen.dart';
+import 'OnboardingAndUserPreferencesScreens/location_setup_screen/models/location_choice.dart';
 import '../features/map_view_screen/map_view_screen.dart';
 import '../features/compare_locations_screen/compare_locations_screen.dart';
 
 class MainWrapperScreen extends StatefulWidget {
-  const MainWrapperScreen({super.key});
+  final LocationChoice? initialLocation;
+
+  const MainWrapperScreen({super.key, this.initialLocation});
 
   @override
   State<MainWrapperScreen> createState() => _MainWrapperScreenState();
@@ -17,6 +20,22 @@ class MainWrapperScreen extends StatefulWidget {
 
 class _MainWrapperScreenState extends State<MainWrapperScreen> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // If an initial location is provided (from onboarding), fetch its weather
+    if (widget.initialLocation != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final weatherProvider = context.read<WeatherProvider>();
+        weatherProvider.fetchWeatherByCoordinates(
+          widget.initialLocation!.latitude,
+          widget.initialLocation!.longitude,
+          locationName: widget.initialLocation!.fullName,
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +47,9 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
         onNavigateToCompare: () {
           final weatherProvider = context.read<WeatherProvider>();
           if (weatherProvider.currentWeather != null) {
-            weatherProvider.addWeatherToCompare(weatherProvider.currentWeather!);
+            weatherProvider.addWeatherToCompare(
+              weatherProvider.currentWeather!,
+            );
           }
           setState(() {
             _currentIndex = 3;
@@ -37,20 +58,22 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
       ),
       SearchLocationScreen(
         onCitySelected: (city) {
-          // Update weather data and switch back to Home tab
+          // Update weather data using coordinates (more reliable than city name)
           final weatherProvider = context.read<WeatherProvider>();
-          // Assuming fetchCurrentWeather and fetchHourlyForecast exist and are the right methods
-          weatherProvider.fetchCurrentWeather(city.city);
-          weatherProvider.fetchHourlyForecast(city.city);
-          
+          weatherProvider.fetchWeatherByCoordinates(
+            city.latitude,
+            city.longitude,
+            locationName: city.fullName,
+          );
+
           setState(() {
             _currentIndex = 0; // Switch back to Home tab
           });
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${AppStrings.tr(languageCode, en: 'Switched to', vi: 'Đã chuyển đến')} ${city.city}',
+                '${AppStrings.tr(languageCode, en: 'Switched to', vi: 'Đã chuyển đến')} ${city.fullName}',
               ),
             ),
           );
@@ -58,7 +81,7 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
         onCompareCity: (city) {
           final weatherProvider = context.read<WeatherProvider>();
           weatherProvider.addCityToCompare(city.city);
-          
+
           setState(() {
             _currentIndex = 3; // Switch to Compare tab
           });
@@ -75,10 +98,7 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         currentIndex: _currentIndex,

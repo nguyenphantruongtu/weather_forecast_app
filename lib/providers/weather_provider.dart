@@ -76,17 +76,26 @@ class WeatherProvider extends ChangeNotifier {
 
   Future<void> fetchWeatherByCoordinates(
     double latitude,
-    double longitude,
-  ) async {
+    double longitude, {
+    String? locationName,
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _currentWeather = await _apiService.getWeatherByCoordinates(
-        latitude,
-        longitude,
-      );
+      if (locationName != null && locationName.isNotEmpty) {
+        _currentWeather = await _apiService.getWeatherByCoordinatesWithLocation(
+          latitude,
+          longitude,
+          locationName: locationName,
+        );
+      } else {
+        _currentWeather = await _apiService.getWeatherByCoordinates(
+          latitude,
+          longitude,
+        );
+      }
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -153,12 +162,14 @@ class WeatherProvider extends ChangeNotifier {
   }
 
   Future<void> addCityToCompare(String city) async {
-    if (_compareLocations.any((w) => 
-        w.location.toLowerCase().contains(city.toLowerCase()) || 
-        city.toLowerCase().contains(w.location.toLowerCase()))) {
+    if (_compareLocations.any(
+      (w) =>
+          w.location.toLowerCase().contains(city.toLowerCase()) ||
+          city.toLowerCase().contains(w.location.toLowerCase()),
+    )) {
       return;
     }
-    
+
     _isLoading = true;
     notifyListeners();
 

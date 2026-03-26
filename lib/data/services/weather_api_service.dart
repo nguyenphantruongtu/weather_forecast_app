@@ -9,26 +9,25 @@ import '../../utils/calendar_date_utils.dart';
 class WeatherApiService {
   static const String _baseUrl = 'https://api.openweathermap.org/data/2.5';
   static const String _forecastBaseUrl = 'https://api.open-meteo.com/v1';
-  static const String _geocodingBaseUrl = 'https://geocoding-api.open-meteo.com/v1';
+  static const String _geocodingBaseUrl =
+      'https://geocoding-api.open-meteo.com/v1';
 
   final Dio _dio;
   final String _apiKey;
 
   // Use mock data for testing
-  static const bool USE_MOCK_DATA = false;
+  static const bool useMockData = false;
 
-  WeatherApiService({
-    Dio? dio,
-    String? apiKey,
-    String? baseUrl,
-  })  : _dio = dio ??
-            Dio(
-              BaseOptions(
-                connectTimeout: const Duration(seconds: 10),
-                receiveTimeout: const Duration(seconds: 10),
-              ),
+  WeatherApiService({Dio? dio, String? apiKey, String? baseUrl})
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
             ),
-        _apiKey = apiKey ?? '';
+          ),
+      _apiKey = apiKey ?? '';
 
   // ============================================================
   // MOCK DATA (for testing without API)
@@ -80,32 +79,35 @@ class WeatherApiService {
   // ============================================================
 
   Future<WeatherModel> getCurrentWeather(String city) async {
-    if (USE_MOCK_DATA) {
+    if (useMockData) {
       await Future.delayed(Duration(milliseconds: 500));
       return _getMockWeather(city);
     }
 
     try {
       final geo = await _searchCity(city);
-      final forecastData = await _fetchForecastData(geo.latitude, geo.longitude);
-      return _buildCurrentWeather(
-        forecastData,
-        '${geo.name}, ${geo.country}',
+      final forecastData = await _fetchForecastData(
+        geo.latitude,
+        geo.longitude,
       );
+      return _buildCurrentWeather(forecastData, '${geo.name}, ${geo.country}');
     } catch (e) {
       throw Exception('Failed to load current weather: $e');
     }
   }
 
   Future<List<ForecastModel>> getHourlyForecast(String city) async {
-    if (USE_MOCK_DATA) {
+    if (useMockData) {
       await Future.delayed(Duration(milliseconds: 500));
       return _getMockForecast(city);
     }
 
     try {
       final geo = await _searchCity(city);
-      final forecastData = await _fetchForecastData(geo.latitude, geo.longitude);
+      final forecastData = await _fetchForecastData(
+        geo.latitude,
+        geo.longitude,
+      );
       return _buildHourlyForecast(forecastData);
     } catch (e) {
       throw Exception('Failed to load hourly forecast: $e');
@@ -115,7 +117,10 @@ class WeatherApiService {
   Future<List<ForecastModel>> getDailyForecast(String city) async {
     try {
       final geo = await _searchCity(city);
-      final forecastData = await _fetchForecastData(geo.latitude, geo.longitude);
+      final forecastData = await _fetchForecastData(
+        geo.latitude,
+        geo.longitude,
+      );
       return _buildDailyForecast(forecastData);
     } catch (e) {
       throw Exception('Failed to load daily forecast: $e');
@@ -139,7 +144,8 @@ class WeatherApiService {
     String? locationName,
   }) async {
     try {
-      final placeName = locationName ?? await _reverseGeocode(latitude, longitude);
+      final placeName =
+          locationName ?? await _reverseGeocode(latitude, longitude);
       final forecastData = await _fetchForecastData(latitude, longitude);
       return _buildCurrentWeather(forecastData, placeName);
     } catch (e) {
@@ -372,7 +378,9 @@ class WeatherApiService {
 
     final data = response.data ?? <String, dynamic>{};
     final weatherList = (data['weather'] as List?) ?? const [];
-    final weather = weatherList.isNotEmpty ? weatherList.first as Map : const {};
+    final weather = weatherList.isNotEmpty
+        ? weatherList.first as Map
+        : const {};
     final main = (data['main'] as Map?) ?? const {};
     final wind = (data['wind'] as Map?) ?? const {};
     final rainMap = (data['rain'] as Map?) ?? const {};
@@ -440,8 +448,9 @@ class WeatherApiService {
           : <String, dynamic>{};
       final wind = Map<String, dynamic>.from((mid['wind'] as Map?) ?? {});
       final rain = (mid['rain'] as Map?) ?? {};
-      final pop = (slots.map((e) => (e['pop'] as num?)?.toDouble() ?? 0.0))
-          .reduce((a, b) => a > b ? a : b);
+      final pop = (slots.map(
+        (e) => (e['pop'] as num?)?.toDouble() ?? 0.0,
+      )).reduce((a, b) => a > b ? a : b);
       final date = DateTime.parse(dayKey);
 
       result.add(
@@ -450,12 +459,14 @@ class WeatherApiService {
           temp: (maxT + minT) / 2,
           tempMax: maxT,
           tempMin: minT,
-          feelsLike: (main['feels_like'] as num?)?.toDouble() ?? (maxT + minT) / 2,
+          feelsLike:
+              (main['feels_like'] as num?)?.toDouble() ?? (maxT + minT) / 2,
           humidity: (main['humidity'] as num?)?.toInt() ?? 0,
           windSpeed: (wind['speed'] as num?)?.toDouble() ?? 0,
           windDeg: (wind['deg'] as num?)?.toInt() ?? 0,
           precipitationProbability: pop.clamp(0.0, 1.0),
-          precipitationAmount: ((rain['3h'] ?? rain['1h'] ?? 0) as num).toDouble(),
+          precipitationAmount: ((rain['3h'] ?? rain['1h'] ?? 0) as num)
+              .toDouble(),
           uvIndex: 0,
           sunrise: DateTime(date.year, date.month, date.day, 6),
           sunset: DateTime(date.year, date.month, date.day, 18),
@@ -518,8 +529,44 @@ class WeatherApiService {
         final result = <WeatherDayModel>[today];
 
         for (final raw in daily.skip(1)) {
-          final day = WeatherDayModel.fromOneCallDaily(
-            Map<String, dynamic>.from(raw as Map),
+          final json = Map<String, dynamic>.from(raw as Map);
+          final date = DateTime.fromMillisecondsSinceEpoch(
+            ((json['dt'] as num?)?.toInt() ?? 0) * 1000,
+          );
+          final weatherList = (json['weather'] as List?) ?? [];
+          final w = weatherList.isNotEmpty
+              ? Map<String, dynamic>.from(weatherList.first as Map)
+              : <String, dynamic>{};
+          final temp = Map<String, dynamic>.from((json['temp'] as Map?) ?? {});
+          final feels = Map<String, dynamic>.from(
+            (json['feels_like'] as Map?) ?? {},
+          );
+
+          final day = WeatherDayModel(
+            date: date,
+            temp:
+                (((temp['max'] as num?)?.toDouble() ?? 0) +
+                    ((temp['min'] as num?)?.toDouble() ?? 0)) /
+                2,
+            tempMax: (temp['max'] as num?)?.toDouble() ?? 0,
+            tempMin: (temp['min'] as num?)?.toDouble() ?? 0,
+            feelsLike: (feels['day'] as num?)?.toDouble() ?? 0,
+            humidity: (json['humidity'] as num?)?.toInt() ?? 0,
+            windSpeed: (json['wind_speed'] as num?)?.toDouble() ?? 0,
+            windDeg: (json['wind_deg'] as num?)?.toInt() ?? 0,
+            precipitationProbability: ((json['pop'] as num?)?.toDouble() ?? 0)
+                .clamp(0.0, 1.0),
+            precipitationAmount: (json['rain'] as num?)?.toDouble() ?? 0,
+            uvIndex: (json['uvi'] as num?)?.toDouble() ?? 0,
+            sunrise: DateTime.fromMillisecondsSinceEpoch(
+              ((json['sunrise'] as num?)?.toInt() ?? 0) * 1000,
+            ),
+            sunset: DateTime.fromMillisecondsSinceEpoch(
+              ((json['sunset'] as num?)?.toInt() ?? 0) * 1000,
+            ),
+            condition: (w['main'] as String?) ?? 'Clear',
+            iconCode: (w['icon'] as String?) ?? '01d',
+            hourlyTemperatures: const [],
           );
           result.add(day);
         }
@@ -639,7 +686,12 @@ class WeatherApiService {
     if (code == 61 || code == 63 || code == 65 || code == 66 || code == 67) {
       return 'rain';
     }
-    if (code == 71 || code == 73 || code == 75 || code == 77 || code == 85 || code == 86) {
+    if (code == 71 ||
+        code == 73 ||
+        code == 75 ||
+        code == 77 ||
+        code == 85 ||
+        code == 86) {
       return 'snow';
     }
     if (code == 95 || code == 96 || code == 99) return 'thunderstorm';
