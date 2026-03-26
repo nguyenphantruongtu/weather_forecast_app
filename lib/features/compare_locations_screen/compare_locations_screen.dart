@@ -5,7 +5,12 @@ import '../../providers/weather_provider.dart';
 import '../../data/models/weather_model.dart';
 
 class CompareLocationsScreen extends StatefulWidget {
-  const CompareLocationsScreen({super.key});
+  final VoidCallback? onNavigateToSearch;
+
+  const CompareLocationsScreen({
+    super.key,
+    this.onNavigateToSearch,
+  });
 
   @override
   State<CompareLocationsScreen> createState() => _CompareLocationsScreenState();
@@ -150,9 +155,13 @@ class _CompareLocationsScreenState extends State<CompareLocationsScreen> {
               child: Center(
                 child: TextButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Vào màn hình Tìm Kiếm để thêm thành phố!')),
-                    );
+                    if (widget.onNavigateToSearch != null) {
+                      widget.onNavigateToSearch!();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Vào màn hình Tìm Kiếm để thêm thành phố!')),
+                      );
+                    }
                   },
                   icon: const Icon(Icons.add, color: Colors.grey),
                   label: const Text(
