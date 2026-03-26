@@ -1,78 +1,131 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:timezone/data/latest.dart' as tz;
+
+// App
 import 'app.dart';
+
+// Config
+import 'config/env_config.dart';
+
+// Services
+import 'data/services/weather_api_service.dart';
+import 'data/services/notification_service.dart';
+
+// Providers - Original (HEAD)
 import 'providers/settings_provider.dart';
 import 'providers/news_provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/location_provider.dart';
-import 'package:timezone/data/latest.dart' as tz;
-import 'data/services/notification_service.dart';
+
+// Providers - New (TuNPT - SV5)
+import 'providers/calendar_provider.dart';
+import 'providers/statistics_provider.dart';
+import 'providers/widget_config_provider.dart';
+
+// Screens
+import 'screens/weather_home_shell.dart';
 
 /// Entry point của ứng dụng
-/// main(): hàm chính được gọi khi app khởi động
 void main() async {
   // Đảm bảo Flutter bindings được khởi tạo
-  // Điều này cần thiết để các plugin native hoạt động đúng cách
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Tải environment variables từ file .env
-    // Điều này cho phép lưu trữ API keys trong file .env thay vì hardcode
-    await dotenv.load();
-  } catch (e) {
-    // Nếu .env không tồn tại, in warning nhưng không dừng app
-    debugPrint('Warning: Khong the tai file .env: $e');
-  }
+    // Load environment variables từ file .env
+    await dotenv.load(fileName: EnvConfig.envFileName);
 
-  try {
-    // Khởi tạo dữ liệu locale cho DateFormat (vd: vi_VN)
+    // Validate API keys
+    if (!EnvConfig.isConfigValid) {
+      debugPrint('⚠️ Missing API keys:');
+      for (final key in EnvConfig.validateApiKeys()) {
+        debugPrint('   - $key');
+      }
+    }
+
+    // Khởi tạo dữ liệu locale cho DateFormat (vi_VN, en_US, etc.)
     await initializeDateFormatting();
 
-    // Khởi tạo SettingsProvider và tải cài đặt từ SharedPreferences
-    final settingsProvider = SettingsProvider();
-    await settingsProvider.init();
-    // settingsProvider.init(): tải cấu hình đã lưu trước đó
-
-    // Khởi tạo timezone data cho tính năng thông báo theo múi giờ
+    // Khởi tạo timezone data cho notification
     tz.initializeTimeZones();
     await NotificationService().initialize();
 
-    // Load file .env
-    await dotenv.load(fileName: '.env');
+    // Khởi tạo SettingsProvider và load settings từ SharedPreferences
+    final settingsProvider = SettingsProvider();
+    await settingsProvider.init();
 
     // Chạy ứng dụng
     runApp(
       MultiProvider(
-        // MultiProvider: cung cấp nhiều providers cho toàn bộ app
-        // Tất cả widget con có thể truy cập các provider này thông qua context.watch(), context.read(), v.v.
         providers: [
-          // Cung cấp SettingsProvider cho toàn bộ app
-          // ChangeNotifierProvider.value: sử dụng instance đã tạo sẵn
+          // ============================================================
+          // ORIGINAL PROVIDERS (HEAD - Team khác)
+          // ============================================================
+          
+          // Settings Provider
           ChangeNotifierProvider.value(value: settingsProvider),
 
-          // Cung cấp NewsProvider cho toàn bộ app
-          // ChangeNotifierProvider(create: (_) => ...): tạo instance mới
+          // News Provider
           ChangeNotifierProvider(create: (_) => NewsProvider()),
 
-          // Cung cấp WeatherProvider cho toàn bộ app
+          // Weather Provider (Home screen)
           ChangeNotifierProvider(create: (_) => WeatherProvider()),
 
-          // Cung cấp NotificationProvider cho toàn bộ app
+          // Notification Provider
           ChangeNotifierProvider(create: (_) => NotificationProvider()),
 
-          // Cung cấp LocationProvider cho tính năng Bản đồ và Quản lý vị trí
+          // Location Provider
           ChangeNotifierProvider(create: (_) => LocationProvider()),
+
+          // ============================================================
+          // NEW PROVIDERS (TuNPT - SV5 Screens)
+          // ============================================================
+
+          // Weather API Service (singleton)
+          Provider<WeatherApiService>(
+            create: (_) => WeatherApiService(
+              dio: Dio(),
+              apiKey: EnvConfig.openWeatherApiKey,
+              baseUrl: EnvConfig.openWeatherBaseUrl,
+            ),
+          ),
+
+          // Widget Config Provider (for theme)
+          ChangeNotifierProvider<WidgetConfigProvider>(
+            create: (_) => WidgetConfigProvider(),
+          ),
+
+          // Calendar Provider
+          ChangeNotifierProvider<CalendarProvider>(
+            create: (ctx) => CalendarProvider(
+              apiService: ctx.read<WeatherApiService>(),
+            ),
+          ),
+
+          // Statistics Provider (depends on CalendarProvider)
+          ChangeNotifierProxyProvider<CalendarProvider, StatisticsProvider>(
+            create: (ctx) => StatisticsProvider(
+              calendarProvider: ctx.read<CalendarProvider>(),
+            ),
+            update: (_, calendar, previous) =>
+                previous ?? StatisticsProvider(calendarProvider: calendar),
+          ),
         ],
         child: const MyApp(),
       ),
     );
   } catch (e, stackTrace) {
-    // Nếu có lỗi khởi tạo, hiển thị error screen thay vì trắng xóa
+    // Nếu có lỗi khởi tạo, hiển thị error screen
+    debugPrint('❌ Initialization Error: $e');
+    debugPrint('Stack trace: $stackTrace');
+    
     runApp(
       MaterialApp(
+        debugShowCheckedModeBanner: false,
         home: Scaffold(
           body: Center(
             child: SingleChildScrollView(
@@ -105,6 +158,15 @@ void main() async {
                       color: Colors.grey,
                       fontFamily: 'monospace',
                     ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Restart app
+                      runApp(const MaterialApp(home: SizedBox.shrink()));
+                      main();
+                    },
+                    child: const Text('Retry'),
                   ),
                 ],
               ),

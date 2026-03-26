@@ -1,28 +1,39 @@
 import 'package:dio/dio.dart';
 import '../models/weather_model.dart';
 import '../models/forecast_model.dart';
-
-// Mock data flag
-const bool USE_MOCK_DATA = false;
+import '../models/weather_day_model.dart' as app_weather;
+import '../models/weather_forecast_day_model.dart';
+import '../models/weather_history_model.dart';
+import '../../utils/calendar_date_utils.dart';
 
 class WeatherApiService {
+  static const String _baseUrl = 'https://api.openweathermap.org/data/2.5';
   static const String _forecastBaseUrl = 'https://api.open-meteo.com/v1';
   static const String _geocodingBaseUrl = 'https://geocoding-api.open-meteo.com/v1';
 
   final Dio _dio;
+  final String _apiKey;
 
   // Use mock data for testing
   static const bool USE_MOCK_DATA = false;
 
-  WeatherApiService({Dio? dio, String? apiKey, String? baseUrl})
-      : _dio = dio ?? Dio(
-          BaseOptions(
-            connectTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 10),
-          ),
-        );
+  WeatherApiService({
+    Dio? dio,
+    String? apiKey,
+    String? baseUrl,
+  })  : _dio = dio ??
+            Dio(
+              BaseOptions(
+                connectTimeout: const Duration(seconds: 10),
+                receiveTimeout: const Duration(seconds: 10),
+              ),
+            ),
+        _apiKey = apiKey ?? '';
 
-  // Mock weather data generator
+  // ============================================================
+  // MOCK DATA (for testing without API)
+  // ============================================================
+
   WeatherModel _getMockWeather(String city) {
     return WeatherModel(
       location: city,
@@ -64,9 +75,13 @@ class WeatherApiService {
     return forecasts;
   }
 
+  // ============================================================
+  // OPEN-METEO API (Current Weather - Free Tier)
+  // ============================================================
+
   Future<WeatherModel> getCurrentWeather(String city) async {
     if (USE_MOCK_DATA) {
-      await Future.delayed(Duration(milliseconds: 500)); // Simulate API delay
+      await Future.delayed(Duration(milliseconds: 500));
       return _getMockWeather(city);
     }
 
@@ -131,6 +146,10 @@ class WeatherApiService {
       throw Exception('Failed to load weather by coordinates: $e');
     }
   }
+
+  // ============================================================
+  // GEOCODING (Open-Meteo)
+  // ============================================================
 
   Future<_GeoPoint> _searchCity(String city) async {
     final response = await _dio.get(
@@ -332,6 +351,284 @@ class WeatherApiService {
     return items;
   }
 
+  // ============================================================
+  // OPENWEATHERMAP API (for Calendar & Statistics screens)
+  // ============================================================
+
+  /// Fetch current weather snapshot (for WeatherHistory model)
+  Future<WeatherHistory> fetchCurrentWeatherSnapshot({
+    required double lat,
+    required double lon,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/weather',
+      queryParameters: {
+        'lat': lat,
+        'lon': lon,
+        'appid': _apiKey,
+        'units': 'metric',
+      },
+    );
+
+    final data = response.data ?? <String, dynamic>{};
+    final weatherList = (data['weather'] as List?) ?? const [];
+    final weather = weatherList.isNotEmpty ? weatherList.first as Map : const {};
+    final main = (data['main'] as Map?) ?? const {};
+    final wind = (data['wind'] as Map?) ?? const {};
+    final rainMap = (data['rain'] as Map?) ?? const {};
+
+    // OpenWeather returns mm/1h or mm/3h, normalize to 0.0-1.0
+    final rainMm = ((rainMap['1h'] ?? rainMap['3h'] ?? 0) as num).toDouble();
+    final normalizedPrecipitation = (rainMm / 10).clamp(0, 1).toDouble();
+
+    return WeatherHistory(
+      date: DateTime.now(),
+      tempMax: (main['temp_max'] as num?)?.toDouble() ?? 0,
+      tempMin: (main['temp_min'] as num?)?.toDouble() ?? 0,
+      condition: (weather['main'] as String?) ?? 'Unknown',
+      icon: (weather['icon'] as String?) ?? '01d',
+      humidity: (main['humidity'] as num?)?.toInt() ?? 0,
+      windSpeed: (wind['speed'] as num?)?.toDouble() ?? 0,
+      precipitation: normalizedPrecipitation,
+    );
+  }
+
+  /// 5 Day / 3 Hour Forecast (free tier)
+  Future<List<WeatherDayModel>> fetchFiveDayForecast({
+    required double lat,
+    required double lon,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/forecast',
+      queryParameters: {
+        'lat': lat,
+        'lon': lon,
+        'appid': _apiKey,
+        'units': 'metric',
+      },
+    );
+
+    final data = response.data ?? <String, dynamic>{};
+    final list = (data['list'] as List?) ?? <dynamic>[];
+    if (list.isEmpty) return [];
+
+    // Group by day
+    final byDay = <String, List<Map<String, dynamic>>>{};
+    for (final raw in list) {
+      final item = Map<String, dynamic>.from(raw as Map);
+      final dt = DateTime.fromMillisecondsSinceEpoch(
+        ((item['dt'] as num?)?.toInt() ?? 0) * 1000,
+      );
+      final dayKey = CalendarDateUtils.dayKey(dt);
+      byDay.putIfAbsent(dayKey, () => []).add(item);
+    }
+
+    final result = <WeatherDayModel>[];
+    for (final dayKey in byDay.keys.toList()..sort()) {
+      final slots = byDay[dayKey]!;
+      final temps = slots
+          .map((e) => ((e['main'] as Map?)?['temp'] as num?)?.toDouble() ?? 0.0)
+          .toList();
+      final maxT = temps.isEmpty ? 0.0 : temps.reduce((a, b) => a > b ? a : b);
+      final minT = temps.isEmpty ? 0.0 : temps.reduce((a, b) => a < b ? a : b);
+      final midIndex = slots.length ~/ 2;
+      final mid = slots[midIndex];
+      final main = Map<String, dynamic>.from((mid['main'] as Map?) ?? {});
+      final weatherList = (mid['weather'] as List?) ?? [];
+      final weather = weatherList.isNotEmpty
+          ? Map<String, dynamic>.from(weatherList.first as Map)
+          : <String, dynamic>{};
+      final wind = Map<String, dynamic>.from((mid['wind'] as Map?) ?? {});
+      final rain = (mid['rain'] as Map?) ?? {};
+      final pop = (slots.map((e) => (e['pop'] as num?)?.toDouble() ?? 0.0))
+          .reduce((a, b) => a > b ? a : b);
+      final date = DateTime.parse(dayKey);
+
+      result.add(
+        WeatherDayModel(
+          date: CalendarDateUtils.normalize(date),
+          temp: (maxT + minT) / 2,
+          tempMax: maxT,
+          tempMin: minT,
+          feelsLike: (main['feels_like'] as num?)?.toDouble() ?? (maxT + minT) / 2,
+          humidity: (main['humidity'] as num?)?.toInt() ?? 0,
+          windSpeed: (wind['speed'] as num?)?.toDouble() ?? 0,
+          windDeg: (wind['deg'] as num?)?.toInt() ?? 0,
+          precipitationProbability: pop.clamp(0.0, 1.0),
+          precipitationAmount: ((rain['3h'] ?? rain['1h'] ?? 0) as num).toDouble(),
+          uvIndex: 0,
+          sunrise: DateTime(date.year, date.month, date.day, 6),
+          sunset: DateTime(date.year, date.month, date.day, 18),
+          condition: (weather['main'] as String?) ?? 'Unknown',
+          iconCode: (weather['icon'] as String?) ?? '01d',
+          hourlyTemperatures: temps.isEmpty
+              ? List<double>.filled(24, (maxT + minT) / 2)
+              : temps,
+        ),
+      );
+    }
+    return result;
+  }
+
+  /// Today (current) + up to 5 days forecast
+  Future<List<WeatherDayModel>> fetchTodayWithForecast({
+    required double lat,
+    required double lon,
+  }) async {
+    try {
+      final single = await fetchCurrentWeatherSnapshot(lat: lat, lon: lon);
+      final now = DateTime.now();
+      final today = WeatherDayModel(
+        date: CalendarDateUtils.normalize(now),
+        temp: (single.tempMax + single.tempMin) / 2,
+        tempMax: single.tempMax,
+        tempMin: single.tempMin,
+        feelsLike: (single.tempMax + single.tempMin) / 2,
+        humidity: single.humidity,
+        windSpeed: single.windSpeed,
+        windDeg: 0,
+        precipitationProbability: single.precipitation,
+        precipitationAmount: single.precipitation * 10,
+        uvIndex: 0,
+        sunrise: DateTime(now.year, now.month, now.day, 6),
+        sunset: DateTime(now.year, now.month, now.day, 18),
+        condition: single.condition,
+        iconCode: single.icon,
+        hourlyTemperatures: List<double>.filled(
+          24,
+          (single.tempMax + single.tempMin) / 2,
+        ),
+      );
+
+      // Try One Call API (may fail on free tier)
+      try {
+        final response = await _dio.get<Map<String, dynamic>>(
+          '$_baseUrl/onecall',
+          queryParameters: {
+            'lat': lat,
+            'lon': lon,
+            'appid': _apiKey,
+            'units': 'metric',
+            'exclude': 'minutely,alerts',
+          },
+        );
+
+        final data = response.data ?? <String, dynamic>{};
+        final daily = (data['daily'] as List?) ?? [];
+        final result = <WeatherDayModel>[today];
+
+        for (final raw in daily.skip(1)) {
+          final day = WeatherDayModel.fromOneCallDaily(
+            Map<String, dynamic>.from(raw as Map),
+          );
+          result.add(day);
+        }
+
+        return result;
+      } catch (_) {
+        // One Call failed, use 5-day forecast instead
+        final forecast = await fetchFiveDayForecast(lat: lat, lon: lon);
+        return [today, ...forecast];
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch today with forecast: $e');
+    }
+  }
+
+  /// Raw One Call 2.5 response (may 401 on free keys)
+  Future<Map<String, dynamic>> fetchOneCallWeather({
+    required double lat,
+    required double lon,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/onecall',
+      queryParameters: {
+        'lat': lat,
+        'lon': lon,
+        'appid': _apiKey,
+        'units': 'metric',
+        'exclude': 'minutely,alerts',
+      },
+    );
+    return response.data ?? <String, dynamic>{};
+  }
+
+  /// Raw 5-day / 3-hour forecast JSON
+  Future<Map<String, dynamic>> fetchFiveDayForecastJson({
+    required double lat,
+    required double lon,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/forecast',
+      queryParameters: {
+        'lat': lat,
+        'lon': lon,
+        'appid': _apiKey,
+        'units': 'metric',
+      },
+    );
+    return response.data ?? <String, dynamic>{};
+  }
+
+  static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  /// Merges One Call daily (when available) with `/forecast` aggregates
+  Future<Map<DateTime, app_weather.WeatherDay>> fetchAppWeatherDays({
+    required double lat,
+    required double lon,
+  }) async {
+    final result = <DateTime, app_weather.WeatherDay>{};
+
+    // Try One Call first
+    try {
+      final one = await fetchOneCallWeather(lat: lat, lon: lon);
+      final daily = (one['daily'] as List?) ?? const [];
+      for (final raw in daily) {
+        final day = app_weather.WeatherDay.fromOneCallDaily(
+          Map<String, dynamic>.from(raw as Map),
+        );
+        result[_dateOnly(day.date)] = day;
+      }
+    } catch (_) {
+      // One Call not available
+    }
+
+    // Then try 5-day forecast
+    try {
+      final fj = await fetchFiveDayForecastJson(lat: lat, lon: lon);
+      final list = (fj['list'] as List?) ?? const [];
+      final byDay = <String, List<Map<String, dynamic>>>{};
+      for (final raw in list) {
+        final item = Map<String, dynamic>.from(raw as Map);
+        final dt = DateTime.fromMillisecondsSinceEpoch(
+          ((item['dt'] as num?)?.toInt() ?? 0) * 1000,
+        );
+        final key =
+            '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+        byDay.putIfAbsent(key, () => []).add(item);
+      }
+      for (final entry in byDay.entries) {
+        final segs = entry.key.split('-');
+        final d = DateTime(
+          int.parse(segs[0]),
+          int.parse(segs[1]),
+          int.parse(segs[2]),
+        );
+        final key = _dateOnly(d);
+        final merged = app_weather.WeatherDay.fromForecastSlots(d, entry.value);
+        result.putIfAbsent(key, () => merged);
+      }
+    } catch (_) {
+      // Forecast failed
+    }
+
+    return result;
+  }
+
+  // ============================================================
+  // HELPER METHODS
+  // ============================================================
+
   String _legacyConditionFromCode(int code) {
     if (code == 0) return 'clear';
     if (code == 1 || code == 2 || code == 3) return 'clouds';
@@ -399,6 +696,10 @@ class WeatherApiService {
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 }
+
+// ============================================================
+// HELPER CLASS
+// ============================================================
 
 class _GeoPoint {
   final String name;
