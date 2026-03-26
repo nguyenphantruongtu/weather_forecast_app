@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../models/weather_day_model.dart' as app_weather;
 import '../models/weather_history_model.dart';
 import '../../screens/sv5_screens/calendar_screen/models/weather_day_model.dart';
 import '../../screens/sv5_screens/calendar_screen/utils/date_utils.dart';
@@ -58,7 +59,7 @@ class WeatherApiService {
     );
   }
 
-  /// 5 Day / 3 Hour Forecast (free tier). Gộp theo ngày thành List<WeatherDayModel>.
+  /// 5 Day / 3 Hour Forecast (free tier). Gộp theo ngày thành `List<WeatherDayModel>`.
   Future<List<WeatherDayModel>> fetchFiveDayForecast({
     required double lat,
     required double lon,
@@ -360,5 +361,96 @@ class WeatherApiService {
     }
 
     return dailyList;
+  }
+
+  // --- App screens (WeatherDay model in lib/data/models) ---
+
+  /// Raw One Call 2.5 response (may 401 on free keys — caller should fall back).
+  Future<Map<String, dynamic>> fetchOneCallWeather({
+    required double lat,
+    required double lon,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/onecall',
+      queryParameters: {
+        'lat': lat,
+        'lon': lon,
+        'appid': _apiKey,
+        'units': 'metric',
+        'exclude': 'minutely,alerts',
+      },
+    );
+    return response.data ?? <String, dynamic>{};
+  }
+
+  /// Raw 5-day / 3-hour forecast JSON.
+  Future<Map<String, dynamic>> fetchFiveDayForecastJson({
+    required double lat,
+    required double lon,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '$_baseUrl/forecast',
+      queryParameters: {
+        'lat': lat,
+        'lon': lon,
+        'appid': _apiKey,
+        'units': 'metric',
+      },
+    );
+    return response.data ?? <String, dynamic>{};
+  }
+
+  static DateTime _dateOnly(DateTime d) =>
+      DateTime(d.year, d.month, d.day);
+
+  /// Merges One Call daily (when available) with `/forecast` aggregates.
+  Future<Map<DateTime, app_weather.WeatherDay>> fetchAppWeatherDays({
+    required double lat,
+    required double lon,
+  }) async {
+    final result = <DateTime, app_weather.WeatherDay>{};
+
+    try {
+      final one = await fetchOneCallWeather(lat: lat, lon: lon);
+      final daily = (one['daily'] as List?) ?? const [];
+      for (final raw in daily) {
+        final day = app_weather.WeatherDay.fromOneCallDaily(
+          Map<String, dynamic>.from(raw as Map),
+        );
+        result[_dateOnly(day.date)] = day;
+      }
+    } catch (_) {
+      // One Call not available
+    }
+
+    try {
+      final fj = await fetchFiveDayForecastJson(lat: lat, lon: lon);
+      final list = (fj['list'] as List?) ?? const [];
+      final byDay = <String, List<Map<String, dynamic>>>{};
+      for (final raw in list) {
+        final item = Map<String, dynamic>.from(raw as Map);
+        final dt = DateTime.fromMillisecondsSinceEpoch(
+          ((item['dt'] as num?)?.toInt() ?? 0) * 1000,
+        );
+        final key =
+            '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+        byDay.putIfAbsent(key, () => []).add(item);
+      }
+      for (final entry in byDay.entries) {
+        final segs = entry.key.split('-');
+        final d = DateTime(
+          int.parse(segs[0]),
+          int.parse(segs[1]),
+          int.parse(segs[2]),
+        );
+        final key = _dateOnly(d);
+        final merged = app_weather.WeatherDay.fromForecastSlots(d, entry.value);
+        result.putIfAbsent(key, () => merged);
+      }
+    } catch (_) {
+      // Forecast failed
+    }
+
+    return result;
   }
 }

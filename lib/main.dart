@@ -1,22 +1,33 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
 
-import 'data/services/open_meteo_service.dart';
+import 'config/env_config.dart';
 import 'data/services/weather_api_service.dart';
-import 'screens/sv5_screens/calendar_screen/calendar_screen.dart';
-import 'screens/sv5_screens/calendar_screen/providers/calendar_provider.dart';
-import 'screens/sv5_screens/statistics_screen/statistics_screen.dart';
+import 'providers/calendar_provider.dart';
+import 'providers/statistics_provider.dart';
+import 'providers/widget_config_provider.dart';
+import 'screens/weather_home_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
-  runApp(const WeatherNowApp());
+  await dotenv.load(fileName: EnvConfig.envFileName);
+
+  if (!EnvConfig.isConfigValid) {
+    // ignore: avoid_print
+    print('Missing API keys:');
+    for (final key in EnvConfig.validateApiKeys()) {
+      // ignore: avoid_print
+      print('   - $key');
+    }
+  }
+
+  runApp(const WeatherApp());
 }
 
-class WeatherNowApp extends StatelessWidget {
-  const WeatherNowApp({super.key});
+class WeatherApp extends StatelessWidget {
+  const WeatherApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,34 +36,40 @@ class WeatherNowApp extends StatelessWidget {
         Provider<WeatherApiService>(
           create: (_) => WeatherApiService(
             dio: Dio(),
-            apiKey: dotenv.env['OPENWEATHER_API_KEY'] ?? '',
-            baseUrl:
-                dotenv.env['OPENWEATHER_BASE_URL'] ??
-                'https://api.openweathermap.org/data/2.5',
+            apiKey: EnvConfig.openWeatherApiKey,
+            baseUrl: EnvConfig.openWeatherBaseUrl,
           ),
-        ),
-        Provider<OpenMeteoService>(
-          create: (_) => OpenMeteoService(dio: Dio()),
         ),
         ChangeNotifierProvider<CalendarProvider>(
           create: (context) => CalendarProvider(
-            weatherApiService: context.read<WeatherApiService>(),
+            apiService: context.read<WeatherApiService>(),
           ),
+        ),
+        ChangeNotifierProxyProvider<CalendarProvider, StatisticsProvider>(
+          create: (context) => StatisticsProvider(
+            calendarProvider: context.read<CalendarProvider>(),
+          ),
+          update: (_, calendar, previous) =>
+              previous ?? StatisticsProvider(calendarProvider: calendar),
+        ),
+        ChangeNotifierProvider<WidgetConfigProvider>(
+          create: (_) => WidgetConfigProvider(),
         ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'WeatherNow',
+        title: 'Weather App',
         theme: ThemeData(
           useMaterial3: true,
-          scaffoldBackgroundColor: const Color(0xFF0F1B2B),
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4FACFE)),
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF007AFF)),
+          scaffoldBackgroundColor: const Color(0xFFF5F5F5),
         ),
+        home: const WeatherHomeShell(),
         routes: {
-          '/calendar': (_) => const CalendarScreen(),
-          '/statistics': (_) => const StatisticsScreen(),
+          '/calendar': (_) => const WeatherHomeShell(),
+          '/statistics': (_) => const WeatherHomeShell(),
+          '/widgets': (_) => const WeatherHomeShell(),
         },
-        home: const CalendarScreen(),
       ),
     );
   }
