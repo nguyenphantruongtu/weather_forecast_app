@@ -1,4 +1,4 @@
-/// Represents a historical weather snapshot at a specific point in time.
+/// Snapshot of current weather used for calendar/statistics history.
 class WeatherHistory {
   const WeatherHistory({
     required this.date,
@@ -11,27 +11,39 @@ class WeatherHistory {
     required this.precipitation,
   });
 
-  /// The date/time of the weather snapshot
   final DateTime date;
-
-  /// Maximum temperature in Celsius
   final double tempMax;
-
-  /// Minimum temperature in Celsius
   final double tempMin;
-
-  /// Weather condition (e.g., 'Clear', 'Rainy', 'Cloudy')
   final String condition;
-
-  /// Weather icon code (e.g., '01d', '02n')
   final String icon;
-
-  /// Humidity percentage (0-100)
   final int humidity;
-
-  /// Wind speed in m/s
   final double windSpeed;
-
-  /// Normalized precipitation value (0.0-1.0)
   final double precipitation;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'date': date.toIso8601String(),
+      'tempMax': tempMax,
+      'tempMin': tempMin,
+      'condition': condition,
+      'icon': icon,
+      'humidity': humidity,
+      'windSpeed': windSpeed,
+      'precipitation': precipitation,
+    };
+  }
+
+  factory WeatherHistory.fromJson(Map<String, dynamic> json) {
+    return WeatherHistory(
+      date:
+          DateTime.tryParse((json['date'] as String?) ?? '') ?? DateTime.now(),
+      tempMax: (json['tempMax'] as num?)?.toDouble() ?? 0,
+      tempMin: (json['tempMin'] as num?)?.toDouble() ?? 0,
+      condition: (json['condition'] as String?) ?? 'Unknown',
+      icon: (json['icon'] as String?) ?? '01d',
+      humidity: (json['humidity'] as num?)?.toInt() ?? 0,
+      windSpeed: (json['windSpeed'] as num?)?.toDouble() ?? 0,
+      precipitation: (json['precipitation'] as num?)?.toDouble() ?? 0,
+    );
+  }
 }

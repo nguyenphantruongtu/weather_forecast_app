@@ -6,6 +6,7 @@ import '../../../providers/weather_provider.dart';
 import '../../../utils/app_strings.dart';
 import '../../OnboardingAndUserPreferencesScreens/settings_screen/settings_screen.dart';
 import '../../NotiAndNewsScreens/noti_news_main_screen.dart';
+import '../../weather_home_shell.dart';
 import 'widgets/current_weather_card.dart';
 import 'widgets/weather_metrics_grid.dart';
 import 'widgets/forecast_preview.dart';
@@ -56,6 +57,14 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const NotiNewsMainScreen()));
+  }
+
+  void _navigateToCalendarWeather() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const WeatherHomeShell(),
+      ),
+    );
   }
 
   @override
@@ -216,6 +225,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           languageCode: languageCode,
                         ),
                         const SizedBox(height: 24),
+                        _buildCalendarWeatherBanner(languageCode),
+                        const SizedBox(height: 24),
                         _buildNotiNewsBanner(languageCode),
                         const SizedBox(height: 24),
                         ForecastPreview(
@@ -309,6 +320,61 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.white70,
               size: 16,
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalendarWeatherBanner(String languageCode) {
+    return GestureDetector(
+      onTap: _navigateToCalendarWeather,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1FA2FF), Color(0xFF12D8FA)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1FA2FF).withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_month, color: Colors.white, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.tr(languageCode, en: 'Calendar Weather', vi: 'Lịch thời tiết'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    AppStrings.tr(
+                      languageCode,
+                      en: 'View weather by date and monthly summary',
+                      vi: 'Xem thời tiết theo ngày và tổng quan theo tháng',
+                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
           ],
         ),
       ),
