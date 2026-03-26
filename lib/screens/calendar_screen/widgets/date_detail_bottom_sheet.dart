@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../providers/calendar_provider.dart';
+import '../../../providers/widget_config_provider.dart';
 import '../../../utils/date_formatter.dart';
 import '../../../utils/temperature_utils.dart';
 
@@ -16,16 +17,23 @@ class DateDetailBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<CalendarProvider>();
     final weather = provider.getWeatherForDate(date);
+    final widgetTheme = context.watch<WidgetConfigProvider>().selectedTheme;
+    final isDark = widgetTheme.name == 'Dark Mode';
+    final sheetBg = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+    final accentColor = isDark ? Colors.white : widgetTheme.color;
 
     if (weather == null) {
       return Container(
         height: 200,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: sheetBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: const Center(
-          child: Text('No weather data for this date'),
+        child: Center(
+          child: Text(
+            'No weather data for this date',
+            style: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
+          ),
         ),
       );
     }
@@ -37,9 +45,9 @@ class DateDetailBottomSheet extends StatelessWidget {
       builder: (context, scrollController) {
         final windKmh = TemperatureUtils.windMsToKmh(weather.windSpeed);
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: BoxDecoration(
+            color: sheetBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: SingleChildScrollView(
             controller: scrollController,
@@ -63,6 +71,7 @@ class DateDetailBottomSheet extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
                 Text(
@@ -72,7 +81,7 @@ class DateDetailBottomSheet extends StatelessWidget {
                   }).join(' '),
                   style: GoogleFonts.inter(
                     fontSize: 14,
-                    color: Colors.grey[600],
+                    color: isDark ? Colors.white60 : Colors.grey[600],
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -88,13 +97,14 @@ class DateDetailBottomSheet extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 32,
                             fontWeight: FontWeight.w300,
+                            color: isDark ? Colors.white : Colors.black87,
                           ),
                         ),
                         Text(
                           'High / Low',
                           style: GoogleFonts.inter(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: isDark ? Colors.white60 : Colors.grey[600],
                           ),
                         ),
                       ],
@@ -107,6 +117,7 @@ class DateDetailBottomSheet extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -123,14 +134,16 @@ class DateDetailBottomSheet extends StatelessWidget {
                       icon: Icons.water_drop_outlined,
                       label: 'Precipitation',
                       value: '${weather.precipitation.round()} mm',
-                      color: Theme.of(context).colorScheme.primary,
+                      color: accentColor,
+                      isDark: isDark,
                     ),
                     _buildMetricCard(
                       context: context,
                       icon: Icons.water_outlined,
                       label: 'Humidity',
                       value: '${weather.humidity}%',
-                      color: Theme.of(context).colorScheme.primary,
+                      color: accentColor,
+                      isDark: isDark,
                     ),
                     _buildMetricCard(
                       context: context,
@@ -138,6 +151,7 @@ class DateDetailBottomSheet extends StatelessWidget {
                       label: 'Wind',
                       value: '${windKmh.round()} km/h',
                       color: const Color(0xFF34C759),
+                      isDark: isDark,
                     ),
                     _buildMetricCard(
                       context: context,
@@ -145,6 +159,7 @@ class DateDetailBottomSheet extends StatelessWidget {
                       label: 'UV Index',
                       value: '${weather.uvIndex}',
                       color: const Color(0xFFFF9500),
+                      isDark: isDark,
                     ),
                     _buildMetricCard(
                       context: context,
@@ -152,13 +167,15 @@ class DateDetailBottomSheet extends StatelessWidget {
                       label: 'Sunrise',
                       value: DateFormat('h:mm a').format(weather.sunrise),
                       color: const Color(0xFFFF9500),
+                      isDark: isDark,
                     ),
                     _buildMetricCard(
                       context: context,
                       icon: Icons.nights_stay_outlined,
                       label: 'Sunset',
                       value: DateFormat('h:mm a').format(weather.sunset),
-                      color: Theme.of(context).colorScheme.primary,
+                      color: accentColor,
+                      isDark: isDark,
                     ),
                   ],
                 ),
@@ -166,7 +183,9 @@ class DateDetailBottomSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
+                    color: isDark
+                        ? const Color(0xFF3A3A3C)
+                        : const Color(0xFFF5F5F5),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -177,12 +196,16 @@ class DateDetailBottomSheet extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Temperature was ${(weather.tempMax - 25).abs().round()}° ${weather.tempMax > 25 ? "above" : "below"} a rough seasonal baseline (25°C) for this date.',
-                        style: GoogleFonts.inter(fontSize: 13),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: isDark ? Colors.white70 : Colors.black87,
+                        ),
                       ),
                     ],
                   ),
@@ -191,11 +214,12 @@ class DateDetailBottomSheet extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: ElevatedButton(
+                      child:                       ElevatedButton(
                         onPressed: () => Navigator.pop(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
+                          backgroundColor: accentColor,
+                          foregroundColor:
+                              isDark ? Colors.black87 : Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -206,12 +230,12 @@ class DateDetailBottomSheet extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: OutlinedButton(
+                      child:                       OutlinedButton(
                         onPressed: () {},
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: accentColor,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                          side: BorderSide(color: accentColor),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -235,13 +259,16 @@ class DateDetailBottomSheet extends StatelessWidget {
     required String label,
     required String value,
     required Color color,
+    bool isDark = false,
   }) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF3A3A3C) : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(
+          color: isDark ? Colors.white12 : Colors.grey[200]!,
+        ),
       ),
       child: Row(
         children: [
@@ -256,7 +283,7 @@ class DateDetailBottomSheet extends StatelessWidget {
                   label,
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: Colors.grey[600],
+                    color: isDark ? Colors.white60 : Colors.grey[600],
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -266,6 +293,7 @@ class DateDetailBottomSheet extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

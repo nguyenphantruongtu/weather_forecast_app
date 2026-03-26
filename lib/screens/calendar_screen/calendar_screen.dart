@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../providers/calendar_provider.dart';
+import '../../providers/widget_config_provider.dart';
 import 'widgets/date_cell_widget.dart';
 import 'widgets/date_detail_bottom_sheet.dart';
 import 'widgets/month_summary_card.dart';
@@ -29,12 +30,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final widgetTheme = context.watch<WidgetConfigProvider>().selectedTheme;
+    final isDark = widgetTheme.name == 'Dark Mode';
+    final accentColor = isDark ? Colors.white : widgetTheme.color;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor:
+          isDark ? widgetTheme.color : widgetTheme.color.withOpacity(0.1),
       appBar: AppBar(
         leading: Navigator.canPop(context)
             ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                icon: Icon(Icons.arrow_back, color: widgetTheme.textColor),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
@@ -43,24 +49,26 @@ class _CalendarScreenState extends State<CalendarScreen> {
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: widgetTheme.textColor,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black87),
+            icon: Icon(Icons.refresh, color: widgetTheme.textColor),
             onPressed: () {
               context.read<CalendarProvider>().loadMonth(_focusedDay);
             },
           ),
         ],
-        backgroundColor: Colors.white,
+        backgroundColor: widgetTheme.color,
         elevation: 0,
       ),
       body: Consumer<CalendarProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading && provider.weatherData.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(color: accentColor),
+            );
           }
 
           if (provider.errorMessage != null && provider.weatherData.isEmpty) {
@@ -70,7 +78,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const Icon(Icons.error_outline,
+                        size: 64, color: Colors.red),
                     const SizedBox(height: 16),
                     Text(
                       provider.errorMessage!,
@@ -97,7 +106,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF2C2C2E) : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -111,7 +120,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     firstDay: DateTime(2020, 1, 1),
                     lastDay: DateTime(2030, 12, 31),
                     focusedDay: _focusedDay,
-                    selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                    selectedDayPredicate: (day) =>
+                        isSameDay(_selectedDay, day),
                     calendarFormat: CalendarFormat.month,
                     rowHeight: 72,
                     headerStyle: HeaderStyle(
@@ -120,33 +130,40 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       titleTextStyle: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
                       ),
                       leftChevronIcon: Icon(
                         Icons.chevron_left,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: accentColor,
                       ),
                       rightChevronIcon: Icon(
                         Icons.chevron_right,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: accentColor,
                       ),
                     ),
                     calendarStyle: CalendarStyle(
                       todayDecoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        color: accentColor.withOpacity(0.2),
                         shape: BoxShape.circle,
                       ),
                       selectedDecoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
+                        color: accentColor,
                         shape: BoxShape.circle,
                       ),
                       weekendTextStyle: const TextStyle(color: Colors.red),
                       outsideDaysVisible: false,
+                      defaultTextStyle: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      todayTextStyle: TextStyle(
+                        color: isDark ? Colors.black87 : accentColor,
+                      ),
                     ),
                     daysOfWeekStyle: DaysOfWeekStyle(
                       weekdayStyle: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[600],
+                        color: isDark ? Colors.white70 : Colors.grey[600],
                       ),
                       weekendStyle: GoogleFonts.inter(
                         fontSize: 12,
