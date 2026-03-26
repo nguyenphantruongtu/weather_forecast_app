@@ -136,6 +136,52 @@ class WeatherDayModel {
     };
   }
 
+  factory WeatherDayModel.fromOneCallDaily(Map<String, dynamic> json) {
+    final weatherList = (json['weather'] as List?) ?? const [];
+    final w = weatherList.isNotEmpty
+        ? Map<String, dynamic>.from(weatherList.first as Map)
+        : <String, dynamic>{};
+    final temp =
+        Map<String, dynamic>.from((json['temp'] as Map?) ?? const {});
+    final feelsLikeMap =
+        Map<String, dynamic>.from((json['feels_like'] as Map?) ?? const {});
+
+    final rain = json['rain'];
+    double precipAmt = 0;
+    if (rain is num) precipAmt = rain.toDouble();
+    if (rain is Map) {
+      precipAmt =
+          ((rain['1d'] ?? rain['3h'] ?? rain['1h'] ?? 0) as num).toDouble();
+    }
+
+    final dayTemp = (temp['day'] as num?)?.toDouble() ?? 0;
+
+    return WeatherDayModel(
+      date: DateTime.fromMillisecondsSinceEpoch(
+        ((json['dt'] as num?)?.toInt() ?? 0) * 1000,
+      ),
+      temp: dayTemp,
+      tempMax: (temp['max'] as num?)?.toDouble() ?? 0,
+      tempMin: (temp['min'] as num?)?.toDouble() ?? 0,
+      feelsLike: (feelsLikeMap['day'] as num?)?.toDouble() ?? 0,
+      humidity: (json['humidity'] as num?)?.toInt() ?? 0,
+      windSpeed: (json['wind_speed'] as num?)?.toDouble() ?? 0,
+      windDeg: (json['wind_deg'] as num?)?.toInt() ?? 0,
+      precipitationProbability: (json['pop'] as num?)?.toDouble() ?? 0,
+      precipitationAmount: precipAmt,
+      uvIndex: (json['uvi'] as num?)?.toDouble() ?? 0,
+      sunrise: DateTime.fromMillisecondsSinceEpoch(
+        ((json['sunrise'] as num?)?.toInt() ?? 0) * 1000,
+      ),
+      sunset: DateTime.fromMillisecondsSinceEpoch(
+        ((json['sunset'] as num?)?.toInt() ?? 0) * 1000,
+      ),
+      condition: (w['main'] as String?) ?? 'Clear',
+      iconCode: (w['icon'] as String?) ?? '01d',
+      hourlyTemperatures: List<double>.filled(24, dayTemp),
+    );
+  }
+
   factory WeatherDayModel.fromJson(Map<String, dynamic> json) {
     final now = DateTime.now();
     final hourly = ((json['hourlyTemperatures'] as List?) ?? const <dynamic>[])

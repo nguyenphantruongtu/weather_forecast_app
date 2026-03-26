@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/calendar_provider.dart';
 import '../../providers/statistics_provider.dart';
+import '../../data/models/statistics_model.dart';
 import 'widgets/comparison_indicator.dart';
 import 'widgets/period_selector.dart';
 import 'widgets/temperature_chart.dart';
@@ -27,34 +27,8 @@ class StatisticsScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: Consumer2<CalendarProvider, StatisticsProvider>(
-        builder: (context, calendar, statsProv, child) {
-          if (calendar.isLoading && calendar.weatherData.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (calendar.weatherData.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Open the Calendar tab and pull to refresh or wait for data to load.',
-                  style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700]),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
-
-          final stats = statsProv.statistics;
-          if (stats == null) {
-            return Center(
-              child: Text(
-                'No statistics for this period',
-                style: GoogleFonts.inter(color: Colors.grey[700]),
-              ),
-            );
-          }
-
+      body: Consumer<StatisticsProvider>(
+        builder: (context, statsProv, child) {
           return SingleChildScrollView(
             child: Column(
               children: [
@@ -82,13 +56,61 @@ class StatisticsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                TemperatureChart(stats: stats),
-                ComparisonIndicator(stats: stats),
+                if (statsProv.selectedPeriod == 'All') ...[
+                  _buildSectionTitle('Week'),
+                  if (statsProv.weekStatistics != null)
+                    TemperatureChart(stats: statsProv.weekStatistics!),
+                  if (statsProv.weekStatistics != null)
+                    ComparisonIndicator(stats: statsProv.weekStatistics!),
+                  const SizedBox(height: 10),
+                  _buildSectionTitle('Month'),
+                  if (statsProv.monthStatistics != null)
+                    TemperatureChart(stats: statsProv.monthStatistics!),
+                  if (statsProv.monthStatistics != null)
+                    ComparisonIndicator(stats: statsProv.monthStatistics!),
+                  const SizedBox(height: 10),
+                  _buildSectionTitle('Year'),
+                  if (statsProv.yearStatistics != null)
+                    TemperatureChart(stats: statsProv.yearStatistics!),
+                  if (statsProv.yearStatistics != null)
+                    ComparisonIndicator(stats: statsProv.yearStatistics!),
+                ] else ...[
+                  if (statsProv.statistics != null)
+                    TemperatureChart(stats: statsProv.statistics!),
+                  if (statsProv.statistics != null)
+                    ComparisonIndicator(stats: statsProv.statistics!),
+                  if (statsProv.statistics == null)
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'No statistics for this period',
+                        style: GoogleFonts.inter(color: Colors.grey[700]),
+                      ),
+                    ),
+                ],
                 const SizedBox(height: 24),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.black54,
+            ),
+          ),
+        ],
       ),
     );
   }
