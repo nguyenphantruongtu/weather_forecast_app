@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../data/models/settings_model.dart';
 import '../../../providers/settings_provider.dart';
-import '../../../providers/location_provider.dart';
 import '../../../utils/app_strings.dart';
 import '../../../providers/weather_provider.dart';
 import '../../../data/models/forecast_model.dart';
@@ -23,24 +22,22 @@ class HourlyForecastScreen extends StatefulWidget {
 
 class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
   int _selectedIndex = 0;
-  late String _currentCity;
+  String? _lastLoadedCity;
 
   @override
   void initState() {
     super.initState();
-    if (widget.city != null) {
-      _currentCity = widget.city!;
-    } else {
-      // Get current selected city from LocationProvider
-      final locationProv = context.read<LocationProvider>();
-      _currentCity = locationProv.selectedCity?.name ?? 'Hanoi';
-    }
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   void _loadData() {
-    final weatherProvider = context.read<WeatherProvider>();
-    weatherProvider.fetchHourlyForecast(_currentCity);
+    final city = widget.city ?? 'Hanoi';
+    if (_lastLoadedCity != city) {
+      _lastLoadedCity = city;
+      context.read<WeatherProvider>().fetchHourlyForecast(city);
+    }
   }
 
   @override
@@ -75,6 +72,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
       ),
       body: Consumer<WeatherProvider>(
         builder: (context, weatherProvider, _) {
+          final currentCity = widget.city ?? 'Hanoi';
           if (weatherProvider.isLoading) {
             return _buildLoadingShimmer();
           }
@@ -150,7 +148,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _currentCity,
+                          currentCity,
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

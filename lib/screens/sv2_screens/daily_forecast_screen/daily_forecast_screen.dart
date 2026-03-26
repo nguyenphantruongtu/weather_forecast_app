@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../data/models/settings_model.dart';
 import '../../../providers/settings_provider.dart';
-import '../../../providers/location_provider.dart';
 import '../../../utils/app_strings.dart';
 import '../../../utils/unit_converter.dart';
 import '../../../providers/weather_provider.dart';
@@ -21,25 +20,23 @@ class DailyForecastScreen extends StatefulWidget {
 }
 
 class _DailyForecastScreenState extends State<DailyForecastScreen> {
-  late String _currentCity;
   int _selectedViewIndex = 0; // 0: Chart, 1: Card, 2: List
+  String? _lastLoadedCity;
 
   @override
   void initState() {
     super.initState();
-    if (widget.city != null) {
-      _currentCity = widget.city!;
-    } else {
-      // Get current selected city from LocationProvider
-      final locationProv = context.read<LocationProvider>();
-      _currentCity = locationProv.selectedCity?.name ?? 'Hanoi';
-    }
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   void _loadData() {
-    final weatherProvider = context.read<WeatherProvider>();
-    weatherProvider.fetchDailyForecast(_currentCity);
+    final city = widget.city ?? 'Hanoi';
+    if (_lastLoadedCity != city) {
+      _lastLoadedCity = city;
+      context.read<WeatherProvider>().fetchDailyForecast(city);
+    }
   }
 
   @override
@@ -75,6 +72,7 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
       ),
       body: Consumer<WeatherProvider>(
         builder: (context, weatherProvider, _) {
+          final currentCity = widget.city ?? 'Hanoi';
           if (weatherProvider.isLoading) {
             return _buildLoadingState(context);
           }
@@ -121,7 +119,7 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${AppStrings.tr(languageCode, en: 'Forecast for', vi: 'Du bao cho')} $_currentCity',
+                        '${AppStrings.tr(languageCode, en: 'Forecast for', vi: 'Du bao cho')} $currentCity',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

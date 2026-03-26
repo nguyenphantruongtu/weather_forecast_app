@@ -4,7 +4,6 @@ import 'package:shimmer/shimmer.dart';
 import '../../../data/models/weather_model.dart';
 import '../../../data/models/settings_model.dart';
 import '../../../providers/settings_provider.dart';
-import '../../../providers/location_provider.dart';
 import '../../../utils/app_strings.dart';
 import '../../../utils/unit_converter.dart';
 import '../../../providers/weather_provider.dart';
@@ -24,24 +23,22 @@ class WeatherDetailsScreen extends StatefulWidget {
 }
 
 class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
-  late String _currentCity;
+  String? _lastLoadedCity;
 
   @override
   void initState() {
     super.initState();
-    if (widget.city != null) {
-      _currentCity = widget.city!;
-    } else {
-      // Get current selected city from LocationProvider
-      final locationProv = context.read<LocationProvider>();
-      _currentCity = locationProv.selectedCity?.name ?? 'Hanoi';
-    }
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   void _loadData() {
-    final weatherProvider = context.read<WeatherProvider>();
-    weatherProvider.fetchCurrentWeather(_currentCity);
+    final city = widget.city ?? 'Hanoi';
+    if (_lastLoadedCity != city) {
+      _lastLoadedCity = city;
+      context.read<WeatherProvider>().fetchCurrentWeather(city);
+    }
   }
 
   @override
@@ -77,6 +74,7 @@ class _WeatherDetailsScreenState extends State<WeatherDetailsScreen> {
       ),
       body: Consumer<WeatherProvider>(
         builder: (context, weatherProvider, _) {
+          final currentCity = widget.city ?? 'Hanoi';
           if (weatherProvider.isLoading) {
             return _buildLoadingState(context);
           }

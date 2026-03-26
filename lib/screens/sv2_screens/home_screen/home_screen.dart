@@ -7,6 +7,9 @@ import '../../../utils/app_strings.dart';
 import '../../OnboardingAndUserPreferencesScreens/settings_screen/settings_screen.dart';
 import '../../NotiAndNewsScreens/noti_news_main_screen.dart';
 import '../../weather_home_shell.dart';
+import '../hourly_forecast_screen/hourly_forecast_screen.dart';
+import '../daily_forecast_screen/daily_forecast_screen.dart';
+import '../weather_details_screen/weather_details_screen.dart';
 import 'widgets/current_weather_card.dart';
 import 'widgets/weather_metrics_grid.dart';
 import 'widgets/forecast_preview.dart';
@@ -464,7 +467,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/hourly-forecast');
+                final city =
+                    context.read<WeatherProvider>().currentWeather?.location ??
+                    '';
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HourlyForecastScreen(city: city),
+                  ),
+                );
               },
             ),
             ListTile(
@@ -485,7 +496,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/daily-forecast');
+                final city =
+                    context.read<WeatherProvider>().currentWeather?.location ??
+                    '';
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DailyForecastScreen(city: city),
+                  ),
+                );
               },
             ),
             ListTile(
@@ -506,7 +525,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/weather-details');
+                final city =
+                    context.read<WeatherProvider>().currentWeather?.location ??
+                    '';
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => WeatherDetailsScreen(city: city),
+                  ),
+                );
               },
             ),
             ListTile(
